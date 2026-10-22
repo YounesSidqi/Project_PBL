@@ -85,14 +85,45 @@ Route::middleware('auth')->group(function () {
         $dosenId = $dosen ? $dosen->id : null;
         $students = User::where('role', 'mahasiswa')->where('dosen_id', $dosenId)->with('logbooks')->get();
 
-        $query = Logbook::where('dosen_id', $dosenId)->with('student')->orderBy('tanggal', 'desc');
-        if ($request->filled('student_id')) {
-            $query->where('user_id', $request->query('student_id'));
-        }
-        $logbooks = $query->get();
+        $selectedStudentId = $request->query('student_id');
+        $selectedStudent = $selectedStudentId ? $students->firstWhere('id', $selectedStudentId) : null;
 
-        return view('logbook.dosen', compact('students', 'logbooks', 'dosen'));
+        $logbooksQuery = Logbook::where('dosen_id', $dosenId)->with('student')->orderBy('tanggal', 'desc');
+        if ($selectedStudentId) {
+            $logbooksQuery->where('user_id', $selectedStudentId);
+        }
+        $logbooks = $logbooksQuery->get();
+
+        return view('logbook.dosen', compact('students', 'logbooks', 'dosen', 'selectedStudent'));
     })->name('logbook.dosen');
+
+    // Form F2 (User Requirement & Capaian Industri)
+    Route::get('/form/f2', function (Request $request) {
+        $user = Auth::user();
+        $role = $request->query('role', $user?->role ?? 'mahasiswa');
+
+        return ($role === 'dosen') ? redirect()->route('form.f2.dosen') : redirect()->route('form.f2.mahasiswa');
+    })->name('form.f2');
+    Route::get('/form/f2/mahasiswa', function () {
+        return view('form.f2-mahasiswa');
+    })->name('form.f2.mahasiswa');
+    Route::get('/form/f2/dosen', function () {
+        return view('form.f2-dosen');
+    })->name('form.f2.dosen');
+
+    // Form F4 (Buku Penghubung Dosen Pembimbing)
+    Route::get('/form/f4', function (Request $request) {
+        $user = Auth::user();
+        $role = $request->query('role', $user?->role ?? 'mahasiswa');
+
+        return ($role === 'dosen') ? redirect()->route('form.f4.dosen') : redirect()->route('form.f4.mahasiswa');
+    })->name('form.f4');
+    Route::get('/form/f4/mahasiswa', function () {
+        return view('form.f4-mahasiswa');
+    })->name('form.f4.mahasiswa');
+    Route::get('/form/f4/dosen', function () {
+        return view('form.f4-dosen');
+    })->name('form.f4.dosen');
 
     Route::post('/logbooks', [LogbookController::class, 'store'])->name('logbooks.store');
     Route::get('/logbooks/{logbook}', [LogbookController::class, 'show'])->name('logbooks.show');

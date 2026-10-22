@@ -7,6 +7,10 @@
     $active = 'validasi_f1';
   } elseif (!empty($activePage)) {
     $active = $activePage;
+  } elseif (request()->routeIs('form.f2*')) {
+    $active = 'f2';
+  } elseif (request()->routeIs('form.f4*')) {
+    $active = 'f4';
   } else {
     $active = request()->routeIs('*logbook*') ? 'logbook' : (request()->routeIs('*dashboard*') ? 'dashboard' : '');
   }
@@ -31,19 +35,35 @@
   $mahasiswaNav = [
     [
       'id' => 'dashboard',
-      'label' => 'Dashboard & Penempatan',
+      'label' => 'Dashboard & Penempatan (F1)',
       'icon' => 'dashboard',
       'route' => route('dashboard.mahasiswa'),
       'badge' => null,
       'badgeClass' => '',
     ],
     [
+      'id' => 'f2',
+      'label' => 'Requirement Industri (F2)',
+      'icon' => 'terminal',
+      'route' => route('form.f2.mahasiswa'),
+      'badge' => null,
+      'badgeClass' => '',
+    ],
+    [
       'id' => 'logbook',
-      'label' => 'Workspace & Logbook (F2-F4)',
+      'label' => 'Logbook Harian (F3)',
       'icon' => 'menu_book',
       'route' => route('logbook.mahasiswa'),
       'badge' => 'Aktif',
       'badgeClass' => 'bg-[#009688]/10 text-[#02796B]',
+    ],
+    [
+      'id' => 'f4',
+      'label' => 'Bimbingan Dosen (F4)',
+      'icon' => 'co_present',
+      'route' => route('form.f4.mahasiswa'),
+      'badge' => null,
+      'badgeClass' => '',
     ],
     [
       'id' => 'penilaian_industri',
@@ -101,19 +121,26 @@
       'badgeClass' => '',
     ],
     [
+      'id' => 'f2',
+      'label' => 'Capaian Industri (F2)',
+      'icon' => 'terminal',
+      'route' => route('form.f2.dosen'),
+      'badge' => null,
+      'badgeClass' => '',
+    ],
+    [
       'id' => 'logbook',
-      'label' => 'Review Logbook (F3)',
+      'label' => 'Verifikasi Logbook (F3)',
       'icon' => 'rate_review',
       'route' => route('logbook.dosen'),
       'badge' => ($pendingCount > 0 ? $pendingCount . ' Baru' : '0 Baru'),
       'badgeClass' => ($pendingCount > 0 ? 'bg-amber-100 text-amber-800 font-bold' : 'bg-blue-100 text-[#0056B3]'),
     ],
     [
-      'id' => 'agenda',
-      'label' => 'Jadwal & Agenda (F4)',
-      'icon' => 'event_note',
-      'route' => route('dashboard.dosen') . '#agenda-section',
-      'onclick' => "updateSidebarActive('agenda');",
+      'id' => 'f4',
+      'label' => 'Buku Bimbingan (F4)',
+      'icon' => 'co_present',
+      'route' => route('form.f4.dosen'),
       'badge' => null,
       'badgeClass' => '',
     ],
