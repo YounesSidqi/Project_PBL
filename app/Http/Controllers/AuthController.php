@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -19,7 +18,7 @@ class AuthController extends Controller
             return redirect()->route('dashboard');
         }
 
-        return view('login');
+        return view('auth.login');
     }
 
     /**
@@ -52,7 +51,7 @@ class AuthController extends Controller
         ];
 
         // If a specific role is passed, enforce role checking
-        if (!empty($role)) {
+        if (! empty($role)) {
             $credentials['role'] = $role;
         }
 
@@ -60,11 +59,11 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             return redirect()->intended(route('dashboard'))
-                ->with('success', 'Selamat datang di SIM-PKL, ' . Auth::user()->name . '!');
+                ->with('success', 'Selamat datang di SIM-PKL, '.Auth::user()->name.'!');
         }
 
         // If role-specific attempt failed, check if account exists under a different role
-        if (!empty($role)) {
+        if (! empty($role)) {
             $userExists = User::where($field, $identifier)->first();
             if ($userExists && $userExists->role !== $role) {
                 $roleLabels = [
@@ -84,7 +83,6 @@ class AuthController extends Controller
             'identifier' => 'Kredensial yang dimasukkan tidak sesuai dengan data terdaftar kami.',
         ]);
     }
-
 
     /**
      * Handle user logout.
