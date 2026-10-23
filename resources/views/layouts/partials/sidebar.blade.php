@@ -100,6 +100,9 @@
   $pendingCount = \App\Models\Logbook::where('dosen_id', $dosenId)
                     ->where('status', 'pending')
                     ->count();
+  $pendingF1Count = \App\Models\F1Application::where('dosen_id', $dosenId)
+                    ->where('status', 'pending')
+                    ->count();
 
   $dosenNav = [
     [
@@ -115,10 +118,10 @@
       'id' => 'validasi_f1',
       'label' => 'Validasi Form F1',
       'icon' => 'assignment_turned_in',
-      'route' => route('dashboard.dosen', ['tab' => 'f1']) . '#mahasiswa-section',
-      'onclick' => "updateSidebarActive('validasi_f1'); if(typeof filterStudents === 'function') { const sf = document.getElementById('status-filter'); if(sf) { sf.value='f1'; filterStudents(); } }",
-      'badge' => null,
-      'badgeClass' => '',
+      'route' => route('dashboard.dosen', ['tab' => 'f1']) . '#f1-section',
+      'onclick' => "updateSidebarActive('validasi_f1'); if(typeof showF1Tab === 'function') { showF1Tab(); }",
+      'badge' => ($pendingF1Count > 0 ? $pendingF1Count . ' Baru' : null),
+      'badgeClass' => ($pendingF1Count > 0 ? 'bg-amber-100 text-amber-800 font-bold' : ''),
     ],
     [
       'id' => 'f2',

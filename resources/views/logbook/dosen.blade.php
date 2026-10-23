@@ -411,7 +411,7 @@
 <!-- ======================================================== -->
 <!-- LEVEL 3: MODAL DETAIL LENGKAP & REVIEW LOGBOOK HARIAN    -->
 <!-- ======================================================== -->
-<div class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" id="modal-dosen-review">
+<div class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" id="modal-dosen-review">
   <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-scale-up">
     
     <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
@@ -484,7 +484,12 @@
   function toggleModal(id) {
     const modal = document.getElementById(id);
     if (modal) {
-      modal.classList.toggle('hidden');
+      const isHidden = modal.classList.toggle('hidden');
+      if (isHidden) {
+        modal.classList.remove('flex');
+      } else {
+        modal.classList.add('flex');
+      }
     }
   }
 

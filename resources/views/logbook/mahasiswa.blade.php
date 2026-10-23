@@ -207,7 +207,7 @@
                 <div class="flex items-center gap-2.5">
                   @if($lb->status === 'approved')
                     <button type="button" 
-                            onclick="openVerificationModal('{{ $lb->dosen->name ?? 'Dr. Bambang Sutrisno, M.T.' }}', '{{ $lb->dosen->identifier ?? '198503152010121002' }}', '{{ $lb->updated_at ? $lb->updated_at->translatedFormat('d M Y H:i') . ' WIB' : '22 Okt 2026' }}', 'SHA256: {{ substr(hash('sha256', $lb->id . $lb->subject), 0, 32) }}...')" 
+                            onclick="openVerificationModal('{{ $lb->dosen->name ?? 'Dr. Bambang Sutrisno, M.T.' }}', '{{ $lb->dosen->identifier ?? '198503152010121002' }}', '{{ $lb->updated_at ? $lb->updated_at->translatedFormat('d M Y H:i') . ' WIB' : now()->translatedFormat('d M Y H:i') . ' WIB' }}', 'SHA256: {{ substr(hash('sha256', $lb->id . $lb->subject), 0, 32) }}...')" 
                             class="p-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-[#02796B] border border-teal-200 transition-colors flex items-center justify-center shadow-sm" 
                             title="Lihat Stempel Verifikasi Digital">
                       <span class="material-symbols-outlined text-[20px]">qr_code_2</span>
@@ -323,7 +323,7 @@
 
 
 <!-- MODAL: ADD LOGBOOK (FORM F3) -->
-<div class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" id="modal-add-log">
+<div class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" id="modal-add-log">
   <div class="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-scale-up">
     
     <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
@@ -347,7 +347,7 @@
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Dosen Pembimbing:</label>
-          <input type="text" readonly value="Dr. Bambang Sutrisno, M.T." class="w-full h-10 px-3 bg-slate-100 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-600 cursor-not-allowed">
+          <input type="text" readonly value="{{ Auth::user()->dosen->name ?? 'Dr. Bambang Sutrisno, M.T.' }}" class="w-full h-10 px-3 bg-slate-100 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-600 cursor-not-allowed">
         </div>
       </div>
 
@@ -378,7 +378,7 @@
 </div>
 
 <!-- MODAL: PREVIEW STEMPEL DIGITAL VERIFIKASI -->
-<div class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" id="modal-verification">
+<div class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" id="modal-verification">
   <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-scale-up">
     <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
       <div class="flex items-center gap-2">
@@ -446,7 +446,7 @@
 </div>
 
 <!-- MODAL: VIEW LOGBOOK DETAIL -->
-<div class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" id="modal-view-logbook">
+<div class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" id="modal-view-logbook">
   <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-scale-up">
     <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
       <div>
@@ -480,7 +480,7 @@
 </div>
 
 <!-- MODAL: EDIT LOGBOOK -->
-<div class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" id="modal-edit-log">
+<div class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" id="modal-edit-log">
   <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-scale-up">
     <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
       <div class="flex items-center gap-2">
@@ -529,7 +529,7 @@
 </div>
 
 <!-- MODAL: HAPUS LOGBOOK -->
-<div class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" id="modal-delete-log">
+<div class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" id="modal-delete-log">
   <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-scale-up">
     <div class="px-6 py-4 bg-rose-50 border-b border-rose-100 flex items-center justify-between">
       <div class="flex items-center gap-2">
@@ -572,7 +572,12 @@
   function toggleModal(id) {
     const modal = document.getElementById(id);
     if (modal) {
-      modal.classList.toggle('hidden');
+      const isHidden = modal.classList.toggle('hidden');
+      if (isHidden) {
+        modal.classList.remove('flex');
+      } else {
+        modal.classList.add('flex');
+      }
     }
   }
 
@@ -581,11 +586,19 @@
     document.getElementById('modal-supervisor-nrk').innerText = nrk;
     document.getElementById('modal-verify-time').innerText = time;
     document.getElementById('modal-hash').innerText = hash;
-    document.getElementById('modal-verification').classList.remove('hidden');
+    const modal = document.getElementById('modal-verification');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
   }
 
   function closeVerificationModal() {
-    document.getElementById('modal-verification').classList.add('hidden');
+    const modal = document.getElementById('modal-verification');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
   }
 
   function viewLogbookDetail(subject, tanggal, content, status, feedback) {

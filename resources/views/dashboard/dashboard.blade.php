@@ -85,6 +85,9 @@
 </head>
 
 <body class="bg-[#F8FAFC] font-sans text-gray-800 selection:bg-[#009688]/20 selection:text-[#0056B3] min-h-screen flex antialiased">
+  @php
+    $activeF1 = $f1Application ?? null;
+  @endphp
 
   <!-- Mobile Sidebar Backdrop -->
   <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden hidden transition-opacity"></div>
@@ -171,6 +174,20 @@
         <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-semibold flex items-center gap-3 shadow-sm animate-fade-in">
           <span class="material-symbols-outlined text-emerald-600 text-[22px]">check_circle</span>
           <span>{{ session('success') }}</span>
+        </div>
+      @endif
+
+      @if(session('info'))
+        <div class="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-[#0056B3] text-xs sm:text-sm font-semibold flex items-center gap-3 shadow-sm animate-fade-in">
+          <span class="material-symbols-outlined text-[#0056B3] text-[22px]">info</span>
+          <span>{{ session('info') }}</span>
+        </div>
+      @endif
+
+      @if(session('error') || $errors->any())
+        <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-semibold flex items-center gap-3 shadow-sm animate-fade-in">
+          <span class="material-symbols-outlined text-rose-600 text-[22px]">error</span>
+          <span>{{ session('error') ?? $errors->first() }}</span>
         </div>
       @endif
       <!-- Top Hero Identity Card -->
@@ -303,19 +320,49 @@
             <span class="text-[11px] text-slate-400 mt-3 font-mono">02 Feb 2026</span>
           </div>
 
-          <!-- Step 4: Completed -->
-          <div class="flex flex-col p-4 rounded-xl bg-slate-50/80 border border-slate-200/70 hover:border-teal-200 transition-all group">
+          <!-- Step 4: Form F1 Dospem -->
+          @php
+            $activeF1 = $activeF1 ?? ($f1Application ?? null);
+            $hasAssignedDosen = !empty(Auth::user()->dosen_id) && ($dosen ?? null) != null;
+            $isApprovedF1 = ($activeF1 && $activeF1->status === 'approved') || $hasAssignedDosen;
+            $isPendingF1 = ($activeF1 && $activeF1->status === 'pending') && !$hasAssignedDosen;
+          @endphp
+          <div class="flex flex-col p-4 rounded-xl {{ $isApprovedF1 ? 'bg-slate-50/80 border border-slate-200/70 hover:border-teal-200' : ($isPendingF1 ? 'bg-amber-50/60 border border-amber-200' : 'bg-slate-50/50 border border-slate-200/60') }} transition-all group">
             <div class="flex items-center justify-between mb-2.5">
-              <span class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shadow-sm">
-                <span class="material-symbols-outlined text-[16px]">check</span>
-              </span>
-              <span class="text-[10px] text-emerald-600 font-bold uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                Terverifikasi
-              </span>
+              @if($isApprovedF1)
+                <span class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                  <span class="material-symbols-outlined text-[16px]">check</span>
+                </span>
+                <span class="text-[10px] text-emerald-600 font-bold uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                  Disetujui
+                </span>
+              @elseif($isPendingF1)
+                <span class="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                  <span class="material-symbols-outlined text-[16px] animate-spin">refresh</span>
+                </span>
+                <span class="text-[10px] text-amber-700 font-bold uppercase tracking-wider bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200">
+                  Menunggu ACC
+                </span>
+              @else
+                <span class="w-7 h-7 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center text-xs font-bold shadow-sm">
+                  <span class="material-symbols-outlined text-[16px]">hourglass_empty</span>
+                </span>
+                <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                  Belum Diajukan
+                </span>
+              @endif
             </div>
             <h3 class="text-sm font-bold text-slate-800 font-heading">4. Form F1 Dospem</h3>
-            <p class="text-xs text-slate-500 mt-1 leading-snug">Penetapan Pembimbing &amp; Pengesahan KPS</p>
-            <span class="text-[11px] text-slate-400 mt-3 font-mono">06 Feb 2026</span>
+            <p class="text-xs text-slate-500 mt-1 leading-snug">Persetujuan Dosen Pengampu PKL</p>
+            <span class="text-[11px] text-slate-400 mt-3 font-mono">
+              @if($isApprovedF1)
+                {{ $activeF1->approved_at ? $activeF1->approved_at->translatedFormat('d M Y') : now()->translatedFormat('d M Y') }}
+              @elseif($isPendingF1)
+                {{ $activeF1->created_at ? $activeF1->created_at->translatedFormat('d M Y') : now()->translatedFormat('d M Y') }}
+              @else
+                Belum Diajukan
+              @endif
+            </span>
           </div>
 
           <!-- Step 5: Active Pulse -->
@@ -525,6 +572,27 @@
           
           <!-- Form F1 Card Banner -->
           <div class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-card space-y-5">
+            @php
+              $activeF1 = $f1Application ?? null;
+              $hasAssignedDosen = !empty(Auth::user()->dosen_id) && $dosen != null;
+              $isF1Approved = ($activeF1 && $activeF1->status === 'approved') || $hasAssignedDosen;
+              $isF1Pending = ($activeF1 && $activeF1->status === 'pending') && !$hasAssignedDosen;
+
+              $dospem = $dosen ?? ($activeF1?->dosen ?? null);
+              $dospemName = $dospem?->name ?? 'Dr. Bambang Sutrisno, M.T.';
+              $dospemNip = $dospem?->identifier ?? '198503152010121002';
+              $words = explode(' ', trim($dospemName));
+              $initials = '';
+              foreach ($words as $w) {
+                $clean = preg_replace('/[^a-zA-Z]/', '', $w);
+                if (strlen($clean) > 0 && !in_array(strtolower($clean), ['dr', 'eng', 'kom', 'mt', 'mkom', 'drs', 'h', 'st', 'si', 'ti'])) {
+                  $initials .= strtoupper($clean[0]);
+                  if (strlen($initials) >= 2) break;
+                }
+              }
+              if (!$initials) $initials = 'BS';
+            @endphp
+
             <div class="flex items-start justify-between gap-3">
               <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-[#02796B]">Status Pengesahan Jurusan</span>
@@ -538,70 +606,114 @@
               </div>
             </div>
 
-            <!-- Dual Endorsement Breakdown -->
-            <div class="space-y-3">
-              
-              <!-- Endorsement 1: Dospem -->
-              <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200/60 space-y-2.5">
+            @if($isF1Approved)
+              <!-- State 1: DISAHKAN / DI-ACC DOSEN -->
+              <div class="p-4 sm:p-5 rounded-xl bg-slate-50/80 border border-slate-200/60 space-y-3">
                 <div class="flex items-center justify-between">
-                  <span class="text-[11px] text-slate-500 font-bold uppercase tracking-wider">1. Dosen Pembimbing PKL</span>
+                  <span class="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Dosen Pengampu / Pembimbing PKL</span>
                   <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-[11px] font-bold">
                     <span class="material-symbols-outlined text-[13px]">check_circle</span>
-                    <span>Disetujui</span>
+                    <span>Disetujui &amp; Disahkan</span>
                   </span>
                 </div>
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-[#0056B3] text-white flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0">
-                    NA
+                <div class="flex items-center gap-3.5">
+                  <div class="w-11 h-11 rounded-xl bg-[#0056B3] text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm flex-shrink-0">
+                    {{ $initials }}
                   </div>
                   <div class="flex flex-col min-w-0">
-                    <span class="text-xs sm:text-sm font-bold text-slate-800 font-heading truncate">Dr. Eng. Nur Aisyah, S.Kom., M.T.</span>
-                    <span class="text-xs text-slate-500 font-mono">NIP: 198204122008122001</span>
+                    <span class="text-xs sm:text-sm font-bold text-slate-800 font-heading truncate">{{ $dospemName }}</span>
+                    <span class="text-xs text-slate-500 font-mono">NIP: {{ $dospemNip }}</span>
                   </div>
                 </div>
-                <div class="p-2 bg-white rounded-lg border border-slate-200/80 flex items-center justify-between text-slate-400 text-[11px]">
+
+                @if($activeF1 && $activeF1->company_name)
+                  <div class="pt-2 border-t border-slate-200/60 text-xs text-slate-600 space-y-0.5">
+                    <p><strong class="text-slate-700">Instansi PKL:</strong> {{ $activeF1->company_name }}</p>
+                    <p class="text-[11px] text-slate-500 line-clamp-1"><strong class="text-slate-700">Topik PKL:</strong> {{ $activeF1->internship_title }}</p>
+                  </div>
+                @endif
+
+                <div class="p-2.5 bg-white rounded-lg border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-slate-400 text-[11px]">
                   <span class="font-mono flex items-center gap-1.5 text-slate-600">
                     <span class="material-symbols-outlined text-[#009688] text-[15px]">fingerprint</span>
-                    <span>SHA256: 8a4f9...de19b</span>
+                    <span>SHA256: {{ substr($activeF1->signature_hash ?? hash('sha256', $dospemNip . 'F1_APPROVED'), 0, 16) }}...</span>
                   </span>
-                  <span class="font-mono text-slate-400 text-[10px]">04 Feb 2026 • 14:22 WIB</span>
+                  <span class="font-mono text-slate-400 text-[10px]">
+                    {{ $activeF1?->approved_at ? $activeF1->approved_at->translatedFormat('d M Y • H:i') . ' WIB' : ($activeF1?->updated_at ? $activeF1->updated_at->translatedFormat('d M Y • H:i') . ' WIB' : now()->translatedFormat('d M Y • H:i') . ' WIB') }}
+                  </span>
                 </div>
               </div>
 
-              <!-- Endorsement 2: KPS TI -->
-              <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200/60 space-y-2.5">
+              <!-- Action: Download / View PDF Surat Pernyataan -->
+              <a href="{{ $activeF1 ? route('f1.surat.download', $activeF1->id) : '#' }}" target="_blank" class="w-full bg-[#0056B3] hover:bg-[#00428A] text-white font-bold font-heading text-xs sm:text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm">
+                <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+                <span>Lihat Surat Pernyataan Kesediaan Dosen (PDF)</span>
+              </a>
+
+            @elseif($isF1Pending)
+              <!-- State 2: MENUNGGU PERSETUJUAN & UPLOAD PDF DARI DOSEN -->
+              <div class="p-4 sm:p-5 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-3.5">
                 <div class="flex items-center justify-between">
-                  <span class="text-[11px] text-slate-500 font-bold uppercase tracking-wider">2. Koordinator Program Studi (KPS TI)</span>
-                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-[11px] font-bold">
-                    <span class="material-symbols-outlined text-[13px]">check_circle</span>
-                    <span>Disahkan</span>
+                  <span class="text-[11px] text-amber-800 font-bold uppercase tracking-wider">Pengajuan Form F1</span>
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 text-[11px] font-bold">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span>Menunggu Persetujuan Dosen</span>
                   </span>
                 </div>
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-[#02796B] text-white flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0">
-                    BW
+
+                <div class="flex items-center gap-3.5">
+                  <div class="w-11 h-11 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm flex-shrink-0">
+                    {{ $initials }}
                   </div>
                   <div class="flex flex-col min-w-0">
-                    <span class="text-xs sm:text-sm font-bold text-slate-800 font-heading truncate">Drs. Bambang Wahyudi, M.T.</span>
-                    <span class="text-xs text-slate-500 font-mono">NIP: 196803151993031002</span>
+                    <span class="text-xs sm:text-sm font-bold text-slate-800 font-heading truncate">{{ $activeF1->dosen->name ?? $dospemName }}</span>
+                    <span class="text-xs text-slate-500 font-mono">NIP: {{ $activeF1->dosen->identifier ?? $dospemNip }}</span>
                   </div>
                 </div>
-                <div class="p-2 bg-white rounded-lg border border-slate-200/80 flex items-center justify-between text-slate-400 text-[11px]">
-                  <span class="font-mono flex items-center gap-1.5 text-slate-600">
-                    <span class="material-symbols-outlined text-[#009688] text-[15px]">fingerprint</span>
-                    <span>SHA256: 41c8e...ff02a</span>
-                  </span>
-                  <span class="font-mono text-slate-400 text-[10px]">06 Feb 2026 • 09:15 WIB</span>
+
+                <div class="p-3 bg-white/90 rounded-xl border border-amber-200 text-xs text-slate-600 space-y-1">
+                  <p><strong class="text-slate-800">Tempat PKL:</strong> {{ $activeF1->company_name }}</p>
+                  <p><strong class="text-slate-800">Topik PKL:</strong> {{ $activeF1->internship_title }}</p>
+                  <p class="text-[11px] text-slate-500 font-mono pt-1 border-t border-amber-100 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px] text-amber-600">schedule</span>
+                    <span>Diajukan pada: {{ $activeF1->created_at ? $activeF1->created_at->translatedFormat('d M Y, H:i') : now()->translatedFormat('d M Y, H:i') }} WIB ({{ $activeF1->created_at ? $activeF1->created_at->diffForHumans() : 'baru saja' }})</span>
+                  </p>
+                  <p class="text-[11px] text-amber-700 pt-1 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[15px]">info</span>
+                    <span>Dosen sedang meninjau pengajuan Anda dan akan menerbitkan Surat Pernyataan Kesediaan (PDF) sebelum ACC.</span>
+                  </p>
                 </div>
+
+                <!-- Cancel / Change Button -->
+                <form action="{{ route('f1.cancel', $activeF1->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan pengajuan ini dan memilih dosen pembimbing lain?')">
+                  @csrf
+                  @method('DELETE')
+                  <button type="submit" class="w-full bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 font-bold font-heading text-xs py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-colors">
+                    <span class="material-symbols-outlined text-[16px]">cancel</span>
+                    <span>Batalkan / Ganti Pilihan Dosen</span>
+                  </button>
+                </form>
               </div>
 
-            </div>
+            @else
+              <!-- State 3: BELUM MEMILIH DOSEN PEMBIMBING -->
+              <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 text-center space-y-3.5">
+                <div class="w-12 h-12 mx-auto rounded-2xl bg-blue-100/70 text-[#0056B3] flex items-center justify-center">
+                  <span class="material-symbols-outlined text-[28px]">person_search</span>
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold font-heading text-slate-800">Belum Ada Dosen Pembimbing</h4>
+                  <p class="text-xs text-slate-500 mt-1">
+                    Anda belum mengajukan dosen pembimbing PKL. Silakan pilih dosen pembimbing yang sesuai dengan bidang dan topik PKL Anda.
+                  </p>
+                </div>
 
-            <!-- Action Button -->
-            <button type="button" onclick="handleDocumentAction(this, 'Membuka Salinan Dokumen...')" class="w-full bg-slate-50 hover:bg-slate-100 text-[#0056B3] border border-slate-200/80 font-bold font-heading text-xs sm:text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm">
-              <span class="material-symbols-outlined text-[18px]">visibility</span>
-              <span>Lihat Salinan Dokumen Form F1 (PDF)</span>
-            </button>
+                <button type="button" onclick="openSelectDosenModal()" class="w-full bg-gradient-to-r from-[#0056B3] to-[#02796B] hover:from-[#00428A] hover:to-[#005f54] text-white font-bold font-heading text-xs sm:text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md">
+                  <span class="material-symbols-outlined text-[18px]">how_to_reg</span>
+                  <span>Pilih Dosen Pembimbing (Form F1)</span>
+                </button>
+              </div>
+            @endif
           </div>
 
           <!-- Agenda Bimbingan Dospem Widget -->
@@ -673,7 +785,7 @@
             <div class="flex items-center gap-2">
               <span class="text-xs font-bold uppercase tracking-wider text-[#02796B]">Logbook Kegiatan PKL</span>
               <span class="text-xs text-slate-400">•</span>
-              <span class="text-xs text-slate-500 font-medium">Terhubung ke Dosen Pembimbing (Dr. Bambang Sutrisno, M.T.)</span>
+              <span class="text-xs text-slate-500 font-medium">Terhubung ke Dosen Pembimbing ({{ $dospemName ?? 'Dr. Bambang Sutrisno, M.T.' }})</span>
             </div>
             <h3 class="text-lg sm:text-xl font-bold font-heading text-slate-800 mt-0.5">
               Jurnal Harian &amp; Lembar Kerja Bimbingan
@@ -783,7 +895,7 @@
   </div>
 
   <!-- MODAL: Tambah Logbook Baru Mahasiswa -->
-  <div id="modal-create-logbook" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+  <div id="modal-create-logbook" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center hidden p-4">
     <div class="bg-white rounded-2xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-scale-up">
       <div class="flex items-start justify-between border-b border-slate-100 pb-4">
         <div>
@@ -837,6 +949,111 @@
     </div>
   </div>
 
+  <!-- MODAL: Pilih Dosen Pembimbing PKL (Form F1) -->
+  <div id="modal-select-dosen" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-scale-up max-h-[92vh] flex flex-col">
+      <div class="flex items-start justify-between border-b border-slate-100 pb-4 flex-shrink-0">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-[#02796B]">Form F1: Kesediaan Pembimbing</span>
+          <h3 class="text-lg font-bold font-heading text-slate-800 mt-0.5">Pilih Dosen Pembimbing PKL</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Pilih dosen yang sesuai dengan bidang atau topik magang industri Anda.</p>
+        </div>
+        <button type="button" onclick="closeSelectDosenModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <form action="{{ route('f1.select-dosen') }}" method="POST" class="space-y-4 overflow-y-auto pr-1 flex-1">
+        @csrf
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="f1-company-name" class="block text-xs font-bold text-slate-700 mb-1">
+              Instansi / Perusahaan Tempat PKL <span class="text-rose-500">*</span>
+            </label>
+            <input type="text" id="f1-company-name" name="company_name" required value="" placeholder="Contoh: PT Telekomunikasi Seluler (Telkomsel)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0056B3]/20 focus:border-[#0056B3]">
+          </div>
+          <div>
+            <label for="f1-internship-title" class="block text-xs font-bold text-slate-700 mb-1">
+              Rencana Topik / Judul PKL <span class="text-rose-500">*</span>
+            </label>
+            <input type="text" id="f1-internship-title" name="internship_title" required value="" placeholder="Contoh: Cloud Infrastructure & Kubernetes Microservices Platform" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0056B3]/20 focus:border-[#0056B3]">
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-xs font-bold text-slate-700">
+              Pilih Dosen Pembimbing PKL <span class="text-rose-500">*</span>
+            </label>
+            <span class="text-[11px] text-slate-500">Tersedia {{ count($allDosen ?? []) }} Dosen Jurusan TIK</span>
+          </div>
+
+          <!-- Search Lecturer -->
+          <div class="relative mb-3">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+            <input type="text" id="dosen-search-box" onkeyup="filterDosenListModal()" placeholder="Cari dosen berdasarkan nama atau NIP..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#0056B3]/20 focus:border-[#0056B3]">
+          </div>
+
+          <!-- Lecturer List Options -->
+          <div class="space-y-2.5 max-h-60 overflow-y-auto pr-1" id="dosen-options-container">
+            @forelse($allDosen ?? [] as $d)
+              @php
+                $words = explode(' ', trim($d->name));
+                $dInitials = '';
+                foreach ($words as $w) {
+                  $clean = preg_replace('/[^a-zA-Z]/', '', $w);
+                  if (strlen($clean) > 0 && !in_array(strtolower($clean), ['dr', 'eng', 'kom', 'mt', 'mkom', 'drs', 'h', 'st', 'si', 'ti'])) {
+                    $dInitials .= strtoupper($clean[0]);
+                    if (strlen($dInitials) >= 2) break;
+                  }
+                }
+                if (!$dInitials) $dInitials = 'DS';
+              @endphp
+              <label class="dosen-option-item flex items-center justify-between p-3.5 rounded-xl border border-slate-200 hover:border-[#0056B3] hover:bg-blue-50/40 cursor-pointer transition-all has-[:checked]:border-[#0056B3] has-[:checked]:bg-blue-50/70" data-search="{{ strtolower($d->name . ' ' . $d->identifier . ' ' . $d->prodi) }}">
+                <div class="flex items-center gap-3 min-w-0">
+                  <input type="radio" name="dosen_id" value="{{ $d->id }}" required {{ $loop->first ? 'checked' : '' }} class="w-4 h-4 text-[#0056B3] focus:ring-[#0056B3] border-slate-300">
+                  <div class="w-9 h-9 rounded-xl bg-[#0056B3] text-white flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0">
+                    {{ $dInitials }}
+                  </div>
+                  <div class="flex flex-col min-w-0">
+                    <span class="text-xs sm:text-sm font-bold text-slate-800 font-heading truncate">{{ $d->name }}</span>
+                    <span class="text-[11px] text-slate-500 font-mono">NIP: {{ $d->identifier ?? '-' }} • {{ $d->prodi ?? 'Teknik Informatika' }}</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full {{ ($d->students_count ?? 0) >= 7 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700' }}">
+                    Kuota: {{ $d->students_count ?? 0 }}/7
+                  </span>
+                </div>
+              </label>
+            @empty
+              <p class="text-xs text-slate-500 text-center py-4">Belum ada data dosen terdaftar.</p>
+            @endforelse
+          </div>
+        </div>
+
+        <div class="p-3 bg-blue-50/80 rounded-xl border border-blue-200 text-xs text-[#0056B3] flex items-start gap-2.5">
+          <span class="material-symbols-outlined text-[20px] flex-shrink-0 mt-0.5">info</span>
+          <p class="leading-relaxed">
+            Setelah memilih, pengajuan Form F1 akan langsung masuk ke akun Dosen. 
+            <strong>Dosen wajib mengunggah Surat Pernyataan Kesediaan (PDF)</strong> sebelum pengajuan disetujui secara resmi.
+          </p>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 flex-shrink-0">
+          <button type="button" onclick="closeSelectDosenModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+            Batal
+          </button>
+          <button type="submit" class="bg-[#0056B3] hover:bg-[#00428A] text-white px-5 py-2.5 rounded-xl text-xs font-bold font-heading flex items-center gap-2 transition-all shadow-md">
+            <span class="material-symbols-outlined text-[18px]">send</span>
+            <span>Kirim Pengajuan Form F1</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Interactive Scripts -->
   <script>
     // Toggle Mobile Sidebar Drawer
@@ -855,11 +1072,45 @@
 
     // Modal Create Logbook Handlers
     function openCreateLogbookModal() {
-      document.getElementById('modal-create-logbook').classList.remove('hidden');
+      const modal = document.getElementById('modal-create-logbook');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
     }
 
     function closeCreateLogbookModal() {
-      document.getElementById('modal-create-logbook').classList.add('hidden');
+      const modal = document.getElementById('modal-create-logbook');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    // Modal Select Dosen Handlers
+    function openSelectDosenModal() {
+      const modal = document.getElementById('modal-select-dosen');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+
+    function closeSelectDosenModal() {
+      const modal = document.getElementById('modal-select-dosen');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function filterDosenListModal() {
+      const query = (document.getElementById('dosen-search-box')?.value || '').toLowerCase();
+      const items = document.querySelectorAll('.dosen-option-item');
+      items.forEach(item => {
+        const text = item.getAttribute('data-search') || '';
+        item.style.display = text.includes(query) ? 'flex' : 'none';
+      });
     }
 
     // Interactive button state demonstration for PDF actions

@@ -174,6 +174,45 @@
           <span>{{ session('success') }}</span>
         </div>
       @endif
+
+      @if(session('info'))
+        <div class="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-[#0056B3] text-xs sm:text-sm font-semibold flex items-center gap-3 shadow-sm animate-fade-in">
+          <span class="material-symbols-outlined text-[#0056B3] text-[22px]">info</span>
+          <span>{{ session('info') }}</span>
+        </div>
+      @endif
+
+      @if(session('error') || $errors->any())
+        <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-semibold flex items-center gap-3 shadow-sm animate-fade-in">
+          <span class="material-symbols-outlined text-rose-600 text-[22px]">error</span>
+          <span>{{ session('error') ?? $errors->first() }}</span>
+        </div>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+              if (typeof showToast === 'function') {
+                showToast(@json(session('error') ?? $errors->first()), 'error');
+              }
+            }, 200);
+          });
+        </script>
+      @endif
+
+      @if(session('success'))
+        <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-semibold flex items-center gap-3 shadow-sm animate-fade-in">
+          <span class="material-symbols-outlined text-emerald-600 text-[22px]">check_circle</span>
+          <span>{{ session('success') }}</span>
+        </div>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+              if (typeof showToast === 'function') {
+                showToast(@json(session('success')), 'success');
+              }
+            }, 200);
+          });
+        </script>
+      @endif
       <!-- Top Hero Lecturer Card & Mentorship Quota Capacity Banner -->
       <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0056B3] via-[#004799] to-[#02796B] text-white p-6 sm:p-8 shadow-card">
         <!-- Ambient decorative shapes -->
@@ -337,6 +376,92 @@
 
       </div>
 
+      <!-- SECTION: Validasi Form F1 & Mahasiswa yang Memilih Dosen Ini -->
+      <div id="f1-section" class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-card space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-[#02796B]">Validasi Form F1 Jurusan TIK</span>
+              <span class="text-xs text-slate-400">•</span>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full {{ count($incomingF1 ?? []) > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600' }}">
+                {{ count($incomingF1 ?? []) }} Pengajuan Menunggu
+              </span>
+            </div>
+            <h2 class="text-xl font-bold font-heading text-slate-800 mt-0.5">
+              Mahasiswa yang Memilih Anda sebagai Pembimbing PKL
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Sebelum menyetujui, Dosen Pembimbing wajib mengunggah dokumen <strong>Surat Pernyataan Kesediaan (PDF)</strong> untuk mengesahkan mahasiswa bimbingan.
+            </p>
+          </div>
+        </div>
+
+        <!-- Incoming Requests List -->
+        <div class="grid grid-cols-1 gap-4">
+          @forelse($incomingF1 ?? [] as $app)
+            @php
+              $mhsInitials = collect(explode(' ', $app->student->name))->map(fn($w) => strtoupper(substr($w, 0, 1)))->take(2)->implode('');
+            @endphp
+            <div class="p-5 rounded-2xl bg-gradient-to-r from-amber-50/40 via-white to-slate-50 border border-amber-200/80 hover:border-amber-300 shadow-sm transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+              <div class="flex items-start gap-4 min-w-0">
+                <div class="w-12 h-12 rounded-2xl bg-amber-600 text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
+                  {{ $mhsInitials }}
+                </div>
+                <div class="flex flex-col min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="text-base font-bold font-heading text-slate-800">{{ $app->student->name }}</h3>
+                    <span class="px-2 py-0.5 rounded bg-blue-50 text-[#0056B3] text-xs font-mono font-semibold">NIM: {{ $app->student->identifier }}</span>
+                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-medium">{{ $app->student->prodi ?? 'Teknik Informatika (D4)' }}</span>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                      <span>Menunggu ACC &amp; Upload PDF</span>
+                    </span>
+                  </div>
+                  <div class="mt-2 space-y-1 text-xs sm:text-sm text-slate-700">
+                    <div class="flex items-center gap-2">
+                      <span class="material-symbols-outlined text-[16px] text-rose-500">domain</span>
+                      <strong>{{ $app->company_name ?? 'Perusahaan Magang' }}</strong>
+                      <span class="text-slate-400">•</span>
+                      <span class="text-slate-500">Topik: {{ $app->internship_title ?? 'Praktik Kerja Lapangan' }}</span>
+                    </div>
+                    <p class="text-xs text-slate-500">
+                      Diajukan pada: <span class="font-mono">{{ $app->created_at ? $app->created_at->translatedFormat('d M Y, H:i') : 'Baru saja' }} WIB</span> <span class="text-slate-400">({{ $app->created_at ? $app->created_at->diffForHumans() : 'baru saja' }})</span> • WhatsApp: <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $app->student->phone ?? '') }}" target="_blank" class="text-emerald-600 font-semibold hover:underline">{{ $app->student->phone ?? '-' }}</a>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action: Approve with PDF or Reject -->
+              <div class="flex items-center gap-2.5 flex-shrink-0 justify-end pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                <button type="button" 
+                        data-app-id="{{ $app->id }}"
+                        data-student-name="{{ $app->student->name }}"
+                        data-student-nim="{{ $app->student->identifier }}"
+                        data-company="{{ $app->company_name }}"
+                        data-title="{{ $app->internship_title }}"
+                        onclick="openF1ModalFromBtn(this)" 
+                        class="bg-[#02796B] hover:bg-[#006054] text-white px-4 py-2.5 rounded-xl text-xs font-bold font-heading flex items-center gap-2 transition-all shadow-sm">
+                  <span class="material-symbols-outlined text-[18px]">upload_file</span>
+                  <span>ACC &amp; Upload Surat PDF</span>
+                </button>
+                <form action="{{ route('f1.reject', $app->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menolak pengajuan bimbingan dari {{ addslashes($app->student->name) }}?')">
+                  @csrf
+                  <button type="submit" class="p-2.5 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 hover:border-rose-200 rounded-xl transition-colors" title="Tolak Pengajuan">
+                    <span class="material-symbols-outlined text-[18px]">close</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          @empty
+            <div class="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
+              <span class="material-symbols-outlined text-4xl text-slate-400">task_alt</span>
+              <p class="text-slate-600 font-semibold mt-2">Tidak ada pengajuan Form F1 yang menunggu persetujuan.</p>
+              <p class="text-xs text-slate-400 mt-1">Saat mahasiswa memilih Anda sebagai dosen pembimbing, pengajuan mereka akan tampil di sini.</p>
+            </div>
+          @endforelse
+        </div>
+      </div>
+
       <!-- Main Section: Mahasiswa Bimbingan Management -->
       <div id="mahasiswa-section" class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-card space-y-6">
         
@@ -453,7 +578,7 @@
                   </div>
 
                   <!-- Action Buttons -->
-                  <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
                     <a href="{{ route('logbook.dosen', ['student_id' => $st->id]) }}" class="bg-[#0056B3] hover:bg-[#00428A] text-white px-3.5 py-2 rounded-xl text-xs font-bold font-heading flex items-center gap-1.5 transition-all shadow-sm">
                       <span class="material-symbols-outlined text-[16px]">rate_review</span>
                       <span>Review Logbook</span>
@@ -464,6 +589,14 @@
                     <a href="{{ route('logbook.dosen', ['student_id' => $st->id]) }}" title="Lihat Aktivitas Mahasiswa" class="p-2 bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors">
                       <span class="material-symbols-outlined text-[18px]">visibility</span>
                     </a>
+                    <!-- Tombol Hapus Mahasiswa dari Bimbingan -->
+                    <form action="{{ route('dosen.students.remove', $st->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus mahasiswa {{ addslashes($st->name) }} (NIM: {{ $st->identifier }}) dari daftar bimbingan Anda? Seluruh riwayat logbook mahasiswa ini akan dibersihkan dan slot kuota Anda akan kembali terbuka.')" class="inline">
+                      @csrf
+                      @method('DELETE')
+                      <button type="submit" title="Hapus Mahasiswa dari Daftar Bimbingan" class="p-2 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 border border-rose-200 rounded-xl transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">person_remove</span>
+                      </button>
+                    </form>
                   </div>
 
                 </div>
@@ -718,7 +851,7 @@
   </div>
 
   <!-- MODAL: Review Logbook F3 -->
-  <div id="modal-logbook" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+  <div id="modal-logbook" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center hidden p-4">
     <div class="bg-white rounded-2xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-scale-up">
       <div class="flex items-start justify-between border-b border-slate-100 pb-4">
         <div>
@@ -771,8 +904,8 @@
     </div>
   </div>
 
-  <!-- MODAL: Setujui Form F1 -->
-  <div id="modal-f1" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+  <!-- MODAL: Setujui Form F1 dengan Unggah Dokumen PDF Surat Pernyataan -->
+  <div id="modal-f1" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center hidden p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-scale-up">
       <div class="flex items-start justify-between border-b border-slate-100 pb-4">
         <div>
@@ -780,39 +913,49 @@
           <h3 class="text-lg font-bold font-heading text-slate-800 mt-0.5">Kesediaan Pembimbing PKL</h3>
           <p id="f1-student-info" class="text-xs text-slate-500 mt-0.5">Pengesahan Dosen Pembimbing</p>
         </div>
-        <button onclick="closeModal('modal-f1')" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+        <button type="button" onclick="closeModal('modal-f1')" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
           <span class="material-symbols-outlined text-[20px]">close</span>
         </button>
       </div>
 
-      <div class="space-y-3">
-        <p class="text-xs text-slate-600 leading-relaxed">
-          Dengan menyetujui pengajuan Form F1 ini, Anda menyatakan bersedia menjadi Dosen Pembimbing PKL bagi mahasiswa tersebut dan menyetujui topik/lokasi magang yang diajukan.
-        </p>
+      <form id="form-approve-f1" method="POST" action="{{ route('f1.approve.general') }}" enctype="multipart/form-data" class="space-y-4" onsubmit="return ensureF1FormAction(this)">
+        @csrf
+        <input type="hidden" id="f1-hidden-app-id" name="application_id" value="">
 
-        <div class="p-3 bg-blue-50/70 border border-blue-200 rounded-xl flex items-center gap-3 text-xs text-[#0056B3]">
-          <span class="material-symbols-outlined text-[22px]">fingerprint</span>
-          <div>
-            <span class="font-bold block">Tanda Tangan Digital SHA-256</span>
-            <span class="font-mono text-[10px] text-slate-500">Hash identitas NIP dosen pembimbing akan dibubuhkan otomatis.</span>
+        <div>
+          <label for="f1-pdf-file" class="block text-xs font-bold text-slate-700 mb-1">
+            Unggah Berkas Surat Pernyataan Kesediaan (Wajib PDF) <span class="text-rose-500">*</span>
+          </label>
+          <input type="file" id="f1-pdf-file" name="surat_pernyataan" required accept="application/pdf" class="w-full text-xs text-slate-600 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#02796B] file:text-white hover:file:bg-[#006054] cursor-pointer bg-slate-50 border border-slate-200 rounded-xl p-1.5 focus:outline-none">
+          <div class="flex items-center justify-between mt-1">
+            <span class="text-[10px] text-slate-400">Format: .pdf (Maksimal 50 MB)</span>
+            <span id="f1-file-size-badge" class="text-[10px] font-semibold text-slate-500 hidden"></span>
           </div>
+          <div id="f1-file-feedback" class="text-xs mt-1.5 hidden"></div>
         </div>
-      </div>
 
-      <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-        <button onclick="closeModal('modal-f1')" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
-          Batal
-        </button>
-        <button onclick="confirmApproveF1()" class="bg-[#02796B] hover:bg-[#006054] text-white px-5 py-2.5 rounded-xl text-xs font-bold font-heading flex items-center gap-1.5 transition-all shadow-sm">
-          <span class="material-symbols-outlined text-[16px]">verified</span>
-          <span>Sahkan Form F1</span>
-        </button>
-      </div>
+        <div>
+          <label for="f1-notes" class="block text-xs font-bold text-slate-700 mb-1">
+            Catatan / Arahan Bimbingan Awal (Opsional):
+          </label>
+          <textarea id="f1-notes" name="notes" rows="2" placeholder="Catatan arahan awal bimbingan untuk mahasiswa..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#02796B]/20">Topik PKL dan tempat magang telah disetujui sesuai kurikulum D4 Teknik Informatika.</textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModal('modal-f1')" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+            Batal
+          </button>
+          <button type="submit" id="btn-submit-f1" class="bg-[#02796B] hover:bg-[#006054] text-white px-5 py-2.5 rounded-xl text-xs font-bold font-heading flex items-center gap-1.5 transition-all shadow-sm">
+            <span class="material-symbols-outlined text-[16px]" id="icon-submit-f1">upload_file</span>
+            <span id="text-submit-f1">Unggah Surat &amp; Sahkan Form F1</span>
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
   <!-- MODAL: Tambah Mahasiswa Bimbingan Baru (Slot Kuota) -->
-  <div id="modal-new-student" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+  <div id="modal-new-student" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center hidden p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-scale-up">
       <div class="flex items-start justify-between border-b border-slate-100 pb-4">
         <div>
@@ -866,16 +1009,18 @@
 
     // Filter Students by Name or Status
     function filterStudents() {
-      const query = document.getElementById('student-search').value.toLowerCase();
-      const statusFilter = document.getElementById('status-filter').value;
+      const searchEl = document.getElementById('student-search');
+      const filterEl = document.getElementById('status-filter');
+      const query = (searchEl ? searchEl.value : '').toLowerCase();
+      const statusFilter = (filterEl ? filterEl.value : 'all');
       const cards = document.querySelectorAll('.student-card');
 
       cards.forEach(card => {
-        const nameAttr = card.getAttribute('data-name').toLowerCase();
-        const statusAttr = card.getAttribute('data-status');
+        const nameAttr = (card.getAttribute('data-name') || '').toLowerCase();
+        const statusAttr = card.getAttribute('data-status') || '';
 
         const matchesQuery = nameAttr.includes(query);
-        const matchesStatus = (statusFilter === 'all') || (statusAttr === statusFilter);
+        const matchesStatus = (statusFilter === 'all') || (statusAttr === statusFilter) || (statusFilter !== 'review' && statusFilter !== 'uptodate');
 
         if (matchesQuery && matchesStatus) {
           card.style.display = 'block';
@@ -885,15 +1030,17 @@
       });
     }
 
-    // Auto-filter and sync when visiting with tab=f1 or #mahasiswa-section
+    // Auto-scroll when visiting with tab=f1 or #f1-section
     function checkF1HashOrTab() {
       const urlParams = new URLSearchParams(window.location.search);
-      if (window.location.hash === '#mahasiswa-section' || urlParams.get('tab') === 'f1') {
-        const sf = document.getElementById('status-filter');
-        if (sf) {
-          sf.value = 'f1';
-          filterStudents();
+      if (window.location.hash === '#f1-section' || urlParams.get('tab') === 'f1') {
+        const section = document.getElementById('f1-section');
+        if (section) {
+          setTimeout(() => {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 100);
         }
+      } else if (window.location.hash === '#mahasiswa-section') {
         const section = document.getElementById('mahasiswa-section');
         if (section) {
           setTimeout(() => {
@@ -920,29 +1067,145 @@
         document.getElementById('review-feedback').value = feedback;
       }
 
-      document.getElementById('modal-logbook').classList.remove('hidden');
+      openModal('modal-logbook');
     }
 
-    function openF1Modal(name, nim, company) {
-      document.getElementById('f1-student-info').innerText = `${name} (${nim}) • ${company}`;
-      document.getElementById('modal-f1').classList.remove('hidden');
-    }
-
-    function openNewStudentModal() {
-      document.getElementById('modal-new-student').classList.remove('hidden');
-    }
-
-    function openStudentDetail(name) {
-      showToast(`Membuka berkas lengkap dan rekap bimbingan ${name}.`);
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
     }
 
     function closeModal(id) {
-      document.getElementById(id).classList.add('hidden');
+      const modal = document.getElementById(id);
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
     }
 
-    function confirmApproveF1() {
-      closeModal('modal-f1');
-      showToast('Form F1 kesediaan bimbingan berhasil disahkan dengan tanda tangan digital SHA-256.');
+    function openNewStudentModal() {
+      openModal('modal-new-student');
+    }
+
+    function openF1ModalFromBtn(btn) {
+      openF1Modal(
+        btn.dataset.appId,
+        btn.dataset.studentName,
+        btn.dataset.studentNim,
+        btn.dataset.company,
+        btn.dataset.title
+      );
+    }
+
+    function openF1Modal(applicationId, name, nim, company, topic) {
+      const studentInfoEl = document.getElementById('f1-student-info');
+      if (studentInfoEl) {
+        studentInfoEl.innerText = `${name} (${nim}) • ${company}`;
+      }
+      
+      const form = document.getElementById('form-approve-f1');
+      if (form) {
+        form.action = `/f1/${applicationId}/approve`;
+      }
+
+      const hiddenAppId = document.getElementById('f1-hidden-app-id');
+      if (hiddenAppId) {
+        hiddenAppId.value = applicationId;
+      }
+
+      // Reset modal state
+      const pdfInput = document.getElementById('f1-pdf-file');
+      if (pdfInput) pdfInput.value = '';
+      const feedback = document.getElementById('f1-file-feedback');
+      if (feedback) { feedback.className = 'text-xs mt-1.5 hidden'; feedback.innerHTML = ''; }
+      const sizeBadge = document.getElementById('f1-file-size-badge');
+      if (sizeBadge) { sizeBadge.className = 'text-[10px] font-semibold text-slate-500 hidden'; sizeBadge.innerText = ''; }
+      const submitBtn = document.getElementById('btn-submit-f1');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+      }
+      const submitText = document.getElementById('text-submit-f1');
+      if (submitText) submitText.innerText = 'Unggah Surat & Sahkan Form F1';
+      const submitIcon = document.getElementById('icon-submit-f1');
+      if (submitIcon) submitIcon.classList.remove('animate-spin');
+
+      openModal('modal-f1');
+    }
+
+    // Client-side file size & extension inspection
+    document.addEventListener('DOMContentLoaded', function() {
+      const fileInput = document.getElementById('f1-pdf-file');
+      if (fileInput) {
+        fileInput.addEventListener('change', function() {
+          const file = this.files[0];
+          const feedback = document.getElementById('f1-file-feedback');
+          const sizeBadge = document.getElementById('f1-file-size-badge');
+          if (!file) {
+            if (feedback) feedback.className = 'text-xs mt-1.5 hidden';
+            if (sizeBadge) sizeBadge.className = 'text-[10px] font-semibold text-slate-500 hidden';
+            return;
+          }
+
+          const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+          if (sizeBadge) {
+            sizeBadge.innerText = `${sizeMB} MB`;
+            sizeBadge.classList.remove('hidden');
+          }
+
+          if (!file.name.toLowerCase().endsWith('.pdf')) {
+            if (feedback) {
+              feedback.className = 'text-xs mt-1.5 text-rose-600 font-semibold flex items-center gap-1';
+              feedback.innerHTML = '<span class="material-symbols-outlined text-[15px]">error</span> Wajib file berekstensi .pdf!';
+            }
+            this.value = '';
+            if (sizeBadge) sizeBadge.classList.add('hidden');
+            return;
+          }
+
+          if (file.size > 52428800) { // 50MB
+            if (feedback) {
+              feedback.className = 'text-xs mt-1.5 text-rose-600 font-semibold flex items-center gap-1';
+              feedback.innerHTML = `<span class="material-symbols-outlined text-[15px]">error</span> Ukuran file (${sizeMB} MB) melebihi batas maksimal 50 MB!`;
+            }
+            this.value = '';
+            return;
+          }
+
+          if (feedback) {
+            feedback.className = 'text-xs mt-1.5 text-emerald-600 font-semibold flex items-center gap-1';
+            feedback.innerHTML = `<span class="material-symbols-outlined text-[15px]">check_circle</span> File siap: <strong>${file.name}</strong> (${sizeMB} MB)`;
+          }
+        });
+      }
+    });
+
+    function ensureF1FormAction(form) {
+      const hiddenAppId = document.getElementById('f1-hidden-app-id');
+      const appId = hiddenAppId ? hiddenAppId.value : null;
+      if (appId) {
+        form.action = `/f1/${appId}/approve`;
+      }
+      const submitBtn = document.getElementById('btn-submit-f1');
+      const submitText = document.getElementById('text-submit-f1');
+      const submitIcon = document.getElementById('icon-submit-f1');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+        if (submitText) submitText.innerText = 'Mengunggah & Memproses...';
+        if (submitIcon) submitIcon.classList.add('animate-spin');
+      }
+      return true;
+    }
+
+    function showF1Tab() {
+      const section = document.getElementById('f1-section');
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
 
     function acceptStudent(name) {
@@ -950,16 +1213,17 @@
       showToast(`${name} berhasil ditambahkan ke dalam daftar bimbingan (Kuota terpakai: 6/7).`);
     }
 
-    // Toast Notification Feedback
-    function showToast(message) {
+    // Toast Notification Feedback (Supports 'success' and 'error')
+    function showToast(message, type = 'success') {
       const existingToast = document.getElementById('sim-toast');
       if (existingToast) existingToast.remove();
 
+      const isError = type === 'error';
       const toast = document.createElement('div');
       toast.id = 'sim-toast';
-      toast.className = 'fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 z-50 text-xs sm:text-sm transition-all';
+      toast.className = `fixed bottom-6 right-6 ${isError ? 'bg-rose-900 border border-rose-700 text-white' : 'bg-slate-900 text-white'} px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 z-50 text-xs sm:text-sm transition-all`;
       toast.innerHTML = `
-        <span class="material-symbols-outlined text-emerald-400 text-[20px]">check_circle</span>
+        <span class="material-symbols-outlined ${isError ? 'text-rose-300' : 'text-emerald-400'} text-[20px]">${isError ? 'error' : 'check_circle'}</span>
         <span>${message}</span>
       `;
       document.body.appendChild(toast);
@@ -968,7 +1232,7 @@
         toast.style.opacity = '0';
         toast.style.transform = 'translateY(10px)';
         setTimeout(() => toast.remove(), 300);
-      }, 3500);
+      }, 5000);
     }
   </script>
 

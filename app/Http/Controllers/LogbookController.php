@@ -40,24 +40,27 @@ class LogbookController extends Controller
             }
         }
 
+        $now = now();
         $logbook = Logbook::create([
             'user_id' => $user->id,
             'dosen_id' => $dosenId,
             'subject' => $validated['subject'],
-            'tanggal' => $validated['tanggal'],
+            'tanggal' => $validated['tanggal'] ?? $now->format('Y-m-d'),
             'content' => $validated['content'],
             'status' => 'pending',
+            'created_at' => $now,
+            'updated_at' => $now,
         ]);
 
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Logbook berhasil disimpan dan diteruskan ke Dosen Pembimbing.',
+                'message' => 'Logbook berhasil disimpan pada ' . $now->translatedFormat('d M Y, H:i') . ' WIB dan siap ditinjau oleh Dosen Pembimbing.',
                 'logbook' => $logbook->load('student', 'dosen'),
             ]);
         }
 
-        return redirect()->back()->with('success', 'Logbook berhasil dikirim dan siap ditinjau oleh Dosen Pembimbing!');
+        return redirect()->back()->with('success', 'Logbook berhasil dikirim pada ' . $now->translatedFormat('d M Y, H:i') . ' WIB dan siap ditinjau oleh Dosen Pembimbing!');
     }
 
     /**
@@ -164,16 +167,18 @@ class LogbookController extends Controller
             'feedback' => ['nullable', 'string', 'max:1000'],
         ]);
 
+        $now = now();
         $logbook->status = $validated['status'];
         if (array_key_exists('feedback', $validated)) {
             $logbook->feedback = $validated['feedback'];
         }
+        $logbook->updated_at = $now;
         $logbook->save();
 
         $message = match ($logbook->status) {
-            'approved' => 'Logbook berhasil disetujui & diverifikasi dengan stempel digital!',
+            'approved' => 'Logbook berhasil disetujui & diverifikasi dengan stempel digital pada ' . $now->translatedFormat('d M Y, H:i') . ' WIB!',
             'revision' => 'Status logbook berhasil diubah menjadi Perlu Revisi dengan catatan arahan bimbingan.',
-            default => 'Status logbook berhasil diperbarui.',
+            default => 'Status logbook berhasil diperbarui pada ' . $now->translatedFormat('d M Y, H:i') . ' WIB.',
         };
 
         if ($request->wantsJson()) {

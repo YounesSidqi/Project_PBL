@@ -82,4 +82,28 @@ class User extends Authenticatable
     {
         return $this->hasMany(Logbook::class, 'dosen_id');
     }
+
+    /**
+     * Pengajuan F1 yang diajukan oleh mahasiswa ini.
+     */
+    public function f1Applications()
+    {
+        return $this->hasMany(F1Application::class, 'student_id');
+    }
+
+    /**
+     * Pengajuan F1 terbaru mahasiswa.
+     */
+    public function latestF1Application()
+    {
+        return $this->hasOne(F1Application::class, 'student_id')->latestOfMany();
+    }
+
+    /**
+     * Pengajuan F1 mahasiswa yang memilih dosen ini.
+     */
+    public function incomingF1Applications()
+    {
+        return $this->hasMany(F1Application::class, 'dosen_id');
+    }
 }

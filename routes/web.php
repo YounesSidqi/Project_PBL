@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\F1Controller;
 use App\Http\Controllers\LogbookController;
+use App\Models\F1Application;
 use App\Models\Logbook;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -29,13 +31,17 @@ Route::get('/dashboard', function (Request $request) {
         $dosenId = $dosen ? $dosen->id : null;
         $students = User::where('role', 'mahasiswa')->where('dosen_id', $dosenId)->with('logbooks')->get();
         $logbooks = Logbook::where('dosen_id', $dosenId)->with('student')->orderBy('tanggal', 'desc')->get();
+        $incomingF1 = F1Application::where('dosen_id', $dosenId)->where('status', 'pending')->with('student')->latest()->get();
 
-        return view('dashboard.dashboard-dosen', compact('students', 'logbooks', 'dosen'));
+        return view('dashboard.dashboard-dosen', compact('students', 'logbooks', 'dosen', 'incomingF1'));
     }
 
     $logbooks = $user ? $user->logbooks()->orderBy('tanggal', 'desc')->get() : collect();
+    $dosen = $user?->dosen ?? ($user?->dosen_id ? User::find($user->dosen_id) : null);
+    $f1Application = $user ? F1Application::where('student_id', $user->id)->whereIn('status', ['pending', 'approved'])->with('dosen')->latest()->first() : null;
+    $allDosen = User::where('role', 'dosen')->withCount('students')->get();
 
-    return view('dashboard.dashboard', compact('logbooks'));
+    return view('dashboard.dashboard', compact('logbooks', 'dosen', 'f1Application', 'allDosen'));
 })->middleware('auth')->name('dashboard');
 
 Route::get('/dashboard/dosen', function () {
@@ -45,16 +51,20 @@ Route::get('/dashboard/dosen', function () {
     $dosenId = $dosen ? $dosen->id : null;
     $students = User::where('role', 'mahasiswa')->where('dosen_id', $dosenId)->with('logbooks')->get();
     $logbooks = Logbook::where('dosen_id', $dosenId)->with('student')->orderBy('tanggal', 'desc')->get();
+    $incomingF1 = F1Application::where('dosen_id', $dosenId)->where('status', 'pending')->with('student')->latest()->get();
 
-    return view('dashboard.dashboard-dosen', compact('students', 'logbooks', 'dosen'));
+    return view('dashboard.dashboard-dosen', compact('students', 'logbooks', 'dosen', 'incomingF1'));
 })->middleware('auth')->name('dashboard.dosen');
 
 Route::get('/dashboard/mahasiswa', function () {
     /** @var User|null $user */
     $user = Auth::user();
     $logbooks = $user ? $user->logbooks()->orderBy('tanggal', 'desc')->get() : collect();
+    $dosen = $user?->dosen ?? ($user?->dosen_id ? User::find($user->dosen_id) : null);
+    $f1Application = $user ? F1Application::where('student_id', $user->id)->whereIn('status', ['pending', 'approved'])->with('dosen')->latest()->first() : null;
+    $allDosen = User::where('role', 'dosen')->withCount('students')->get();
 
-    return view('dashboard.dashboard', compact('logbooks'));
+    return view('dashboard.dashboard', compact('logbooks', 'dosen', 'f1Application', 'allDosen'));
 })->middleware('auth')->name('dashboard.mahasiswa');
 
 // Logbook Workspace Routes (Mahasiswa & Dosen)
@@ -130,4 +140,13 @@ Route::middleware('auth')->group(function () {
     Route::put('/logbooks/{logbook}', [LogbookController::class, 'update'])->name('logbooks.update');
     Route::delete('/logbooks/{logbook}', [LogbookController::class, 'destroy'])->name('logbooks.destroy');
     Route::post('/logbooks/{logbook}/status', [LogbookController::class, 'updateStatus'])->name('logbooks.updateStatus');
+
+    // Form F1 Routes (Pemilihan Dosen, Pengesahan Berkas PDF, & Manajemen Mahasiswa Bimbingan)
+    Route::post('/f1/select-dosen', [F1Controller::class, 'selectDosen'])->name('f1.select-dosen');
+    Route::delete('/f1/{application}/cancel', [F1Controller::class, 'cancel'])->name('f1.cancel');
+    Route::post('/f1/approve', [F1Controller::class, 'approveGeneral'])->name('f1.approve.general');
+    Route::post('/f1/{application}/approve', [F1Controller::class, 'approve'])->name('f1.approve');
+    Route::post('/f1/{application}/reject', [F1Controller::class, 'reject'])->name('f1.reject');
+    Route::delete('/dosen/students/{student}/remove', [F1Controller::class, 'removeStudent'])->name('dosen.students.remove');
+    Route::get('/f1/{application}/surat', [F1Controller::class, 'downloadSurat'])->name('f1.surat.download');
 });
