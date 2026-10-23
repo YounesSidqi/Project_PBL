@@ -121,18 +121,6 @@
 
       <!-- Right: Role Switcher, Notifications, & Profile -->
       <div class="flex items-center gap-2 sm:gap-4">
-        
-        <!-- Role Switcher -->
-        <div class="hidden md:flex items-center bg-slate-100/80 hover:bg-slate-100 rounded-xl px-3 py-1.5 border border-slate-200/60 text-xs font-medium text-slate-700">
-          <span class="material-symbols-outlined text-slate-400 text-[16px] mr-1.5">switch_account</span>
-          <span class="text-slate-500 mr-1.5">Akses:</span>
-          <select id="role-switcher" onchange="window.location.href = '/dashboard?role=' + this.value" class="bg-transparent font-semibold text-slate-800 focus:outline-none cursor-pointer">
-            <option value="mahasiswa">Mahasiswa</option>
-            <option value="dosen" selected>Dosen Pembimbing</option>
-            <option value="dudi">Supervisor DUDI</option>
-            <option value="admin">Panitia / Admin</option>
-          </select>
-        </div>
 
         <!-- Notification Bell -->
         <div class="relative">

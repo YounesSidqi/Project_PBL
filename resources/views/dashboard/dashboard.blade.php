@@ -121,18 +121,6 @@
 
       <!-- Right: Role Switcher, Notifications, & Profile -->
       <div class="flex items-center gap-2 sm:gap-4">
-        
-        <!-- Role Switcher Badge / Select -->
-        <div class="hidden md:flex items-center bg-slate-100/80 hover:bg-slate-100 rounded-xl px-3 py-1.5 border border-slate-200/60 text-xs font-medium text-slate-700">
-          <span class="material-symbols-outlined text-slate-400 text-[16px] mr-1.5">switch_account</span>
-          <span class="text-slate-500 mr-1.5">Akses:</span>
-          <select id="role-switcher" onchange="window.location.href = '/dashboard?role=' + this.value" class="bg-transparent font-semibold text-slate-800 focus:outline-none cursor-pointer">
-            <option value="mahasiswa" {{ (request('role', Auth::user()->role ?? 'mahasiswa')) == 'mahasiswa' ? 'selected' : '' }}>Mahasiswa</option>
-            <option value="dosen" {{ (request('role', Auth::user()->role ?? 'mahasiswa')) == 'dosen' ? 'selected' : '' }}>Dosen Pembimbing</option>
-            <option value="dudi" {{ (request('role', Auth::user()->role ?? 'mahasiswa')) == 'dudi' ? 'selected' : '' }}>Supervisor DUDI</option>
-            <option value="admin" {{ (request('role', Auth::user()->role ?? 'mahasiswa')) == 'admin' ? 'selected' : '' }}>Panitia / Admin</option>
-          </select>
-        </div>
 
         <!-- Notification Bell -->
         <div class="relative">
@@ -248,151 +236,6 @@
               <span class="material-symbols-outlined text-[18px]">badge</span>
               <span>Profil Lengkap</span>
             </button>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- 6-Stage Milestone Stepper (Siklus Tahapan PKL) -->
-      <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-card">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-bold uppercase tracking-wider text-[#02796B]">Milestone Progres</span>
-              <span class="text-xs text-slate-400">•</span>
-              <span class="text-xs text-slate-500 font-medium">Batas Sidang: Juli 2026</span>
-            </div>
-            <h2 class="text-lg sm:text-xl font-bold font-heading text-slate-800 mt-0.5">
-              Siklus Tahapan Praktik Kerja Lapangan 2026
-            </h2>
-          </div>
-          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 text-[#0056B3] rounded-xl text-xs font-semibold self-start sm:self-auto">
-            <span class="material-symbols-outlined text-[16px] animate-spin">refresh</span>
-            <span>Tahap 5 dari 6 Sedang Berjalan</span>
-          </div>
-        </div>
-
-        <!-- 6 Step Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-          
-          <!-- Step 1: Completed -->
-          <div class="flex flex-col p-4 rounded-xl bg-slate-50/80 border border-slate-200/70 hover:border-teal-200 transition-all group">
-            <div class="flex items-center justify-between mb-2.5">
-              <span class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shadow-sm">
-                <span class="material-symbols-outlined text-[16px]">check</span>
-              </span>
-              <span class="text-[10px] text-emerald-600 font-bold uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                Selesai
-              </span>
-            </div>
-            <h3 class="text-sm font-bold text-slate-800 font-heading">1. Pengajuan Mandiri</h3>
-            <p class="text-xs text-slate-500 mt-1 leading-snug">Verifikasi berkas CV &amp; Proposal ke Koor PKL</p>
-            <span class="text-[11px] text-slate-400 mt-3 font-mono">15 Jan 2026</span>
-          </div>
-
-          <!-- Step 2: Completed -->
-          <div class="flex flex-col p-4 rounded-xl bg-slate-50/80 border border-slate-200/70 hover:border-teal-200 transition-all group">
-            <div class="flex items-center justify-between mb-2.5">
-              <span class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shadow-sm">
-                <span class="material-symbols-outlined text-[16px]">check</span>
-              </span>
-              <span class="text-[10px] text-emerald-600 font-bold uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                Selesai
-              </span>
-            </div>
-            <h3 class="text-sm font-bold text-slate-800 font-heading">2. Surat Pengantar</h3>
-            <p class="text-xs text-slate-500 mt-1 leading-snug">Penerbitan surat izin resmi jurusan ke mitra</p>
-            <span class="text-[11px] text-slate-400 mt-3 font-mono">22 Jan 2026</span>
-          </div>
-
-          <!-- Step 3: Completed -->
-          <div class="flex flex-col p-4 rounded-xl bg-slate-50/80 border border-slate-200/70 hover:border-teal-200 transition-all group">
-            <div class="flex items-center justify-between mb-2.5">
-              <span class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shadow-sm">
-                <span class="material-symbols-outlined text-[16px]">check</span>
-              </span>
-              <span class="text-[10px] text-emerald-600 font-bold uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                Diterima
-              </span>
-            </div>
-            <h3 class="text-sm font-bold text-slate-800 font-heading">3. Konfirmasi Industri</h3>
-            <p class="text-xs text-slate-500 mt-1 leading-snug">Approval resmi &amp; offering letter Telkomsel</p>
-            <span class="text-[11px] text-slate-400 mt-3 font-mono">02 Feb 2026</span>
-          </div>
-
-          <!-- Step 4: Form F1 Dospem -->
-          @php
-            $activeF1 = $activeF1 ?? ($f1Application ?? null);
-            $hasAssignedDosen = !empty(Auth::user()->dosen_id) && ($dosen ?? null) != null;
-            $isApprovedF1 = ($activeF1 && $activeF1->status === 'approved') || $hasAssignedDosen;
-            $isPendingF1 = ($activeF1 && $activeF1->status === 'pending') && !$hasAssignedDosen;
-          @endphp
-          <div class="flex flex-col p-4 rounded-xl {{ $isApprovedF1 ? 'bg-slate-50/80 border border-slate-200/70 hover:border-teal-200' : ($isPendingF1 ? 'bg-amber-50/60 border border-amber-200' : 'bg-slate-50/50 border border-slate-200/60') }} transition-all group">
-            <div class="flex items-center justify-between mb-2.5">
-              @if($isApprovedF1)
-                <span class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shadow-sm">
-                  <span class="material-symbols-outlined text-[16px]">check</span>
-                </span>
-                <span class="text-[10px] text-emerald-600 font-bold uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                  Disetujui
-                </span>
-              @elseif($isPendingF1)
-                <span class="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold shadow-sm">
-                  <span class="material-symbols-outlined text-[16px] animate-spin">refresh</span>
-                </span>
-                <span class="text-[10px] text-amber-700 font-bold uppercase tracking-wider bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200">
-                  Menunggu ACC
-                </span>
-              @else
-                <span class="w-7 h-7 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center text-xs font-bold shadow-sm">
-                  <span class="material-symbols-outlined text-[16px]">hourglass_empty</span>
-                </span>
-                <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
-                  Belum Diajukan
-                </span>
-              @endif
-            </div>
-            <h3 class="text-sm font-bold text-slate-800 font-heading">4. Form F1 Dospem</h3>
-            <p class="text-xs text-slate-500 mt-1 leading-snug">Persetujuan Dosen Pengampu PKL</p>
-            <span class="text-[11px] text-slate-400 mt-3 font-mono">
-              @if($isApprovedF1)
-                {{ $activeF1->approved_at ? $activeF1->approved_at->translatedFormat('d M Y') : now()->translatedFormat('d M Y') }}
-              @elseif($isPendingF1)
-                {{ $activeF1->created_at ? $activeF1->created_at->translatedFormat('d M Y') : now()->translatedFormat('d M Y') }}
-              @else
-                Belum Diajukan
-              @endif
-            </span>
-          </div>
-
-          <!-- Step 5: Active Pulse -->
-          <div class="flex flex-col p-4 rounded-xl bg-gradient-to-b from-blue-50/90 to-teal-50/50 border-2 border-[#0056B3] shadow-md transition-all relative">
-            <div class="flex items-center justify-between mb-2.5">
-              <span class="w-7 h-7 rounded-full bg-[#0056B3] text-white flex items-center justify-center text-xs font-bold shadow-sm">
-                <span class="material-symbols-outlined text-[16px] animate-pulse">autorenew</span>
-              </span>
-              <span class="text-[10px] text-[#0056B3] font-bold uppercase tracking-wider bg-blue-100/70 px-2 py-0.5 rounded-full">
-                Berjalan
-              </span>
-            </div>
-            <h3 class="text-sm font-bold text-[#0056B3] font-heading">5. Logbook (F2-F4)</h3>
-            <p class="text-xs text-slate-600 mt-1 leading-snug">Jurnal mingguan, absensi, &amp; bimbingan</p>
-            <span class="text-[11px] text-[#0056B3] font-bold mt-3 font-mono">Minggu ke-4 / 20</span>
-          </div>
-
-          <!-- Step 6: Locked -->
-          <div class="flex flex-col p-4 rounded-xl bg-slate-50/50 border border-slate-200/60 opacity-60">
-            <div class="flex items-center justify-between mb-2.5">
-              <span class="w-7 h-7 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold">
-                <span class="material-symbols-outlined text-[16px]">lock</span>
-              </span>
-              <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded-full">
-                Terkunci
-              </span>
-            </div>
-            <h3 class="text-sm font-bold text-slate-500 font-heading">6. Evaluasi &amp; Bab VII</h3>
-            <p class="text-xs text-slate-400 mt-1 leading-snug">Penilaian DUDI (F5), Sidang (F6/F7)</p>
-            <span class="text-[11px] text-slate-400 mt-3 font-mono">Juli 2026</span>
           </div>
 
         </div>
@@ -537,19 +380,6 @@
                   <span>Ditandatangani: <strong>Dr. Anita Hidayati, S.Kom., M.Kom.</strong> (Ketua Jurusan TIK)</span>
                 </div>
               </div>
-
-              <!-- Barcode / Digital Legal Stamp -->
-              <div class="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm flex-shrink-0 self-stretch md:self-auto justify-between md:justify-start">
-                <div class="flex flex-col text-left">
-                  <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Legalitas Digital</span>
-                  <span class="text-xs font-mono font-bold text-[#0056B3]">PNJ-TIK-2026-AUTH</span>
-                  <span class="text-[10px] text-emerald-600 font-medium">QR Tervalidasi</span>
-                </div>
-                <!-- Simulated Digital Stamp -->
-                <div class="w-10 h-10 bg-[#0056B3]/10 text-[#0056B3] p-1 rounded-lg flex items-center justify-center">
-                  <span class="material-symbols-outlined text-[24px]">qr_code_2</span>
-                </div>
-              </div>
             </div>
 
             <!-- Action & Note -->
@@ -597,9 +427,6 @@
               <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-[#02796B]">Status Pengesahan Jurusan</span>
                 <h3 class="text-lg font-bold font-heading text-slate-800 mt-0.5">Form F1: Kesediaan Pembimbing</h3>
-                <p class="text-xs text-slate-500 mt-1">
-                  Surat Pernyataan Kesediaan Bimbingan &amp; Persetujuan Kelayakan Tempat PKL
-                </p>
               </div>
               <div class="w-10 h-10 rounded-xl bg-teal-50 text-[#009688] flex items-center justify-center flex-shrink-0">
                 <span class="material-symbols-outlined text-[22px]">assignment_turned_in</span>
@@ -624,23 +451,6 @@
                     <span class="text-xs sm:text-sm font-bold text-slate-800 font-heading truncate">{{ $dospemName }}</span>
                     <span class="text-xs text-slate-500 font-mono">NIP: {{ $dospemNip }}</span>
                   </div>
-                </div>
-
-                @if($activeF1 && $activeF1->company_name)
-                  <div class="pt-2 border-t border-slate-200/60 text-xs text-slate-600 space-y-0.5">
-                    <p><strong class="text-slate-700">Instansi PKL:</strong> {{ $activeF1->company_name }}</p>
-                    <p class="text-[11px] text-slate-500 line-clamp-1"><strong class="text-slate-700">Topik PKL:</strong> {{ $activeF1->internship_title }}</p>
-                  </div>
-                @endif
-
-                <div class="p-2.5 bg-white rounded-lg border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-slate-400 text-[11px]">
-                  <span class="font-mono flex items-center gap-1.5 text-slate-600">
-                    <span class="material-symbols-outlined text-[#009688] text-[15px]">fingerprint</span>
-                    <span>SHA256: {{ substr($activeF1->signature_hash ?? hash('sha256', $dospemNip . 'F1_APPROVED'), 0, 16) }}...</span>
-                  </span>
-                  <span class="font-mono text-slate-400 text-[10px]">
-                    {{ $activeF1?->approved_at ? $activeF1->approved_at->translatedFormat('d M Y • H:i') . ' WIB' : ($activeF1?->updated_at ? $activeF1->updated_at->translatedFormat('d M Y • H:i') . ' WIB' : now()->translatedFormat('d M Y • H:i') . ' WIB') }}
-                  </span>
                 </div>
               </div>
 
@@ -764,14 +574,6 @@
               </div>
 
             </div>
-
-            <!-- Notification helper -->
-            <div class="p-3 bg-amber-50/70 border border-amber-200/60 rounded-xl flex items-start gap-2.5">
-              <span class="material-symbols-outlined text-amber-600 text-[18px] mt-0.5 flex-shrink-0">help_outline</span>
-              <p class="text-xs text-amber-800 leading-relaxed">
-                Minimal kehadiran bimbingan dospem adalah <strong>8 kali</strong> sebelum pendaftaran Sidang PKL (Form F6) dibuka pada bulan Juli.
-              </p>
-            </div>
           </div>
 
         </div>
@@ -860,25 +662,6 @@
               </button>
             </div>
           @endforelse
-        </div>
-      </div>
-
-      <!-- Quick Access to Workspace Logbook -->
-      <div class="bg-gradient-to-r from-blue-50 via-teal-50/40 to-slate-50 border border-blue-100/80 rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-        <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#0056B3] to-[#02796B] text-white flex items-center justify-center shadow-md flex-shrink-0">
-            <span class="material-symbols-outlined text-[26px]">folder_special</span>
-          </div>
-          <div>
-            <h4 class="text-base sm:text-lg font-bold font-heading text-slate-800">Akses Cepat Modul Workspace Logbook</h4>
-            <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Kelola lembar kerja mingguan (F2) dan absensi harian PKL Anda.</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3 w-full sm:w-auto">
-          <a href="{{ route('logbook.mahasiswa') }}" class="w-full sm:w-auto bg-[#0056B3] hover:bg-[#00428A] text-white px-6 py-3 rounded-xl font-bold font-heading text-xs sm:text-sm transition-all shadow-md flex items-center justify-center gap-2">
-            <span>Buka Workspace Logbook (F2)</span>
-            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
-          </a>
         </div>
       </div>
 
