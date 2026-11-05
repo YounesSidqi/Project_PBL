@@ -106,4 +106,28 @@ class User extends Authenticatable
     {
         return $this->hasMany(F1Application::class, 'dosen_id');
     }
+
+    /**
+     * Check if user is KPS or Admin.
+     */
+    public function isKps(): bool
+    {
+        return in_array($this->role, ['kps', 'admin']);
+    }
+
+    /**
+     * Check if user is Dosen.
+     */
+    public function isDosen(): bool
+    {
+        return $this->role === 'dosen';
+    }
+
+    /**
+     * Check if user is Mahasiswa.
+     */
+    public function isMahasiswa(): bool
+    {
+        return $this->role === 'mahasiswa';
+    }
 }

@@ -29,7 +29,7 @@ class AuthController extends Controller
         $request->validate([
             'identifier' => ['required', 'string'],
             'password' => ['required', 'string'],
-            'role' => ['nullable', 'string', 'in:mahasiswa,dosen,dudi,admin'],
+            'role' => ['nullable', 'string', 'in:mahasiswa,dosen,dudi,admin,kps'],
         ], [
             'identifier.required' => 'NIM, NIP, atau Email wajib diisi.',
             'password.required' => 'Kata sandi wajib diisi.',
@@ -50,27 +50,54 @@ class AuthController extends Controller
             'password' => $password,
         ];
 
-        // If a specific role is passed, enforce role checking
+        // If a specific role is passed, enforce role checking (admin and kps are treated equivalently for coordinator portal)
         if (! empty($role)) {
-            $credentials['role'] = $role;
+            if ($role === 'admin' || $role === 'kps') {
+                $userExists = User::where($field, $identifier)->first();
+                if ($userExists && ! in_array($userExists->role, ['admin', 'kps'])) {
+                    $roleLabels = [
+                        'mahasiswa' => 'Mahasiswa',
+                        'dosen' => 'Dosen Pembimbing',
+                        'dudi' => 'Mitra DUDI',
+                        'admin' => 'Admin / KPS',
+                        'kps' => 'Admin / KPS',
+                    ];
+                    $actualRole = $roleLabels[$userExists->role] ?? $userExists->role;
+                    throw ValidationException::withMessages([
+                        'identifier' => "Akun ini terdaftar sebagai peran \"{$actualRole}\". Silakan pilih tab {$actualRole}.",
+                    ]);
+                }
+            } else {
+                $credentials['role'] = $role;
+            }
         }
 
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
-            return redirect()->intended(route('dashboard'))
-                ->with('success', 'Selamat datang di SIM-PKL, '.Auth::user()->name.'!');
+            /** @var User $authUser */
+            $authUser = Auth::user();
+
+            $targetRoute = match ($authUser->role) {
+                'kps', 'admin' => route('dashboard.kps'),
+                'dosen' => route('dashboard.dosen'),
+                default => route('dashboard.mahasiswa'),
+            };
+
+            return redirect()->intended($targetRoute)
+                ->with('success', 'Selamat datang di SIM-PKL, '.$authUser->name.'!');
         }
 
         // If role-specific attempt failed, check if account exists under a different role
         if (! empty($role)) {
             $userExists = User::where($field, $identifier)->first();
-            if ($userExists && $userExists->role !== $role) {
+            if ($userExists && $userExists->role !== $role && ! ($userExists->isKps() && in_array($role, ['admin', 'kps']))) {
                 $roleLabels = [
                     'mahasiswa' => 'Mahasiswa',
                     'dosen' => 'Dosen Pembimbing',
                     'dudi' => 'Mitra DUDI',
                     'admin' => 'Admin / KPS',
+                    'kps' => 'Admin / KPS',
                 ];
                 $actualRole = $roleLabels[$userExists->role] ?? $userExists->role;
                 throw ValidationException::withMessages([

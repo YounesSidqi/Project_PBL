@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\F1Application;
+use App\Models\Logbook;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,10 +12,8 @@ use Illuminate\Support\Facades\Storage;
 class F1Controller extends Controller
 {
     /**
-     * Mahasiswa mengajukan Form F1 dan memilih Dosen Pembimbing.
-     */
-    /**
-     * Mahasiswa mengajukan Form F1 dan memilih Dosen Pembimbing.
+     * Mahasiswa mengajukan Form F1 dan memilih preferensi Dosen Pembimbing.
+     * Penetapan resmi dilakukan oleh Koordinator Program Studi (KPS).
      */
     public function selectDosen(Request $request)
     {
@@ -27,12 +26,18 @@ class F1Controller extends Controller
         /** @var User $student */
         $student = Auth::user();
 
+        $dosen = User::where('id', $request->dosen_id)->where('role', 'dosen')->firstOrFail();
+
+        // Validasi kuota dosen (maks 7)
+        $currentMentoredCount = User::where('role', 'mahasiswa')->where('dosen_id', $dosen->id)->count();
+        if ($currentMentoredCount >= 7) {
+            return redirect()->back()->with('error', 'Dosen yang Anda pilih baru saja mencapai batas kuota bimbingan penuh. Silakan pilih dosen lain yang tersedia.');
+        }
+
         // Batalkan / hapus pengajuan pending sebelumnya jika ada
         F1Application::where('student_id', $student->id)
             ->where('status', 'pending')
             ->delete();
-
-        $dosen = User::where('id', $request->dosen_id)->where('role', 'dosen')->firstOrFail();
 
         $now = now();
         $application = F1Application::create([
@@ -41,11 +46,12 @@ class F1Controller extends Controller
             'company_name' => $request->company_name,
             'internship_title' => $request->internship_title,
             'status' => 'pending',
+            'notes' => 'Menunggu verifikasi dan penetapan resmi oleh Koordinator Program Studi (KPS).',
             'created_at' => $now,
             'updated_at' => $now,
         ]);
 
-        return redirect()->back()->with('success', 'Pengajuan Form F1 berhasil dikirimkan ke ' . $dosen->name . ' pada ' . $now->translatedFormat('d M Y, H:i') . ' WIB. Menunggu persetujuan dan penerbitan Surat Pernyataan Kesediaan (PDF) oleh dosen.');
+        return redirect()->back()->with('success', 'Pengajuan preferensi dosen pembimbing ('.$dosen->name.') berhasil dikirimkan pada '.$now->translatedFormat('d M Y, H:i').' WIB! Koordinator Program Studi (KPS) akan memverifikasi dan menetapkan secara resmi.');
     }
 
     /**
@@ -59,6 +65,7 @@ class F1Controller extends Controller
 
         if ($application->status === 'pending') {
             $application->delete();
+
             return redirect()->back()->with('info', 'Pengajuan Form F1 berhasil dibatalkan. Anda dapat memilih dosen pembimbing kembali.');
         }
 
@@ -76,6 +83,7 @@ class F1Controller extends Controller
         }
 
         $application = F1Application::findOrFail($applicationId);
+
         return $this->approve($request, $application);
     }
 
@@ -88,8 +96,8 @@ class F1Controller extends Controller
         $user = Auth::user();
 
         // Autentikasi Dosen: Mendukung session dosen asli maupun fallback dev mode jika sedang menguji dashboard dosen
-        $dosen = ($user && $user->role === 'dosen') 
-            ? $user 
+        $dosen = ($user && $user->role === 'dosen')
+            ? $user
             : ($application->dosen ?? User::find($application->dosen_id) ?? User::where('role', 'dosen')->first());
 
         if (! $dosen) {
@@ -105,12 +113,12 @@ class F1Controller extends Controller
         ]);
 
         $file = $request->file('surat_pernyataan');
-        
+
         // Verifikasi format file PDF
         $extension = strtolower($file->getClientOriginalExtension());
         $mime = $file->getMimeType();
-        if ($extension !== 'pdf' && !str_contains($mime, 'pdf')) {
-            return redirect()->back()->with('error', 'Berkas surat pernyataan harus berformat PDF (.pdf). Format file Anda: ' . $extension);
+        if ($extension !== 'pdf' && ! str_contains($mime, 'pdf')) {
+            return redirect()->back()->with('error', 'Berkas surat pernyataan harus berformat PDF (.pdf). Format file Anda: '.$extension);
         }
 
         $originalName = $file->getClientOriginalName();
@@ -139,7 +147,7 @@ class F1Controller extends Controller
             ]);
         }
 
-        return redirect()->to('/dashboard/dosen?tab=mahasiswa#mahasiswa-section')->with('success', 'Form F1 untuk mahasiswa ' . ($student->name ?? 'Mahasiswa') . ' berhasil disetujui pada ' . $now->translatedFormat('d M Y, H:i') . ' WIB! Surat Pernyataan Kesediaan (PDF) telah diterbitkan dan mahasiswa resmi masuk daftar bimbingan aktif Anda.');
+        return redirect()->to('/dashboard/dosen?tab=mahasiswa#mahasiswa-section')->with('success', 'Form F1 untuk mahasiswa '.($student->name ?? 'Mahasiswa').' berhasil disetujui pada '.$now->translatedFormat('d M Y, H:i').' WIB! Surat Pernyataan Kesediaan (PDF) telah diterbitkan dan mahasiswa resmi masuk daftar bimbingan aktif Anda.');
     }
 
     /**
@@ -158,7 +166,7 @@ class F1Controller extends Controller
             'updated_at' => $now,
         ]);
 
-        return redirect()->to('/dashboard/dosen?tab=f1')->with('info', 'Pengajuan Form F1 mahasiswa telah ditolak pada ' . $now->translatedFormat('d M Y, H:i') . ' WIB.');
+        return redirect()->to('/dashboard/dosen?tab=f1')->with('info', 'Pengajuan Form F1 mahasiswa telah ditolak pada '.$now->translatedFormat('d M Y, H:i').' WIB.');
     }
 
     /**
@@ -172,7 +180,7 @@ class F1Controller extends Controller
         $dosen = ($user && $user->role === 'dosen') ? $user : User::where('role', 'dosen')->first();
 
         // 1. Hapus seluruh riwayat logbook yang pernah dibuat mahasiswa ini
-        $deletedLogbooksCount = \App\Models\Logbook::where('user_id', $student->id)->delete();
+        $deletedLogbooksCount = Logbook::where('user_id', $student->id)->delete();
 
         // 2. Lepaskan relasi dosen_id pada mahasiswa
         $student->update([
@@ -187,7 +195,7 @@ class F1Controller extends Controller
                 'updated_at' => now(),
             ]);
 
-        return redirect()->to('/dashboard/dosen?tab=mahasiswa#mahasiswa-section')->with('info', 'Mahasiswa ' . $student->name . ' (NIM: ' . $student->identifier . ') telah dihapus dari daftar bimbingan. Sebanyak ' . $deletedLogbooksCount . ' riwayat logbook mahasiswa ini telah dibersihkan, dan slot kuota Anda kembali tersedia.');
+        return redirect()->to('/dashboard/dosen?tab=mahasiswa#mahasiswa-section')->with('info', 'Mahasiswa '.$student->name.' (NIM: '.$student->identifier.') telah dihapus dari daftar bimbingan. Sebanyak '.$deletedLogbooksCount.' riwayat logbook mahasiswa ini telah dibersihkan, dan slot kuota Anda kembali tersedia.');
     }
 
     /**
@@ -198,10 +206,10 @@ class F1Controller extends Controller
         if ($application->surat_pernyataan_path && Storage::disk('public')->exists($application->surat_pernyataan_path)) {
             $filePath = Storage::disk('public')->path($application->surat_pernyataan_path);
             $fileName = $application->surat_pernyataan_name ?? 'Surat_Pernyataan_Dospem_F1.pdf';
-            
+
             return response()->file($filePath, [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+                'Content-Disposition' => 'inline; filename="'.$fileName.'"',
             ]);
         }
 
@@ -212,7 +220,7 @@ class F1Controller extends Controller
         $studentNim = $application->student->identifier ?? '2107411002';
         $company = $application->company_name ?? 'PT Telekomunikasi Seluler';
 
-        $pdfContent = "%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj\n4 0 obj << /Length 320 >> stream\nBT\n/F1 16 Tf\n50 720 Td\n(KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI) Tj\n/F1 14 Tf\n0 -25 Td\n(POLITEKNIK NEGERI JAKARTA - JURUSAN TIK) Tj\n/F1 12 Tf\n0 -40 Td\n(SURAT PERNYATAAN KESEDIAAN DOSEN PEMBIMBING PKL (FORM F1)) Tj\n0 -30 Td\n(Menyatakan bersedia membimbing mahasiswa:) Tj\n0 -20 Td\n(Nama: " . addcslashes($studentName, '()\\') . " | NIM: " . addcslashes($studentNim, '()\\') . ") Tj\n0 -20 Td\n(Instansi PKL: " . addcslashes($company, '()\\') . ") Tj\n0 -40 Td\n(Dosen Pembimbing: " . addcslashes($dosenName, '()\\') . " | NIP: " . addcslashes($dosenNip, '()\\') . ") Tj\nET\nendstream\nendobj\n5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\nxref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000244 00000 n \n0000000615 00000 n \ntrailer << /Size 6 /Root 1 0 R >>\nstartxref\n690\n%%EOF";
+        $pdfContent = "%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj\n4 0 obj << /Length 320 >> stream\nBT\n/F1 16 Tf\n50 720 Td\n(KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI) Tj\n/F1 14 Tf\n0 -25 Td\n(POLITEKNIK NEGERI JAKARTA - JURUSAN TIK) Tj\n/F1 12 Tf\n0 -40 Td\n(SURAT PERNYATAAN KESEDIAAN DOSEN PEMBIMBING PKL (FORM F1)) Tj\n0 -30 Td\n(Menyatakan bersedia membimbing mahasiswa:) Tj\n0 -20 Td\n(Nama: ".addcslashes($studentName, '()\\').' | NIM: '.addcslashes($studentNim, '()\\').") Tj\n0 -20 Td\n(Instansi PKL: ".addcslashes($company, '()\\').") Tj\n0 -40 Td\n(Dosen Pembimbing: ".addcslashes($dosenName, '()\\').' | NIP: '.addcslashes($dosenNip, '()\\').") Tj\nET\nendstream\nendobj\n5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\nxref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000244 00000 n \n0000000615 00000 n \ntrailer << /Size 6 /Root 1 0 R >>\nstartxref\n690\n%%EOF";
 
         return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\F1Controller;
+use App\Http\Controllers\KpsController;
 use App\Http\Controllers\LogbookController;
 use App\Models\F1Application;
 use App\Models\Logbook;
@@ -26,30 +27,26 @@ Route::get('/dashboard', function (Request $request) {
     $user = Auth::user();
     $role = $request->query('role', $user?->role ?? 'mahasiswa');
 
-    if ($role === 'dosen') {
-        $dosen = ($user && $user->role === 'dosen') ? $user : User::where('role', 'dosen')->first();
-        $dosenId = $dosen ? $dosen->id : null;
-        $students = User::where('role', 'mahasiswa')->where('dosen_id', $dosenId)->with('logbooks')->get();
-        $logbooks = Logbook::where('dosen_id', $dosenId)->with('student')->orderBy('tanggal', 'desc')->get();
-        $incomingF1 = F1Application::where('dosen_id', $dosenId)->where('status', 'pending')->with('student')->latest()->get();
-
-        return view('dashboard.dashboard-dosen', compact('students', 'logbooks', 'dosen', 'incomingF1'));
+    if ($role === 'kps' || $role === 'admin') {
+        return redirect()->route('dashboard.kps');
     }
 
-    $logbooks = $user ? $user->logbooks()->orderBy('tanggal', 'desc')->get() : collect();
-    $dosen = $user?->dosen ?? ($user?->dosen_id ? User::find($user->dosen_id) : null);
-    $f1Application = $user ? F1Application::where('student_id', $user->id)->whereIn('status', ['pending', 'approved'])->with('dosen')->latest()->first() : null;
-    $allDosen = User::where('role', 'dosen')->withCount('students')->get();
+    if ($role === 'dosen') {
+        return redirect()->route('dashboard.dosen');
+    }
 
-    return view('dashboard.dashboard', compact('logbooks', 'dosen', 'f1Application', 'allDosen'));
+    return redirect()->route('dashboard.mahasiswa');
 })->middleware('auth')->name('dashboard');
+
+// Dashboard Koordinator Program Studi (KPS)
+Route::get('/dashboard/kps', [KpsController::class, 'index'])->middleware('auth')->name('dashboard.kps');
 
 Route::get('/dashboard/dosen', function () {
     /** @var User|null $user */
     $user = Auth::user();
     $dosen = ($user && $user->role === 'dosen') ? $user : User::where('role', 'dosen')->first();
     $dosenId = $dosen ? $dosen->id : null;
-    $students = User::where('role', 'mahasiswa')->where('dosen_id', $dosenId)->with('logbooks')->get();
+    $students = User::where('role', 'mahasiswa')->where('dosen_id', $dosenId)->with(['logbooks', 'latestF1Application'])->get();
     $logbooks = Logbook::where('dosen_id', $dosenId)->with('student')->orderBy('tanggal', 'desc')->get();
     $incomingF1 = F1Application::where('dosen_id', $dosenId)->where('status', 'pending')->with('student')->latest()->get();
 
@@ -62,7 +59,12 @@ Route::get('/dashboard/mahasiswa', function () {
     $logbooks = $user ? $user->logbooks()->orderBy('tanggal', 'desc')->get() : collect();
     $dosen = $user?->dosen ?? ($user?->dosen_id ? User::find($user->dosen_id) : null);
     $f1Application = $user ? F1Application::where('student_id', $user->id)->whereIn('status', ['pending', 'approved'])->with('dosen')->latest()->first() : null;
-    $allDosen = User::where('role', 'dosen')->withCount('students')->get();
+    // Hanya dosen yang kuotanya masih tersedia (< 7) yang muncul untuk dipilih mahasiswa
+    $allDosen = User::where('role', 'dosen')
+        ->withCount('students')
+        ->has('students', '<', 7)
+        ->orderBy('name')
+        ->get();
 
     return view('dashboard.dashboard', compact('logbooks', 'dosen', 'f1Application', 'allDosen'));
 })->middleware('auth')->name('dashboard.mahasiswa');
@@ -149,4 +151,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/f1/{application}/reject', [F1Controller::class, 'reject'])->name('f1.reject');
     Route::delete('/dosen/students/{student}/remove', [F1Controller::class, 'removeStudent'])->name('dosen.students.remove');
     Route::get('/f1/{application}/surat', [F1Controller::class, 'downloadSurat'])->name('f1.surat.download');
+
+    // KPS Specific Routes (Penetapan & Plotting Mahasiswa - Dosen)
+    Route::post('/kps/f1/{application}/approve', [KpsController::class, 'approveF1'])->name('kps.f1.approve');
+    Route::post('/kps/f1/{application}/reject', [KpsController::class, 'rejectF1'])->name('kps.f1.reject');
+    Route::post('/kps/students/plot', [KpsController::class, 'plotStudent'])->name('kps.student.plot');
+    Route::post('/kps/students/{student}/reassign', [KpsController::class, 'reassignStudent'])->name('kps.student.reassign');
+    Route::delete('/kps/students/{student}/unassign', [KpsController::class, 'unassignStudent'])->name('kps.student.unassign');
 });

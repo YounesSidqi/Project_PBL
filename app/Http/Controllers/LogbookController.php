@@ -55,12 +55,12 @@ class LogbookController extends Controller
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Logbook berhasil disimpan pada ' . $now->translatedFormat('d M Y, H:i') . ' WIB dan siap ditinjau oleh Dosen Pembimbing.',
+                'message' => 'Logbook berhasil disimpan pada '.$now->translatedFormat('d M Y, H:i').' WIB dan siap ditinjau oleh Dosen Pembimbing.',
                 'logbook' => $logbook->load('student', 'dosen'),
             ]);
         }
 
-        return redirect()->back()->with('success', 'Logbook berhasil dikirim pada ' . $now->translatedFormat('d M Y, H:i') . ' WIB dan siap ditinjau oleh Dosen Pembimbing!');
+        return redirect()->back()->with('success', 'Logbook berhasil dikirim pada '.$now->translatedFormat('d M Y, H:i').' WIB dan siap ditinjau oleh Dosen Pembimbing!');
     }
 
     /**
@@ -176,9 +176,9 @@ class LogbookController extends Controller
         $logbook->save();
 
         $message = match ($logbook->status) {
-            'approved' => 'Logbook berhasil disetujui & diverifikasi dengan stempel digital pada ' . $now->translatedFormat('d M Y, H:i') . ' WIB!',
+            'approved' => 'Logbook berhasil disetujui & diverifikasi dengan stempel digital pada '.$now->translatedFormat('d M Y, H:i').' WIB!',
             'revision' => 'Status logbook berhasil diubah menjadi Perlu Revisi dengan catatan arahan bimbingan.',
-            default => 'Status logbook berhasil diperbarui pada ' . $now->translatedFormat('d M Y, H:i') . ' WIB.',
+            default => 'Status logbook berhasil diperbarui pada '.$now->translatedFormat('d M Y, H:i').' WIB.',
         };
 
         if ($request->wantsJson()) {

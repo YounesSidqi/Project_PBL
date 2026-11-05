@@ -324,7 +324,7 @@
             </div>
 
             <!-- Quick Metrics Bar -->
-            <div class="grid grid-cols-3 gap-3 pt-1 text-center">
+            <div class="grid grid-cols-2 gap-3 pt-1 text-center">
               <div class="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/60">
                 <span class="text-[11px] font-semibold text-slate-500">Logbook Terverifikasi</span>
                 <p class="text-lg sm:text-xl font-extrabold text-[#0056B3] font-heading mt-1">
@@ -334,12 +334,6 @@
               <div class="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/60">
                 <span class="text-[11px] font-semibold text-slate-500">Kehadiran (Absensi)</span>
                 <p class="text-lg sm:text-xl font-extrabold text-[#02796B] font-heading mt-1">100%</p>
-              </div>
-              <div class="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/60">
-                <span class="text-[11px] font-semibold text-slate-500">Progress Laporan</span>
-                <p class="text-lg sm:text-xl font-extrabold text-[#0056B3] font-heading mt-1">
-                  Bab II <span class="text-xs font-normal text-emerald-600 font-semibold">Selesai</span>
-                </p>
               </div>
             </div>
 
@@ -465,9 +459,9 @@
               <div class="p-4 sm:p-5 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-3.5">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] text-amber-800 font-bold uppercase tracking-wider">Pengajuan Form F1</span>
-                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 text-[11px] font-bold">
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 text-[11px] font-bold">
                     <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                    <span>Menunggu Persetujuan Dosen</span>
+                    <span>Menunggu Penetapan KPS</span>
                   </span>
                 </div>
 
@@ -488,9 +482,9 @@
                     <span class="material-symbols-outlined text-[14px] text-amber-600">schedule</span>
                     <span>Diajukan pada: {{ $activeF1->created_at ? $activeF1->created_at->translatedFormat('d M Y, H:i') : now()->translatedFormat('d M Y, H:i') }} WIB ({{ $activeF1->created_at ? $activeF1->created_at->diffForHumans() : 'baru saja' }})</span>
                   </p>
-                  <p class="text-[11px] text-amber-700 pt-1 flex items-center gap-1">
-                    <span class="material-symbols-outlined text-[15px]">info</span>
-                    <span>Dosen sedang meninjau pengajuan Anda dan akan menerbitkan Surat Pernyataan Kesediaan (PDF) sebelum ACC.</span>
+                  <p class="text-[11px] text-amber-800 pt-1 flex items-start gap-1.5 leading-relaxed">
+                    <span class="material-symbols-outlined text-[16px] text-amber-600 flex-shrink-0 mt-0.5">verified_user</span>
+                    <span>Preferensi dosen pembimbing telah terkirim. <strong>Koordinator Program Studi (KPS)</strong> akan memverifikasi dan menetapkan secara resmi dosen pembimbing Anda.</span>
                   </p>
                 </div>
 
@@ -805,22 +799,22 @@
                   </div>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
-                  <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full {{ ($d->students_count ?? 0) >= 7 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700' }}">
-                    Kuota: {{ $d->students_count ?? 0 }}/7
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span>Tersedia</span>
                   </span>
                 </div>
               </label>
             @empty
-              <p class="text-xs text-slate-500 text-center py-4">Belum ada data dosen terdaftar.</p>
+              <p class="text-xs text-slate-500 text-center py-4">Belum ada dosen pembimbing yang tersedia saat ini.</p>
             @endforelse
           </div>
         </div>
 
-        <div class="p-3 bg-blue-50/80 rounded-xl border border-blue-200 text-xs text-[#0056B3] flex items-start gap-2.5">
-          <span class="material-symbols-outlined text-[20px] flex-shrink-0 mt-0.5">info</span>
+        <div class="p-3.5 bg-blue-50/90 rounded-xl border border-blue-200 text-xs text-[#0056B3] flex items-start gap-2.5">
+          <span class="material-symbols-outlined text-[20px] flex-shrink-0 mt-0.5 text-[#0056B3]">verified_user</span>
           <p class="leading-relaxed">
-            Setelah memilih, pengajuan Form F1 akan langsung masuk ke akun Dosen. 
-            <strong>Dosen wajib mengunggah Surat Pernyataan Kesediaan (PDF)</strong> sebelum pengajuan disetujui secara resmi.
+            Pilihlah dosen pembimbing yang sesuai dengan bidang/topik PKL Anda. Setelah Anda mengirim permohonan, <strong>Koordinator Program Studi (KPS)</strong> yang akan memverifikasi dan meresmikan penetapan bimbingan Anda.
           </p>
         </div>
 

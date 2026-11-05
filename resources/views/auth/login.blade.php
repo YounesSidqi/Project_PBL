@@ -379,10 +379,10 @@
         hint.innerText = 'Mitra Industri / DUDI';
         input.placeholder = 'cth. mentor@mitra-industri.co.id';
         icon.innerText = 'apartment';
-      } else if (role === 'admin') {
+      } else if (role === 'admin' || role === 'kps') {
         label.innerText = 'ID Koordinator / KPS Jurusan TIK';
-        hint.innerText = 'Pengelola PKL';
-        input.placeholder = 'cth. admin.tik@pnj.ac.id';
+        hint.innerText = 'Koordinator Program Studi (KPS)';
+        input.placeholder = 'cth. kps.ti@pnj.ac.id atau admin.tik@pnj.ac.id';
         icon.innerText = 'admin_panel_settings';
       }
       

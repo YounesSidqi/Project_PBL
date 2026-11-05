@@ -364,89 +364,28 @@
 
       </div>
 
-      <!-- SECTION: Validasi Form F1 & Mahasiswa yang Memilih Dosen Ini -->
-      <div id="f1-section" class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-card space-y-6">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+      <!-- Banner Informasi Otoritas Penetapan KPS -->
+      <div class="bg-gradient-to-r from-blue-50/80 via-teal-50/50 to-slate-50 border border-blue-100 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-start gap-3.5">
+          <div class="w-11 h-11 rounded-2xl bg-[#0056B3] text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+            <span class="material-symbols-outlined text-[24px]">admin_panel_settings</span>
+          </div>
           <div>
             <div class="flex items-center gap-2">
-              <span class="text-xs font-bold uppercase tracking-wider text-[#02796B]">Validasi Form F1 Jurusan TIK</span>
-              <span class="text-xs text-slate-400">•</span>
-              <span class="text-xs font-semibold px-2 py-0.5 rounded-full {{ count($incomingF1 ?? []) > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600' }}">
-                {{ count($incomingF1 ?? []) }} Pengajuan Menunggu
-              </span>
+              <span class="text-xs font-bold text-[#0056B3] uppercase tracking-wider font-heading">Kebijakan Penetapan PKL 2026</span>
+              <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">Dikelola KPS</span>
             </div>
-            <h2 class="text-xl font-bold font-heading text-slate-800 mt-0.5">
-              Mahasiswa yang Memilih Anda sebagai Pembimbing PKL
-            </h2>
-            <p class="text-xs text-slate-500 mt-0.5">
-              Sebelum menyetujui, Dosen Pembimbing wajib mengunggah dokumen <strong>Surat Pernyataan Kesediaan (PDF)</strong> untuk mengesahkan mahasiswa bimbingan.
+            <h3 class="text-base font-bold text-slate-800 mt-0.5">Penetapan Mahasiswa Bimbingan Dikelola Terpusat oleh KPS</h3>
+            <p class="text-xs text-slate-600 mt-1 leading-relaxed max-w-3xl">
+              Sesuai pedoman baru SIM-PKL TIK PNJ, seluruh penetapan pasangan mahasiswa dan dosen pembimbing diproses dan disahkan oleh <strong>Koordinator Program Studi (KPS)</strong>. Dosen menerima daftar mahasiswa bimbingan yang telah terverifikasi secara resmi untuk dilakukan asistensi logbook dan pemenuhan capaian magang.
             </p>
           </div>
         </div>
-
-        <!-- Incoming Requests List -->
-        <div class="grid grid-cols-1 gap-4">
-          @forelse($incomingF1 ?? [] as $app)
-            @php
-              $mhsInitials = collect(explode(' ', $app->student->name))->map(fn($w) => strtoupper(substr($w, 0, 1)))->take(2)->implode('');
-            @endphp
-            <div class="p-5 rounded-2xl bg-gradient-to-r from-amber-50/40 via-white to-slate-50 border border-amber-200/80 hover:border-amber-300 shadow-sm transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-              <div class="flex items-start gap-4 min-w-0">
-                <div class="w-12 h-12 rounded-2xl bg-amber-600 text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
-                  {{ $mhsInitials }}
-                </div>
-                <div class="flex flex-col min-w-0">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <h3 class="text-base font-bold font-heading text-slate-800">{{ $app->student->name }}</h3>
-                    <span class="px-2 py-0.5 rounded bg-blue-50 text-[#0056B3] text-xs font-mono font-semibold">NIM: {{ $app->student->identifier }}</span>
-                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-medium">{{ $app->student->prodi ?? 'Teknik Informatika (D4)' }}</span>
-                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
-                      <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                      <span>Menunggu ACC &amp; Upload PDF</span>
-                    </span>
-                  </div>
-                  <div class="mt-2 space-y-1 text-xs sm:text-sm text-slate-700">
-                    <div class="flex items-center gap-2">
-                      <span class="material-symbols-outlined text-[16px] text-rose-500">domain</span>
-                      <strong>{{ $app->company_name ?? 'Perusahaan Magang' }}</strong>
-                      <span class="text-slate-400">•</span>
-                      <span class="text-slate-500">Topik: {{ $app->internship_title ?? 'Praktik Kerja Lapangan' }}</span>
-                    </div>
-                    <p class="text-xs text-slate-500">
-                      Diajukan pada: <span class="font-mono">{{ $app->created_at ? $app->created_at->translatedFormat('d M Y, H:i') : 'Baru saja' }} WIB</span> <span class="text-slate-400">({{ $app->created_at ? $app->created_at->diffForHumans() : 'baru saja' }})</span> • WhatsApp: <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $app->student->phone ?? '') }}" target="_blank" class="text-emerald-600 font-semibold hover:underline">{{ $app->student->phone ?? '-' }}</a>
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Action: Approve with PDF or Reject -->
-              <div class="flex items-center gap-2.5 flex-shrink-0 justify-end pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-                <button type="button" 
-                        data-app-id="{{ $app->id }}"
-                        data-student-name="{{ $app->student->name }}"
-                        data-student-nim="{{ $app->student->identifier }}"
-                        data-company="{{ $app->company_name }}"
-                        data-title="{{ $app->internship_title }}"
-                        onclick="openF1ModalFromBtn(this)" 
-                        class="bg-[#02796B] hover:bg-[#006054] text-white px-4 py-2.5 rounded-xl text-xs font-bold font-heading flex items-center gap-2 transition-all shadow-sm">
-                  <span class="material-symbols-outlined text-[18px]">upload_file</span>
-                  <span>ACC &amp; Upload Surat PDF</span>
-                </button>
-                <form action="{{ route('f1.reject', $app->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menolak pengajuan bimbingan dari {{ addslashes($app->student->name) }}?')">
-                  @csrf
-                  <button type="submit" class="p-2.5 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 hover:border-rose-200 rounded-xl transition-colors" title="Tolak Pengajuan">
-                    <span class="material-symbols-outlined text-[18px]">close</span>
-                  </button>
-                </form>
-              </div>
-            </div>
-          @empty
-            <div class="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
-              <span class="material-symbols-outlined text-4xl text-slate-400">task_alt</span>
-              <p class="text-slate-600 font-semibold mt-2">Tidak ada pengajuan Form F1 yang menunggu persetujuan.</p>
-              <p class="text-xs text-slate-400 mt-1">Saat mahasiswa memilih Anda sebagai dosen pembimbing, pengajuan mereka akan tampil di sini.</p>
-            </div>
-          @endforelse
+        <div class="flex items-center gap-2 flex-shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200/60">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 shadow-sm">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>{{ count($students ?? []) }} Mahasiswa Resmi Aktif</span>
+          </span>
         </div>
       </div>
 
@@ -577,14 +516,6 @@
                     <a href="{{ route('logbook.dosen', ['student_id' => $st->id]) }}" title="Lihat Aktivitas Mahasiswa" class="p-2 bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors">
                       <span class="material-symbols-outlined text-[18px]">visibility</span>
                     </a>
-                    <!-- Tombol Hapus Mahasiswa dari Bimbingan -->
-                    <form action="{{ route('dosen.students.remove', $st->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus mahasiswa {{ addslashes($st->name) }} (NIM: {{ $st->identifier }}) dari daftar bimbingan Anda? Seluruh riwayat logbook mahasiswa ini akan dibersihkan dan slot kuota Anda akan kembali terbuka.')" class="inline">
-                      @csrf
-                      @method('DELETE')
-                      <button type="submit" title="Hapus Mahasiswa dari Daftar Bimbingan" class="p-2 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 border border-rose-200 rounded-xl transition-colors">
-                        <span class="material-symbols-outlined text-[18px]">person_remove</span>
-                      </button>
-                    </form>
                   </div>
 
                 </div>
@@ -616,13 +547,13 @@
                   <h4 class="text-sm sm:text-base font-bold font-heading text-slate-700 mt-0.5">
                     {{ $slot === 7 ? 'Slot Kuota Terakhir Pembimbingan PKL' : 'Siap Menerima 1 Mahasiswa Bimbingan Tambahan' }}
                   </h4>
-                  <p class="text-xs text-slate-400 mt-0.5">Mahasiswa Jurusan TIK dapat mengajukan Anda sebagai dosen pembimbing.</p>
+                  <p class="text-xs text-slate-400 mt-0.5">Penetapan mahasiswa pada slot ini akan ditentukan langsung oleh KPS Jurusan TIK.</p>
                 </div>
               </div>
-              <button type="button" onclick="openNewStudentModal()" class="w-full sm:w-auto bg-white hover:bg-slate-100 text-[#0056B3] border border-slate-200 font-bold font-heading text-xs px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm">
-                <span class="material-symbols-outlined text-[16px]">add_circle</span>
-                <span>Terima Mahasiswa Baru</span>
-              </button>
+              <div class="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-500 flex items-center justify-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>Slot Terbuka (Dikelola KPS)</span>
+              </div>
             </div>
           @endfor
 

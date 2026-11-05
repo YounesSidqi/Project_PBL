@@ -82,7 +82,33 @@ class DatabaseSeeder extends Seeder
         }
         $dosenUtama = $dosenUsers[0]; // Dr. Bambang Sutrisno, M.T.
 
-        // 2. Mahasiswa: Ahmad Fauzi
+        // 1.5. Akun Koordinator Program Studi (KPS) Jurusan TIK PNJ
+        $kpsUser = User::updateOrCreate(
+            ['email' => 'kps.ti@pnj.ac.id'],
+            [
+                'name' => 'Dr. Eng. Nur Aisyah, S.Kom., M.T. (KPS)',
+                'identifier' => '197508102000031001',
+                'role' => 'kps',
+                'prodi' => 'Teknik Informatika (D4)',
+                'phone' => '081298765433',
+                'password' => bcrypt('password123'),
+            ]
+        );
+
+        // Akun Admin / KPS alternatif
+        User::updateOrCreate(
+            ['email' => 'admin.tik@pnj.ac.id'],
+            [
+                'name' => 'Koordinator PKL TIK PNJ',
+                'identifier' => 'KPS-TIK-01',
+                'role' => 'kps',
+                'prodi' => 'Jurusan TIK PNJ',
+                'phone' => '081298765400',
+                'password' => bcrypt('password123'),
+            ]
+        );
+
+        // 2. Mahasiswa: Ahmad Fauzi (Telah ditetapkan KPS ke Dr. Bambang Sutrisno)
         $mhs = User::updateOrCreate(
             ['email' => '2107411002@stu.pnj.ac.id'],
             [
@@ -96,7 +122,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 3. Mahasiswa Tambahan untuk demo request F1: Budi Santoso (Pending)
+        // 3. Mahasiswa Tambahan untuk demo request F1: Budi Santoso (Pending penetapan KPS)
         $mhsPending = User::updateOrCreate(
             ['email' => '2107411005@stu.pnj.ac.id'],
             [
@@ -105,12 +131,12 @@ class DatabaseSeeder extends Seeder
                 'role' => 'mahasiswa',
                 'prodi' => 'Teknik Informatika (D4)',
                 'phone' => '081233445566',
-                'dosen_id' => null, // Belum di-ACC
+                'dosen_id' => null, // Belum ditetapkan KPS
                 'password' => bcrypt('password123'),
             ]
         );
 
-        // Mahasiswa Tambahan: Siti Rahmawati (Pending)
+        // Mahasiswa Tambahan: Siti Rahmawati (Pending penetapan KPS)
         $mhsPending2 = User::updateOrCreate(
             ['email' => '2107411012@stu.pnj.ac.id'],
             [
@@ -119,7 +145,21 @@ class DatabaseSeeder extends Seeder
                 'role' => 'mahasiswa',
                 'prodi' => 'Teknik Informatika (D4)',
                 'phone' => '081277889900',
-                'dosen_id' => null, // Belum di-ACC
+                'dosen_id' => null, // Belum ditetapkan KPS
+                'password' => bcrypt('password123'),
+            ]
+        );
+
+        // Mahasiswa Tambahan: Dimas Prasetyo (Belum mengajukan / belum terplot)
+        $mhsUnassigned = User::updateOrCreate(
+            ['email' => '2107411020@stu.pnj.ac.id'],
+            [
+                'name' => 'Dimas Prasetyo',
+                'identifier' => '2107411020',
+                'role' => 'mahasiswa',
+                'prodi' => 'Teknik Informatika (D4)',
+                'phone' => '081244556677',
+                'dosen_id' => null,
                 'password' => bcrypt('password123'),
             ]
         );
@@ -127,13 +167,13 @@ class DatabaseSeeder extends Seeder
         // Create sample PDF for Surat Pernyataan Kesediaan
         Storage::disk('public')->makeDirectory('surat_f1');
         $samplePdfPath = 'surat_f1/surat_pernyataan_bambang_sutrisno.pdf';
-        if (!Storage::disk('public')->exists($samplePdfPath)) {
+        if (! Storage::disk('public')->exists($samplePdfPath)) {
             $pdfContent = "%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj\n4 0 obj << /Length 320 >> stream\nBT\n/F1 16 Tf\n50 720 Td\n(KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI) Tj\n/F1 14 Tf\n0 -25 Td\n(POLITEKNIK NEGERI JAKARTA - JURUSAN TIK) Tj\n/F1 12 Tf\n0 -40 Td\n(SURAT PERNYATAAN KESEDIAAN DOSEN PEMBIMBING PKL (FORM F1)) Tj\n0 -30 Td\n(Menyatakan bersedia membimbing mahasiswa Ahmad Fauzi (NIM: 2107411002).) Tj\n0 -20 Td\n(Instansi PKL: PT Telekomunikasi Seluler (Telkomsel)) Tj\n0 -40 Td\n(Dosen Pembimbing: Dr. Bambang Sutrisno, M.T. | NIP: 198503152010121002) Tj\nET\nendstream\nendobj\n5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\nxref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000244 00000 n \n0000000615 00000 n \ntrailer << /Size 6 /Root 1 0 R >>\nstartxref\n690\n%%EOF";
             Storage::disk('public')->put($samplePdfPath, $pdfContent);
         }
 
         // 4. Form F1 Applications
-        // Ahmad Fauzi: Approved
+        // Ahmad Fauzi: Approved oleh KPS
         F1Application::updateOrCreate(
             [
                 'student_id' => $mhs->id,
@@ -147,11 +187,11 @@ class DatabaseSeeder extends Seeder
                 'surat_pernyataan_name' => 'Surat_Pernyataan_Bambang_Sutrisno.pdf',
                 'signature_hash' => hash('sha256', '198503152010121002_TELKOMSEL_F1'),
                 'approved_at' => now()->subDays(10),
-                'notes' => 'Topik PKL dan tempat magang telah disetujui sesuai kurikulum D4 Teknik Informatika.',
+                'notes' => 'Telah diverifikasi dan disahkan secara resmi oleh Koordinator Program Studi (KPS).',
             ]
         );
 
-        // Budi Santoso: Pending ke Dr. Bambang Sutrisno
+        // Budi Santoso: Pending penetapan KPS ke Dr. Bambang Sutrisno
         F1Application::updateOrCreate(
             [
                 'student_id' => $mhsPending->id,
@@ -165,11 +205,11 @@ class DatabaseSeeder extends Seeder
                 'surat_pernyataan_name' => null,
                 'signature_hash' => null,
                 'approved_at' => null,
-                'notes' => 'Menunggu verifikasi dan berkas surat pernyataan dosen.',
+                'notes' => 'Menunggu verifikasi dan penetapan resmi oleh Koordinator Program Studi (KPS).',
             ]
         );
 
-        // Siti Rahmawati: Pending ke Dr. Bambang Sutrisno
+        // Siti Rahmawati: Pending penetapan KPS ke Dr. Bambang Sutrisno
         F1Application::updateOrCreate(
             [
                 'student_id' => $mhsPending2->id,
@@ -183,7 +223,7 @@ class DatabaseSeeder extends Seeder
                 'surat_pernyataan_name' => null,
                 'signature_hash' => null,
                 'approved_at' => null,
-                'notes' => 'Menunggu verifikasi dan berkas surat pernyataan dosen.',
+                'notes' => 'Menunggu verifikasi dan penetapan resmi oleh Koordinator Program Studi (KPS).',
             ]
         );
 

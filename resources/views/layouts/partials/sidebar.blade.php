@@ -1,10 +1,15 @@
 @php
   $user = Auth::user();
-  $role = $role ?? (request()->query('role') ?? (request()->routeIs('*dosen*') ? 'dosen' : ($user->role ?? 'mahasiswa')));
+  $role = $role ?? (request()->query('role') ?? (request()->routeIs('*kps*') ? 'kps' : (request()->routeIs('*dosen*') ? 'dosen' : ($user->role ?? 'mahasiswa'))));
   
   $tab = request()->query('tab');
-  if ($role === 'dosen' && $tab === 'f1') {
-    $active = 'validasi_f1';
+  if ($role === 'kps' || $role === 'admin') {
+    $active = match ($tab) {
+      'plotting' => 'plotting_f1',
+      'kuota' => 'kuota_dosen',
+      'rekap' => 'rekap_mahasiswa',
+      default => 'dashboard_kps',
+    };
   } elseif (!empty($activePage)) {
     $active = $activePage;
   } elseif (request()->routeIs('form.f2*')) {
@@ -15,8 +20,16 @@
     $active = request()->routeIs('*logbook*') ? 'logbook' : (request()->routeIs('*dashboard*') ? 'dashboard' : '');
   }
   
-  $userName = ($role === 'dosen' && ($user->role ?? '') !== 'dosen') ? 'Dr. Bambang Sutrisno, M.T.' : ($user->name ?? 'Pengguna SIM-PKL');
-  $userRoleLabel = ($role === 'dosen') ? 'Dosen Pembimbing' : 'Mahasiswa (D4 TI)';
+  if ($role === 'kps' || $role === 'admin') {
+    $userName = ($user && in_array($user->role, ['kps', 'admin'])) ? $user->name : 'Dr. Eng. Nur Aisyah, S.Kom., M.T. (KPS)';
+    $userRoleLabel = 'KPS Teknik Informatika';
+  } elseif ($role === 'dosen') {
+    $userName = ($user && $user->role === 'dosen') ? $user->name : 'Dr. Bambang Sutrisno, M.T.';
+    $userRoleLabel = 'Dosen Pembimbing';
+  } else {
+    $userName = $user->name ?? 'Ahmad Fauzi';
+    $userRoleLabel = 'Mahasiswa (D4 TI)';
+  }
   
   if (str_starts_with($userName, 'Dr. ')) {
     $clean = trim(substr($userName, 4));
@@ -31,7 +44,46 @@
     }
   }
 
-  // Mahasiswa Menu Items (Consistent with SIM-PKL standard)
+  // KPS Menu Items (Otoritas Eksklusif Penetapan & Plotting)
+  $pendingKpsCount = \App\Models\F1Application::where('status', 'pending')->count();
+  $totalDosenCount = \App\Models\User::where('role', 'dosen')->count();
+
+  $kpsNav = [
+    [
+      'id' => 'dashboard_kps',
+      'label' => 'Dashboard KPS',
+      'icon' => 'dashboard',
+      'route' => route('dashboard.kps', ['tab' => 'ringkasan']),
+      'badge' => null,
+      'badgeClass' => '',
+    ],
+    [
+      'id' => 'plotting_f1',
+      'label' => 'Penetapan & Plotting (F1)',
+      'icon' => 'assignment_turned_in',
+      'route' => route('dashboard.kps', ['tab' => 'plotting']),
+      'badge' => ($pendingKpsCount > 0 ? $pendingKpsCount . ' Baru' : null),
+      'badgeClass' => ($pendingKpsCount > 0 ? 'bg-amber-100 text-amber-800 font-bold' : ''),
+    ],
+    [
+      'id' => 'kuota_dosen',
+      'label' => 'Distribusi Kuota Dosen',
+      'icon' => 'pie_chart',
+      'route' => route('dashboard.kps', ['tab' => 'kuota']),
+      'badge' => $totalDosenCount . ' Dosen',
+      'badgeClass' => 'bg-blue-100 text-[#0056B3] font-semibold',
+    ],
+    [
+      'id' => 'rekap_mahasiswa',
+      'label' => 'Rekap Seluruh Mahasiswa',
+      'icon' => 'badge',
+      'route' => route('dashboard.kps', ['tab' => 'rekap']),
+      'badge' => null,
+      'badgeClass' => '',
+    ],
+  ];
+
+  // Mahasiswa Menu Items
   $mahasiswaNav = [
     [
       'id' => 'dashboard',
@@ -94,13 +146,10 @@
     ],
   ];
 
-  // Dosen Menu Items (Consistent order & labels)
+  // Dosen Menu Items (Dosen hanya terima bersih mahasiswa yang telah ditetapkan KPS)
   $dosenId = ($user && $user->role === 'dosen') ? $user->id : (\App\Models\User::where('role', 'dosen')->value('id') ?? 1);
   $studentCount = \App\Models\User::where('role', 'mahasiswa')->where('dosen_id', $dosenId)->count();
   $pendingCount = \App\Models\Logbook::where('dosen_id', $dosenId)
-                    ->where('status', 'pending')
-                    ->count();
-  $pendingF1Count = \App\Models\F1Application::where('dosen_id', $dosenId)
                     ->where('status', 'pending')
                     ->count();
 
@@ -113,15 +162,6 @@
       'onclick' => "updateSidebarActive('dashboard'); if(window.location.hash){ history.replaceState(null, null, window.location.pathname); } if(typeof filterStudents === 'function') { const sf = document.getElementById('status-filter'); if(sf) { sf.value='all'; filterStudents(); } }",
       'badge' => $studentCount . '/7',
       'badgeClass' => 'bg-white/20 text-white',
-    ],
-    [
-      'id' => 'validasi_f1',
-      'label' => 'Validasi Form F1',
-      'icon' => 'assignment_turned_in',
-      'route' => route('dashboard.dosen', ['tab' => 'f1']) . '#f1-section',
-      'onclick' => "updateSidebarActive('validasi_f1'); if(typeof showF1Tab === 'function') { showF1Tab(); }",
-      'badge' => ($pendingF1Count > 0 ? $pendingF1Count . ' Baru' : null),
-      'badgeClass' => ($pendingF1Count > 0 ? 'bg-amber-100 text-amber-800 font-bold' : ''),
     ],
     [
       'id' => 'f2',
@@ -167,7 +207,13 @@
     ],
   ];
 
-  $navItems = ($role === 'dosen') ? $dosenNav : $mahasiswaNav;
+  if ($role === 'kps' || $role === 'admin') {
+    $navItems = $kpsNav;
+  } elseif ($role === 'dosen') {
+    $navItems = $dosenNav;
+  } else {
+    $navItems = $mahasiswaNav;
+  }
 @endphp
 
 <!-- Sidebar Navigation Component -->
@@ -176,17 +222,17 @@
     
     <!-- Brand Header -->
     <div class="h-20 px-6 border-b border-slate-100 flex items-center justify-between">
-      <a href="{{ $role === 'dosen' ? route('dashboard.dosen') : route('dashboard.mahasiswa') }}" class="flex items-center gap-3 group">
+      <a href="{{ in_array($role, ['kps', 'admin']) ? route('dashboard.kps') : ($role === 'dosen' ? route('dashboard.dosen') : route('dashboard.mahasiswa')) }}" class="flex items-center gap-3 group">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0056B3] via-[#02796B] to-[#009688] p-[2px] shadow-sm transition-transform group-hover:scale-105 flex-shrink-0">
           <div class="w-full h-full bg-white rounded-[10px] flex items-center justify-center overflow-hidden">
-            <span class="material-symbols-outlined text-[#0056B3] text-[22px]">{{ $role === 'dosen' ? 'supervisor_account' : 'school' }}</span>
+            <span class="material-symbols-outlined text-[#0056B3] text-[22px]">{{ in_array($role, ['kps', 'admin']) ? 'admin_panel_settings' : ($role === 'dosen' ? 'supervisor_account' : 'school') }}</span>
           </div>
         </div>
         <div class="flex flex-col min-w-0">
           <div class="flex items-center gap-1.5">
             <span class="font-heading font-extrabold text-base tracking-tight text-[#0056B3]">SIM-PKL</span>
-            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded {{ $role === 'dosen' ? 'bg-[#02796B]/10 text-[#02796B]' : 'bg-[#009688]/10 text-[#02796B]' }} tracking-wide">
-              {{ $role === 'dosen' ? 'DOSEN' : 'TIK' }}
+            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded {{ in_array($role, ['kps', 'admin']) ? 'bg-amber-100 text-amber-800' : ($role === 'dosen' ? 'bg-[#02796B]/10 text-[#02796B]' : 'bg-[#009688]/10 text-[#02796B]') }} tracking-wide">
+              {{ in_array($role, ['kps', 'admin']) ? 'KPS TI' : ($role === 'dosen' ? 'DOSEN' : 'TIK') }}
             </span>
           </div>
           <span class="text-[11px] text-slate-500 font-medium truncate">Politeknik Negeri Jakarta</span>
@@ -203,7 +249,7 @@
         <div class="flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-[#009688] animate-pulse"></span>
           <span class="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
-            {{ $role === 'dosen' ? 'Portal Dosen' : 'Modul PKL' }}
+            {{ in_array($role, ['kps', 'admin']) ? 'Portal KPS' : ($role === 'dosen' ? 'Portal Dosen' : 'Modul PKL') }}
           </span>
         </div>
         <span class="text-xs font-bold text-[#0056B3]">TA 2025/2026</span>
@@ -245,7 +291,17 @@
 
     <!-- Sidebar Bottom Info Banner -->
     <div class="p-4 border-t border-slate-100">
-      @if($role === 'dosen')
+      @if(in_array($role, ['kps', 'admin']))
+        <div class="bg-gradient-to-br from-slate-50 to-amber-50/60 border border-amber-200/80 p-3.5 rounded-xl">
+          <div class="flex items-center gap-2 text-amber-800">
+            <span class="material-symbols-outlined text-[18px]">gavel</span>
+            <span class="text-xs font-bold font-heading">Otoritas Penetapan KPS</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+            Koordinator Program Studi (KPS) berwenang memvalidasi pengajuan dan menetapkan pembimbing PKL.
+          </p>
+        </div>
+      @elseif($role === 'dosen')
         <div class="bg-gradient-to-br from-slate-50 to-teal-50/50 border border-slate-200/80 p-3.5 rounded-xl">
           <div class="flex items-center gap-2 text-[#02796B]">
             <span class="material-symbols-outlined text-[18px]">rule</span>
