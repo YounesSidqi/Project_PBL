@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Industri;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -54,6 +55,14 @@ class AuthController extends Controller
         if (! empty($role)) {
             if ($role === 'dudi' || $role === 'industri') {
                 $userExists = User::where($field, $identifier)->first();
+                if (! $userExists && $isEmail) {
+                    $pendingInd = Industri::where('email_pj', $identifier)->first();
+                    if ($pendingInd && $pendingInd->status_verifikasi === 'pending') {
+                        throw ValidationException::withMessages([
+                            'identifier' => "Perusahaan \"{$pendingInd->nama_perusahaan}\" masih berstatus Pending. Silakan login sebagai Admin untuk menekan Accept terlebih dahulu agar akun DUDI aktif.",
+                        ]);
+                    }
+                }
                 if ($userExists && ! in_array($userExists->role, ['industri', 'dudi'])) {
                     throw ValidationException::withMessages([
                         'identifier' => 'Akun ini bukan merupakan akun Mitra DUDI / Industri.',

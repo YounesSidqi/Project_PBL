@@ -290,7 +290,7 @@ class AdminController extends Controller
     private function activateIndustriAndCreateAccount(Industri $industri): ?array
     {
         $user = $industri->user;
-        $generatedPassword = 'dudi'.rand(1000, 9999);
+        $generatedPassword = 'password123';
 
         if (! $user) {
             $slug = Str::slug($industri->nama_perusahaan, '.');
