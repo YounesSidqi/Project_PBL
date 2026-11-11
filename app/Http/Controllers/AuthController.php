@@ -59,18 +59,11 @@ class AuthController extends Controller
                         'identifier' => 'Akun ini bukan merupakan akun Mitra DUDI / Industri.',
                     ]);
                 }
-            } elseif ($role === 'admin') {
+            } elseif ($role === 'admin' || $role === 'kps') {
                 $userExists = User::where($field, $identifier)->first();
-                if ($userExists && $userExists->role !== 'admin') {
+                if ($userExists && ! in_array($userExists->role, ['admin', 'kps'])) {
                     throw ValidationException::withMessages([
-                        'identifier' => 'Akun ini bukan merupakan akun Admin Jurusan.',
-                    ]);
-                }
-            } elseif ($role === 'kps') {
-                $userExists = User::where($field, $identifier)->first();
-                if ($userExists && ! in_array($userExists->role, ['kps', 'admin'])) {
-                    throw ValidationException::withMessages([
-                        'identifier' => 'Akun ini bukan merupakan akun KPS.',
+                        'identifier' => 'Akun ini bukan merupakan akun KPS / Admin Jurusan.',
                     ]);
                 }
             } else {
