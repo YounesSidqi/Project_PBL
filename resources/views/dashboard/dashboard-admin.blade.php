@@ -121,8 +121,8 @@
 
   <a href="{{ route('dashboard.admin', ['tab' => 'mahasiswa']) }}"
      class="inline-flex items-center gap-2 px-4 py-3 border-b-2 text-xs sm:text-sm font-bold tracking-tight transition-all {{ $tab === 'mahasiswa' ? 'border-[#0056B3] text-[#0056B3]' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
-    <span class="material-symbols-outlined text-[18px]">upload_file</span>
-    <span>Manajemen Mahasiswa &amp; Import</span>
+    <span class="material-symbols-outlined text-[18px]">tune</span>
+    <span>Full Control Mahasiswa &amp; Import</span>
   </a>
 
   <a href="{{ route('dashboard.admin', ['tab' => 'users']) }}"
@@ -266,6 +266,15 @@
                 <a href="{{ route('dokumen.surat-pengantar', $sp->id) }}" target="_blank" class="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold text-xs flex items-center gap-1 shadow-sm transition-colors">
                   <span class="material-symbols-outlined text-[15px]">print</span> Berkas KOP
                 </a>
+
+                <form method="POST" action="{{ route('admin.mahasiswa.destroy-pkl', $sp->mahasiswa_id) }}" onsubmit="return confirm('Hapus tempat PKL ({{ $sp->industri->nama_perusahaan ?? '' }}) untuk mahasiswa {{ $sp->mahasiswa->name }}? Mahasiswa akan kembali ke status Belum Ada Penempatan.')">
+                  @csrf
+                  @method('DELETE')
+                  <input type="hidden" name="redirect_tab" value="surat">
+                  <button type="submit" class="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 font-bold text-xs flex items-center gap-1 transition-colors" title="Hapus Tempat PKL Mahasiswa">
+                    <span class="material-symbols-outlined text-[15px]">delete</span> Hapus PKL
+                  </button>
+                </form>
               </div>
 
               <!-- Modal Forward Pengajuan ke Industri Terdaftar (PRD 5.2) -->
@@ -732,45 +741,228 @@
     </div>
   </div>
 
-  <!-- Tabel Data Mahasiswa Terdaftar -->
+  <!-- Tabel Full Control Data Mahasiswa & Penempatan PKL -->
   <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
-    <h3 class="text-base font-bold font-heading text-slate-800 mb-4">Daftar Mahasiswa Terdaftar ({{ $mahasiswas->count() }})</h3>
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+      <div>
+        <h3 class="text-base font-bold font-heading text-slate-800 flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#0056B3]">tune</span>
+          <span>Full Control Data Mahasiswa, Status &amp; Tempat PKL ({{ $mahasiswas->count() }})</span>
+        </h3>
+        <p class="text-xs text-slate-500">
+          Admin memiliki akses penuh untuk mengedit profil mahasiswa, mengubah status/dosen pembimbing, mengganti perusahaan, atau menghapus tempat PKL mahasiswa.
+        </p>
+      </div>
+    </div>
+
     <div class="overflow-x-auto rounded-xl border border-slate-200">
       <table class="w-full text-left text-xs text-slate-600">
         <thead class="bg-slate-50 text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200">
           <tr>
             <th class="py-3 px-4">NIM &amp; Nama</th>
-            <th class="py-3 px-4">Program Studi</th>
-            <th class="py-3 px-4">Email &amp; Kontak</th>
+            <th class="py-3 px-4">Prodi &amp; Kontak</th>
             <th class="py-3 px-4">Dosen Pembimbing</th>
-            <th class="py-3 px-4">Penempatan Industri</th>
+            <th class="py-3 px-4">Tempat PKL &amp; Status</th>
+            <th class="py-3 px-4 text-center">Full Control Admin</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 font-medium">
           @foreach($mahasiswas as $m)
+          @php
+            $pmAktif = $m->pengajuanMagangAktif;
+          @endphp
           <tr class="hover:bg-slate-50/80 transition-colors">
-            <td class="py-3 px-4 font-bold text-slate-900">
+            <td class="py-3.5 px-4 font-bold text-slate-900">
               <div>{{ $m->name }}</div>
-              <div class="font-mono text-slate-400 text-[11px]">{{ $m->identifier }}</div>
+              <div class="font-mono text-slate-400 text-[11px]">NIM: {{ $m->identifier }}</div>
             </td>
-            <td class="py-3 px-4">{{ $m->prodi }}</td>
-            <td class="py-3 px-4">
-              <div class="text-slate-800">{{ $m->email }}</div>
+            <td class="py-3.5 px-4">
+              <div class="font-semibold text-slate-800">{{ $m->prodi }}</div>
+              <div class="text-slate-500 text-[11px]">{{ $m->email }}</div>
               <div class="text-slate-400 text-[10px]">{{ $m->phone ?: '-' }}</div>
             </td>
-            <td class="py-3 px-4">
+            <td class="py-3.5 px-4">
               @if($m->dosen)
-                <span class="text-emerald-700 font-bold">{{ $m->dosen->name }}</span>
+                <span class="text-emerald-700 font-bold block">{{ $m->dosen->name }}</span>
+                <span class="text-[10px] text-slate-400 font-mono">NIP: {{ $m->dosen->identifier }}</span>
               @else
                 <span class="text-slate-400 italic">Belum Ditetapkan</span>
               @endif
             </td>
-            <td class="py-3 px-4">
-              @if($m->pengajuanMagangAktif?->industri)
-                <span class="text-[#0056B3] font-bold">{{ $m->pengajuanMagangAktif->industri->nama_perusahaan }}</span>
+            <td class="py-3.5 px-4">
+              @if($pmAktif && $pmAktif->industri)
+                <div class="text-[#0056B3] font-bold">{{ $pmAktif->industri->nama_perusahaan }}</div>
+                <div class="text-[10px] text-slate-500">{{ $pmAktif->posisi_magang ?: 'Internship' }}</div>
+                <div class="flex flex-wrap items-center gap-1 mt-1">
+                  @if($pmAktif->status_surat_pengantar === 'diterbitkan')
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Surat Terbit</span>
+                  @elseif($pmAktif->status_surat_pengantar === 'pending')
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Pending Admin</span>
+                  @elseif($pmAktif->status_surat_pengantar === 'ditolak')
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Ditolak</span>
+                  @else
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">Draft</span>
+                  @endif
+                </div>
               @else
-                <span class="text-slate-400 italic">Belum Ada</span>
+                <span class="text-slate-400 italic">Belum Ada Tempat PKL</span>
               @endif
+            </td>
+            <td class="py-3.5 px-4 text-center">
+              <div class="flex flex-wrap items-center justify-center gap-1.5">
+                <!-- Tombol Edit Data & Status Mahasiswa -->
+                <button type="button" onclick="document.getElementById('modal-edit-mhs-{{ $m->id }}').classList.remove('hidden')" class="px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-[#0056B3] text-[#0056B3] hover:text-white border border-blue-200 font-bold text-xs flex items-center gap-1 transition-colors">
+                  <span class="material-symbols-outlined text-[15px]">edit_square</span> Edit Data &amp; Status
+                </button>
+
+                <!-- Tombol Hapus Tempat PKL -->
+                @if($pmAktif)
+                  <form method="POST" action="{{ route('admin.mahasiswa.destroy-pkl', $m->id) }}" onsubmit="return confirm('Hapus tempat PKL ({{ $pmAktif->industri->nama_perusahaan ?? '' }}) dari mahasiswa {{ $m->name }}?')">
+                    @csrf
+                    @method('DELETE')
+                    <input type="hidden" name="redirect_tab" value="mahasiswa">
+                    <button type="submit" class="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-600 text-amber-800 hover:text-white border border-amber-200 font-bold text-xs flex items-center gap-1 transition-colors" title="Reset / Hapus Tempat PKL Mahasiswa">
+                      <span class="material-symbols-outlined text-[15px]">domain_disabled</span> Hapus Tempat PKL
+                    </button>
+                  </form>
+                @endif
+
+                <!-- Tombol Hapus Akun Mahasiswa -->
+                <form method="POST" action="{{ route('admin.mahasiswa.destroy', $m->id) }}" onsubmit="return confirm('Yakin ingin menghapus akun mahasiswa {{ $m->name }} (NIM: {{ $m->identifier }}) secara permanen?')">
+                  @csrf
+                  @method('DELETE')
+                  <button type="submit" class="p-1.5 rounded-xl bg-slate-100 hover:bg-rose-600 text-slate-500 hover:text-white border border-slate-200 transition-colors" title="Hapus Akun Mahasiswa">
+                    <span class="material-symbols-outlined text-[15px]">person_remove</span>
+                  </button>
+                </form>
+              </div>
+
+              <!-- Modal Full Control Edit Mahasiswa & Status PKL -->
+              <div id="modal-edit-mhs-{{ $m->id }}" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl max-w-2xl w-full p-6 text-left shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
+                  <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-9 h-9 rounded-xl bg-blue-50 text-[#0056B3] flex items-center justify-center">
+                        <span class="material-symbols-outlined text-[20px]">tune</span>
+                      </div>
+                      <div>
+                        <h3 class="text-base font-bold text-slate-900">Full Control Mahasiswa: {{ $m->name }}</h3>
+                        <p class="text-xs text-slate-500">Edit profil akademik, dosen pembimbing, penempatan tempat PKL, dan status administrasi.</p>
+                      </div>
+                    </div>
+                    <button type="button" onclick="document.getElementById('modal-edit-mhs-{{ $m->id }}').classList.add('hidden')" class="p-1 rounded-lg text-slate-400 hover:text-slate-700">
+                      <span class="material-symbols-outlined text-[20px]">close</span>
+                    </button>
+                  </div>
+
+                  <form method="POST" action="{{ route('admin.mahasiswa.update', $m->id) }}" class="space-y-4">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="redirect_tab" value="mahasiswa">
+
+                    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
+                      <div class="text-[11px] font-extrabold uppercase tracking-wider text-[#0056B3]">1. Identitas &amp; Profil Akademik Mahasiswa</div>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">NIM Mahasiswa <span class="text-rose-500">*</span></label>
+                          <input type="text" name="identifier" required value="{{ $m->identifier }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5 bg-white">
+                        </div>
+                        <div>
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Lengkap <span class="text-rose-500">*</span></label>
+                          <input type="text" name="name" required value="{{ $m->name }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5 bg-white">
+                        </div>
+                        <div>
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email Kampus <span class="text-rose-500">*</span></label>
+                          <input type="email" name="email" required value="{{ $m->email }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5 bg-white">
+                        </div>
+                        <div>
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">No. Telepon / WhatsApp</label>
+                          <input type="text" name="phone" value="{{ $m->phone }}" placeholder="0812xxxxxxxx" class="w-full text-xs rounded-xl border-slate-200 p-2.5 bg-white">
+                        </div>
+                        <div class="sm:col-span-2">
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Program Studi</label>
+                          <select name="prodi" class="w-full text-xs rounded-xl border-slate-200 p-2.5 bg-white">
+                            <option value="Teknik Informatika (D4)" {{ $m->prodi === 'Teknik Informatika (D4)' ? 'selected' : '' }}>Teknik Informatika (D4)</option>
+                            <option value="Teknik Komputer & Jaringan (D1/D3)" {{ str_contains($m->prodi ?? '', 'Jaringan') ? 'selected' : '' }}>Teknik Komputer &amp; Jaringan</option>
+                            <option value="Broadband Multimedia (D4)" {{ str_contains($m->prodi ?? '', 'Multimedia') ? 'selected' : '' }}>Broadband Multimedia (D4)</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="p-3.5 rounded-xl bg-teal-50/40 border border-teal-200/70 space-y-3">
+                      <div class="text-[11px] font-extrabold uppercase tracking-wider text-[#02796B]">2. Kontrol Tempat PKL, Status Surat &amp; Dosen Pembimbing</div>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="sm:col-span-2">
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Perusahaan / Tempat PKL</label>
+                          <select name="industri_id" class="w-full text-xs rounded-xl border-slate-200 p-2.5 bg-white">
+                            <option value="">-- Belum Ditempatkan / Tidak Diubah --</option>
+                            @foreach($industris as $indOpt)
+                              <option value="{{ $indOpt->id }}" {{ $pmAktif?->industri_id === $indOpt->id ? 'selected' : '' }}>
+                                {{ $indOpt->nama_perusahaan }} [Status: {{ strtoupper($indOpt->status_verifikasi) }}]
+                              </option>
+                            @endforeach
+                          </select>
+                        </div>
+
+                        <div>
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Posisi / Divisi PKL</label>
+                          <input type="text" name="posisi_magang" value="{{ $pmAktif?->posisi_magang }}" placeholder="Contoh: Software Engineer Intern" class="w-full text-xs rounded-xl border-slate-200 p-2.5 bg-white">
+                        </div>
+
+                        <div>
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Status Pengajuan &amp; Surat Pengantar</label>
+                          <select name="status_surat_pengantar" class="w-full text-xs rounded-xl border-slate-200 p-2.5 bg-white">
+                            <option value="pending" {{ $pmAktif?->status_surat_pengantar === 'pending' ? 'selected' : '' }}>Pending (Menunggu Verifikasi Admin)</option>
+                            <option value="diterbitkan" {{ $pmAktif?->status_surat_pengantar === 'diterbitkan' ? 'selected' : '' }}>Diterbitkan (Disetujui / Resmi)</option>
+                            <option value="draft" {{ $pmAktif?->status_surat_pengantar === 'draft' ? 'selected' : '' }}>Draft (Mahasiswa Bisa Input Ulang)</option>
+                            <option value="ditolak" {{ $pmAktif?->status_surat_pengantar === 'ditolak' ? 'selected' : '' }}>Ditolak (Mahasiswa Bisa Input Ulang)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tanggal Mulai PKL</label>
+                          <input type="date" name="tanggal_mulai" value="{{ $pmAktif?->tanggal_mulai?->format('Y-m-d') }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5 bg-white">
+                        </div>
+
+                        <div>
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tanggal Selesai PKL</label>
+                          <input type="date" name="tanggal_selesai" value="{{ $pmAktif?->tanggal_selesai?->format('Y-m-d') }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5 bg-white">
+                        </div>
+
+                        <div>
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Dosen Pembimbing PKL</label>
+                          <select name="dosen_id" class="w-full text-xs rounded-xl border-slate-200 p-2.5 bg-white">
+                            <option value="">-- Belum Ditetapkan / Kosongkan Dosen --</option>
+                            @foreach($dosens ?? [] as $dsn)
+                              <option value="{{ $dsn->id }}" {{ $m->dosen_id === $dsn->id ? 'selected' : '' }}>
+                                {{ $dsn->name }} ({{ $dsn->identifier }})
+                              </option>
+                            @endforeach
+                          </select>
+                        </div>
+
+                        <div>
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Status Dosen Pembimbing</label>
+                          <select name="status_dosen" class="w-full text-xs rounded-xl border-slate-200 p-2.5 bg-white">
+                            <option value="pending" {{ $pmAktif?->status_dosen === 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="usulan" {{ $pmAktif?->status_dosen === 'usulan' ? 'selected' : '' }}>Usulan Mahasiswa</option>
+                            <option value="acc_kps" {{ $pmAktif?->status_dosen === 'acc_kps' || $m->dosen_id ? 'selected' : '' }}>Disahkan (ACC KPS)</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                      <button type="button" onclick="document.getElementById('modal-edit-mhs-{{ $m->id }}').classList.add('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Batal</button>
+                      <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#0056B3] hover:bg-blue-700 text-white shadow-sm flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[16px]">save</span>
+                        <span>Simpan Perubahan</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
             </td>
           </tr>
           @endforeach

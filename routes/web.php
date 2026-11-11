@@ -59,9 +59,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/admin', [AdminController::class, 'index'])->name('dashboard.admin');
     Route::post('/admin/mahasiswa', [AdminController::class, 'storeMahasiswa'])->name('admin.mahasiswa.store');
     Route::post('/admin/mahasiswa/import', [AdminController::class, 'importMahasiswa'])->name('admin.mahasiswa.import');
+    Route::put('/admin/mahasiswa/{mahasiswa}', [AdminController::class, 'updateMahasiswa'])->name('admin.mahasiswa.update');
+    Route::delete('/admin/mahasiswa/{mahasiswa}/tempat-pkl', [AdminController::class, 'destroyTempatPkl'])->name('admin.mahasiswa.destroy-pkl');
+    Route::delete('/admin/mahasiswa/{mahasiswa}', [AdminController::class, 'destroyMahasiswa'])->name('admin.mahasiswa.destroy');
     Route::post('/admin/surat-pengantar/{pengajuan}/terbitkan', [AdminController::class, 'terbitkanSuratPengantar'])->name('admin.surat.terbitkan');
     Route::post('/admin/surat-pengantar/{pengajuan}/tolak', [AdminController::class, 'tolakSuratPengantar'])->name('admin.surat.tolak');
     Route::post('/admin/industri', [AdminController::class, 'storeIndustri'])->name('admin.industri.store');
+    Route::put('/admin/industri/{industri}', [AdminController::class, 'updateIndustri'])->name('admin.industri.update');
+    Route::delete('/admin/industri/{industri}', [AdminController::class, 'destroyIndustri'])->name('admin.industri.destroy');
     Route::post('/admin/industri/{industri}/acc', [AdminController::class, 'accIndustri'])->name('admin.industri.acc');
     Route::post('/admin/industri/{industri}/reject', [AdminController::class, 'rejectIndustri'])->name('admin.industri.reject');
     Route::post('/admin/pengajuan/{pengajuan}/forward', [AdminController::class, 'forwardPengajuan'])->name('admin.pengajuan.forward');

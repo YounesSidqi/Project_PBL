@@ -47,7 +47,10 @@ class AdminController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // 4. Data Seluruh Pengguna untuk Reset Password
+        // 4. Daftar Dosen untuk Full Control Plotting/Edit Mahasiswa
+        $dosens = User::where('role', 'dosen')->orderBy('name', 'asc')->get();
+
+        // 5. Data Seluruh Pengguna untuk Reset Password
         $usersQuery = User::orderBy('name', 'asc');
         if ($search = $request->query('search_user')) {
             $usersQuery->where(function ($q) use ($search) {
@@ -64,6 +67,7 @@ class AdminController extends Controller
             'mahasiswas',
             'suratPengantars',
             'industris',
+            'dosens',
             'users'
         ));
     }
@@ -441,5 +445,175 @@ class AdminController extends Controller
 
         return redirect()->to(route('dashboard.admin', ['tab' => 'surat']))
             ->with('info', "Status pengajuan magang {$pengajuan->mahasiswa->name} berhasil dikembalikan ke Draft Request per PRD 11.3.");
+    }
+
+    /**
+     * Full Control Admin: Edit Data Mahasiswa, Dosen Pembimbing, Tempat PKL, & Status Pengajuan.
+     */
+    public function updateMahasiswa(Request $request, User $mahasiswa)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'identifier' => 'required|string|max:50|unique:users,identifier,'.$mahasiswa->id,
+            'email' => 'required|email|max:255|unique:users,email,'.$mahasiswa->id,
+            'prodi' => 'required|string|max:100',
+            'phone' => 'nullable|string|max:25',
+            'dosen_id' => 'nullable|exists:users,id',
+            'industri_id' => 'nullable|exists:industris,id',
+            'posisi_magang' => 'nullable|string|max:150',
+            'status_surat_pengantar' => 'nullable|in:draft,pending,diterbitkan,ditolak',
+            'status_dosen' => 'nullable|in:pending,usulan,acc_kps',
+            'tanggal_mulai' => 'nullable|date',
+            'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
+        ]);
+
+        $dosenId = $request->filled('dosen_id') ? (int) $request->dosen_id : null;
+
+        $mahasiswa->update([
+            'name' => $request->name,
+            'identifier' => $request->identifier,
+            'email' => $request->email,
+            'prodi' => $request->prodi,
+            'phone' => $request->phone,
+            'dosen_id' => $dosenId,
+        ]);
+
+        $pengajuan = PengajuanMagang::where('mahasiswa_id', $mahasiswa->id)->latest()->first();
+
+        if ($request->filled('industri_id')) {
+            $statusSurat = $request->input('status_surat_pengantar', $pengajuan?->status_surat_pengantar ?? 'pending');
+            $statusDosen = $request->input('status_dosen', $dosenId ? 'acc_kps' : 'pending');
+
+            $pengajuan = PengajuanMagang::updateOrCreate(
+                ['mahasiswa_id' => $mahasiswa->id],
+                [
+                    'industri_id' => (int) $request->industri_id,
+                    'dosen_id' => $dosenId,
+                    'posisi_magang' => $request->posisi_magang ?: ($pengajuan?->posisi_magang ?: 'Software Engineer Intern'),
+                    'tanggal_mulai' => $request->tanggal_mulai ?: $pengajuan?->tanggal_mulai,
+                    'tanggal_selesai' => $request->tanggal_selesai ?: $pengajuan?->tanggal_selesai,
+                    'status_surat_pengantar' => $statusSurat,
+                    'status_dosen' => $statusDosen,
+                ]
+            );
+
+            if ($statusSurat === 'diterbitkan' && ! $pengajuan->nomor_surat_pengantar) {
+                $pengajuan->update([
+                    'nomor_surat_pengantar' => 'B/'.str_pad($pengajuan->id, 3, '0', STR_PAD_LEFT).'/PL3.TIK/PKL/'.date('Y'),
+                ]);
+            }
+        } elseif ($pengajuan) {
+            $statusSurat = $request->input('status_surat_pengantar', $pengajuan->status_surat_pengantar);
+            $statusDosen = $request->input('status_dosen', $dosenId ? 'acc_kps' : $pengajuan->status_dosen);
+
+            $nomorSurat = $pengajuan->nomor_surat_pengantar;
+            if ($statusSurat === 'diterbitkan' && ! $nomorSurat) {
+                $nomorSurat = 'B/'.str_pad($pengajuan->id, 3, '0', STR_PAD_LEFT).'/PL3.TIK/PKL/'.date('Y');
+            }
+
+            $pengajuan->update([
+                'dosen_id' => $dosenId,
+                'posisi_magang' => $request->filled('posisi_magang') ? $request->posisi_magang : $pengajuan->posisi_magang,
+                'tanggal_mulai' => $request->filled('tanggal_mulai') ? $request->tanggal_mulai : $pengajuan->tanggal_mulai,
+                'tanggal_selesai' => $request->filled('tanggal_selesai') ? $request->tanggal_selesai : $pengajuan->tanggal_selesai,
+                'status_surat_pengantar' => $statusSurat,
+                'status_dosen' => $statusDosen,
+                'nomor_surat_pengantar' => $nomorSurat,
+            ]);
+        }
+
+        $redirectTab = $request->input('redirect_tab', 'mahasiswa');
+
+        return redirect()->to(route('dashboard.admin', ['tab' => $redirectTab]))
+            ->with('success', "Data dan status PKL mahasiswa {$mahasiswa->name} (NIM: {$mahasiswa->identifier}) berhasil diperbarui oleh Admin!");
+    }
+
+    /**
+     * Full Control Admin: Hapus Tempat PKL / Pengajuan Magang Mahasiswa.
+     */
+    public function destroyTempatPkl(Request $request, User $mahasiswa)
+    {
+        $pengajuans = PengajuanMagang::where('mahasiswa_id', $mahasiswa->id)->with('industri')->get();
+
+        foreach ($pengajuans as $pengajuan) {
+            $oldIndustri = $pengajuan->industri;
+            $pengajuan->delete();
+
+            // Jika perusahaan adalah usulan pending/reject yang belum punya akun DUDI dan tidak dipakai mahasiswa lain, ikut bersihkan
+            if ($oldIndustri && $oldIndustri->status_verifikasi !== 'acc' && ! $oldIndustri->user_id && $oldIndustri->pengajuanMagangs()->count() === 0) {
+                $oldIndustri->delete();
+            }
+        }
+
+        $redirectTab = $request->input('redirect_tab', 'mahasiswa');
+
+        return redirect()->to(route('dashboard.admin', ['tab' => $redirectTab]))
+            ->with('info', "Tempat PKL untuk mahasiswa {$mahasiswa->name} berhasil dihapus. Status penempatan mahasiswa telah di-reset sehingga dapat menginput tempat PKL baru.");
+    }
+
+    /**
+     * Full Control Admin: Hapus Akun Mahasiswa.
+     */
+    public function destroyMahasiswa(Request $request, User $mahasiswa)
+    {
+        $nama = $mahasiswa->name;
+        $nim = $mahasiswa->identifier;
+
+        $this->destroyTempatPkl($request, $mahasiswa);
+        $mahasiswa->delete();
+
+        return redirect()->to(route('dashboard.admin', ['tab' => 'mahasiswa']))
+            ->with('info', "Data akun mahasiswa {$nama} (NIM: {$nim}) telah dihapus dari sistem.");
+    }
+
+    /**
+     * Full Control Admin: Edit Data & Status Verifikasi Perusahaan Mitra.
+     */
+    public function updateIndustri(Request $request, Industri $industri)
+    {
+        $request->validate([
+            'nama_perusahaan' => 'required|string|max:255',
+            'bidang_usaha' => 'nullable|string|max:150',
+            'kota' => 'nullable|string|max:100',
+            'alamat' => 'nullable|string|max:500',
+            'kontak_person' => 'nullable|string|max:150',
+            'email_pj' => 'nullable|email|max:150',
+            'telepon' => 'nullable|string|max:50',
+            'status_verifikasi' => 'required|in:pending,acc,reject',
+        ]);
+
+        $industri->update([
+            'nama_perusahaan' => trim($request->nama_perusahaan),
+            'bidang_usaha' => $request->bidang_usaha,
+            'kota' => $request->kota,
+            'alamat' => $request->alamat,
+            'kontak_person' => $request->kontak_person,
+            'email_pj' => $request->email_pj,
+            'telepon' => $request->telepon,
+            'status_verifikasi' => $request->status_verifikasi,
+        ]);
+
+        if ($request->status_verifikasi === 'acc' && ! $industri->user_id) {
+            $this->activateIndustriAndCreateAccount($industri);
+        }
+
+        return redirect()->to(route('dashboard.admin', ['tab' => 'industri']))
+            ->with('success', "Data perusahaan \"{$industri->nama_perusahaan}\" berhasil diperbarui!");
+    }
+
+    /**
+     * Full Control Admin: Hapus Perusahaan Mitra & Lepaskan Penempatan Terkait.
+     */
+    public function destroyIndustri(Request $request, Industri $industri)
+    {
+        $nama = $industri->nama_perusahaan;
+
+        // Hapus pengajuan tempat PKL yang mengarah ke industri ini agar mahasiswa terkait bisa menginput ulang
+        PengajuanMagang::where('industri_id', $industri->id)->delete();
+
+        $industri->delete();
+
+        return redirect()->to(route('dashboard.admin', ['tab' => 'industri']))
+            ->with('info', "Data perusahaan \"{$nama}\" beserta penempatan PKL terkait berhasil dihapus.");
     }
 }

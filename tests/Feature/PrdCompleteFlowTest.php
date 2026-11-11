@@ -532,4 +532,48 @@ class PrdCompleteFlowTest extends TestCase
         $response->assertRedirect(route('dashboard.kps'));
         $this->assertAuthenticated();
     }
+
+    public function test_admin_full_control_can_edit_mahasiswa_status_and_delete_tempat_pkl(): void
+    {
+        $pengajuan = PengajuanMagang::create([
+            'mahasiswa_id' => $this->mahasiswa->id,
+            'industri_id' => $this->industri->id,
+            'posisi_magang' => 'Backend Intern',
+            'status_surat_pengantar' => 'pending',
+        ]);
+
+        // 1. Admin mengedit data, status surat pengantar, dan dosen pembimbing mahasiswa
+        $updateResponse = $this->actingAs($this->admin)->put(route('admin.mahasiswa.update', $this->mahasiswa->id), [
+            'name' => 'Ahmad Fauzi Updated',
+            'identifier' => '2107411002',
+            'email' => '2107411002@stu.pnj.ac.id',
+            'prodi' => 'Teknik Informatika (D4)',
+            'phone' => '081299998888',
+            'dosen_id' => $this->dosen->id,
+            'industri_id' => $this->industri->id,
+            'posisi_magang' => 'Senior Cloud Intern',
+            'status_surat_pengantar' => 'diterbitkan',
+            'status_dosen' => 'acc_kps',
+        ]);
+
+        $updateResponse->assertRedirect();
+        $this->assertDatabaseHas('users', [
+            'id' => $this->mahasiswa->id,
+            'name' => 'Ahmad Fauzi Updated',
+            'dosen_id' => $this->dosen->id,
+        ]);
+        $this->assertDatabaseHas('pengajuan_magangs', [
+            'id' => $pengajuan->id,
+            'posisi_magang' => 'Senior Cloud Intern',
+            'status_surat_pengantar' => 'diterbitkan',
+        ]);
+
+        // 2. Admin menghapus tempat PKL mahasiswa
+        $deletePklResponse = $this->actingAs($this->admin)->delete(route('admin.mahasiswa.destroy-pkl', $this->mahasiswa->id));
+        $deletePklResponse->assertRedirect();
+
+        $this->assertDatabaseMissing('pengajuan_magangs', [
+            'id' => $pengajuan->id,
+        ]);
+    }
 }
