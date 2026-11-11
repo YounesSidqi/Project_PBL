@@ -108,7 +108,39 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is KPS or Admin.
+     * Profil industri yang dikelola jika user ini adalah penanggung jawab industri.
+     */
+    public function industriProfile()
+    {
+        return $this->hasOne(Industri::class, 'user_id');
+    }
+
+    /**
+     * Seluruh riwayat pengajuan magang mahasiswa ini.
+     */
+    public function pengajuanMagangs()
+    {
+        return $this->hasMany(PengajuanMagang::class, 'mahasiswa_id');
+    }
+
+    /**
+     * Pengajuan magang aktif mahasiswa.
+     */
+    public function pengajuanMagangAktif()
+    {
+        return $this->hasOne(PengajuanMagang::class, 'mahasiswa_id')->latestOfMany();
+    }
+
+    /**
+     * Check if user is Admin Jurusan.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Check if user is KPS (Ketua Program Studi).
      */
     public function isKps(): bool
     {
@@ -129,5 +161,29 @@ class User extends Authenticatable
     public function isMahasiswa(): bool
     {
         return $this->role === 'mahasiswa';
+    }
+
+    /**
+     * Check if user is Pembimbing Industri (DUDI).
+     */
+    public function isIndustri(): bool
+    {
+        return in_array($this->role, ['industri', 'dudi']);
+    }
+
+    /**
+     * Accessor for student NIM.
+     */
+    public function getNimAttribute(): ?string
+    {
+        return $this->identifier;
+    }
+
+    /**
+     * Accessor for lecturer/staff NIP.
+     */
+    public function getNipAttribute(): ?string
+    {
+        return $this->identifier;
     }
 }

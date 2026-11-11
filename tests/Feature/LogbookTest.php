@@ -38,7 +38,7 @@ class LogbookTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('logbooks', [
+        $this->assertDatabaseHas('form_f3_logbook', [
             'user_id' => $student->id,
             'subject' => 'Automated Feature Test Entry',
             'status' => 'pending',
@@ -81,7 +81,7 @@ class LogbookTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('logbooks', [
+        $this->assertDatabaseHas('form_f3_logbook', [
             'id' => $logbook->id,
             'subject' => 'Updated Subject Test',
         ]);

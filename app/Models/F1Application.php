@@ -28,7 +28,7 @@ class F1Application extends Model
 {
     use HasFactory;
 
-    protected $table = 'f1_applications';
+    protected $table = 'form_f1_pengajuan';
 
     protected $fillable = [
         'student_id',

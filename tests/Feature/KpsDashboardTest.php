@@ -113,7 +113,7 @@ class KpsDashboardTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('f1_applications', [
+        $this->assertDatabaseHas('form_f1_pengajuan', [
             'student_id' => $this->student1->id,
             'dosen_id' => $this->dosen1->id,
             'status' => 'pending',
@@ -159,7 +159,7 @@ class KpsDashboardTest extends TestCase
 
         $response->assertRedirect(route('dashboard.kps', ['tab' => 'plotting']));
 
-        $this->assertDatabaseHas('f1_applications', [
+        $this->assertDatabaseHas('form_f1_pengajuan', [
             'id' => $application->id,
             'status' => 'approved',
         ]);
@@ -191,7 +191,7 @@ class KpsDashboardTest extends TestCase
 
         $response->assertRedirect(route('dashboard.kps', ['tab' => 'plotting']));
 
-        $this->assertDatabaseHas('f1_applications', [
+        $this->assertDatabaseHas('form_f1_pengajuan', [
             'id' => $application->id,
             'dosen_id' => $this->dosen2->id,
             'status' => 'approved',
@@ -222,7 +222,7 @@ class KpsDashboardTest extends TestCase
             'dosen_id' => $this->dosen1->id,
         ]);
 
-        $this->assertDatabaseHas('f1_applications', [
+        $this->assertDatabaseHas('form_f1_pengajuan', [
             'student_id' => $this->student2->id,
             'dosen_id' => $this->dosen1->id,
             'status' => 'approved',

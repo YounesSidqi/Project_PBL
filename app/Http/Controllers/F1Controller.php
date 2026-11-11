@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\F1Application;
 use App\Models\Logbook;
+use App\Models\PengajuanMagang;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -51,6 +52,27 @@ class F1Controller extends Controller
             'updated_at' => $now,
         ]);
 
+        // Sinkronisasi PengajuanMagang
+        $pengajuan = PengajuanMagang::where('mahasiswa_id', $student->id)->latest()->first();
+        if ($pengajuan) {
+            $pengajuan->update([
+                'dosen_id' => $dosen->id,
+                'status_dosen' => 'usulan',
+                'judul_magang' => $request->internship_title,
+                'updated_at' => $now,
+            ]);
+        } else {
+            PengajuanMagang::create([
+                'mahasiswa_id' => $student->id,
+                'dosen_id' => $dosen->id,
+                'status_dosen' => 'usulan',
+                'judul_magang' => $request->internship_title,
+                'status_surat_pengantar' => 'draft',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Pengajuan preferensi dosen pembimbing ('.$dosen->name.') berhasil dikirimkan pada '.$now->translatedFormat('d M Y, H:i').' WIB! Koordinator Program Studi (KPS) akan memverifikasi dan menetapkan secara resmi.');
     }
 
@@ -64,7 +86,18 @@ class F1Controller extends Controller
         }
 
         if ($application->status === 'pending') {
+            $studentId = $application->student_id;
             $application->delete();
+
+            // Sinkronisasi PengajuanMagang
+            $pengajuan = PengajuanMagang::where('mahasiswa_id', $studentId)->latest()->first();
+            if ($pengajuan && $pengajuan->status_dosen === 'usulan') {
+                $pengajuan->update([
+                    'dosen_id' => null,
+                    'status_dosen' => 'pending',
+                    'updated_at' => now(),
+                ]);
+            }
 
             return redirect()->back()->with('info', 'Pengajuan Form F1 berhasil dibatalkan. Anda dapat memilih dosen pembimbing kembali.');
         }
@@ -145,6 +178,16 @@ class F1Controller extends Controller
             $student->update([
                 'dosen_id' => $application->dosen_id,
             ]);
+
+            $pengajuan = PengajuanMagang::where('mahasiswa_id', $student->id)->latest()->first();
+            if ($pengajuan) {
+                $pengajuan->update([
+                    'dosen_id' => $application->dosen_id,
+                    'status_dosen' => 'acc_kps',
+                    'file_f1' => $storedPath,
+                    'updated_at' => $now,
+                ]);
+            }
         }
 
         return redirect()->to('/dashboard/dosen?tab=mahasiswa#mahasiswa-section')->with('success', 'Form F1 untuk mahasiswa '.($student->name ?? 'Mahasiswa').' berhasil disetujui pada '.$now->translatedFormat('d M Y, H:i').' WIB! Surat Pernyataan Kesediaan (PDF) telah diterbitkan dan mahasiswa resmi masuk daftar bimbingan aktif Anda.');

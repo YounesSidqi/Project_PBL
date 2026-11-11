@@ -757,6 +757,247 @@
 
       </div>
 
+      <!-- SEKSI EVALUASI F6, BIMBINGAN F4, & KALKULASI PYTHON FUZZY LOGIC (PRD 5.3.3, 5.4, 7.5, 9.1) -->
+      @php
+        $activeSt = $selectedStudent ?? ($students ? $students->first() : null);
+        $activePengajuan = $activeSt?->pengajuanMagangAktif;
+        $bimbingansCount = $activePengajuan?->bimbingans?->count() ?? 0;
+        $evalF5 = $activePengajuan?->evaluasiF5;
+        $evalF6 = $activePengajuan?->evaluasiF6;
+      @endphp
+
+      @if($activeSt && $activePengajuan)
+      <div id="penilaian-fuzzy-section" class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-card space-y-6">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-100">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-[#0056B3]">Tahap 4 Panduan PKL</span>
+              <span class="text-xs text-slate-400">•</span>
+              <span class="text-xs text-slate-500 font-medium">Bimbingan F4 (Min 8 Sesi) &amp; Evaluasi F6 (40%)</span>
+            </div>
+            <h2 class="text-xl font-bold font-heading text-slate-800 mt-0.5">
+              Evaluasi Akademik &amp; Engine Penilaian Berbasis Fuzzy Logic
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">
+              Mahasiswa: <strong class="text-slate-800">{{ $activeSt->name }}</strong> (NIM: {{ $activeSt->identifier }}) • Penempatan: {{ $activePengajuan->industri->nama_perusahaan ?? 'Mitra Industri' }}
+            </p>
+          </div>
+
+          <!-- Selector Ganti Mahasiswa jika ada lebih dari 1 -->
+          @if(count($students ?? []) > 1)
+          <form method="GET" action="{{ route('dashboard.dosen') }}#penilaian-fuzzy-section" class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-500">Pilih Mahasiswa:</span>
+            <select name="student_id" onchange="this.form.submit()" class="text-xs font-bold rounded-xl border-slate-200 py-2 px-3 text-slate-700 focus:border-[#0056B3] focus:ring-[#0056B3]">
+              @foreach($students as $st)
+                <option value="{{ $st->id }}" {{ $activeSt->id === $st->id ? 'selected' : '' }}>
+                  {{ $st->name }} ({{ $st->identifier }})
+                </option>
+              @endforeach
+            </select>
+          </form>
+          @endif
+        </div>
+
+        <!-- 3 Columns Metric Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Status F4 Bimbingan -->
+          <div class="p-4 rounded-xl border {{ $bimbingansCount >= 8 ? 'bg-emerald-50/50 border-emerald-200' : 'bg-amber-50/50 border-amber-200' }}">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider {{ $bimbingansCount >= 8 ? 'text-emerald-800' : 'text-amber-800' }}">Logbook Bimbingan F4</span>
+              <span class="material-symbols-outlined text-[20px] {{ $bimbingansCount >= 8 ? 'text-emerald-600' : 'text-amber-600' }}">
+                {{ $bimbingansCount >= 8 ? 'verified' : 'pending' }}
+              </span>
+            </div>
+            <div class="text-2xl font-black font-heading mt-2 {{ $bimbingansCount >= 8 ? 'text-emerald-900' : 'text-amber-900' }}">
+              {{ $bimbingansCount }} <span class="text-sm font-normal text-slate-500">/ 8 Sesi Wajib</span>
+            </div>
+            <div class="text-[11px] font-semibold mt-1 {{ $bimbingansCount >= 8 ? 'text-emerald-700' : 'text-amber-700' }}">
+              {{ $bimbingansCount >= 8 ? 'Telah Memenuhi Syarat Sidang' : 'Kurang ' . (8 - $bimbingansCount) . ' sesi bimbingan lagi' }}
+            </div>
+          </div>
+
+          <!-- Status F5 Nilai Industri (60%) -->
+          <div class="p-4 rounded-xl border {{ $evalF5 ? 'bg-teal-50/50 border-teal-200' : 'bg-slate-50 border-slate-200' }}">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Form F5 Industri (Bobot 60%)</span>
+              <span class="material-symbols-outlined text-[20px] {{ $evalF5 ? 'text-[#02796B]' : 'text-slate-400' }}">domain</span>
+            </div>
+            <div class="text-2xl font-black font-heading mt-2 {{ $evalF5 ? 'text-[#02796B]' : 'text-slate-400' }}">
+              {{ $evalF5 ? $evalF5->rata_rata_f5 . '/100' : 'Belum Diisi' }}
+            </div>
+            <div class="text-[11px] text-slate-500 font-semibold mt-1">
+              {{ $evalF5 ? 'Telah dikirim secara rahasia oleh DUDI' : 'Menunggu input dari pembimbing lapangan' }}
+            </div>
+          </div>
+
+          <!-- Status Nilai Akhir Fuzzy Logic -->
+          <div class="p-4 rounded-xl border {{ $activePengajuan->nilai_akhir_fuzzy ? 'bg-blue-50/60 border-blue-200' : 'bg-slate-50 border-slate-200' }}">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-[#0056B3]">Nilai Akhir Fuzzy Logic</span>
+              <span class="material-symbols-outlined text-[20px] text-[#0056B3]">psychology</span>
+            </div>
+            <div class="text-2xl font-black font-heading mt-2 font-mono text-[#0056B3]">
+              {{ $activePengajuan->nilai_akhir_fuzzy ?? 'Belum Dikalkulasi' }}
+            </div>
+            <div class="text-[11px] text-slate-500 font-semibold mt-1">
+              {{ $activePengajuan->nilai_akhir_fuzzy ? 'Skor numerik rasio resmi (skala 50)' : 'Dihitung via script Python Mamdani' }}
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+          <!-- SUB-FORM 1: INPUT CATATAN SESI BIMBINGAN F4 -->
+          <div class="p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-bold font-heading text-slate-800 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#0056B3]">co_present</span>
+                <span>Catat Sesi Bimbingan Akademik (Form F4)</span>
+              </h3>
+              <a href="{{ route('dokumen.f4', $activePengajuan->id) }}" target="_blank" class="text-xs text-[#0056B3] font-bold hover:underline flex items-center gap-1">
+                <span class="material-symbols-outlined text-[15px]">print</span>
+                <span>Cetak Rekap F4</span>
+              </a>
+            </div>
+
+            <form method="POST" action="{{ route('bimbingan_f4.store', $activePengajuan->id) }}" class="space-y-3">
+              @csrf
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Tanggal Bimbingan</label>
+                  <input type="date" name="tanggal_bimbingan" required value="{{ date('Y-m-d') }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-[#0056B3]">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Progres Bab / Laporan</label>
+                  <input type="text" name="progres_laporan" placeholder="Contoh: Bab III Metodologi" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-[#0056B3]">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Materi / Bahasan Bimbingan</label>
+                <textarea name="materi_bimbingan" rows="2" required placeholder="Uraian konsultasi, arahan perbaikan, atau telaah arsitektur..." class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-[#0056B3]"></textarea>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Catatan Arahan Dosen</label>
+                <input type="text" name="catatan_dosen" placeholder="Contoh: Lanjutkan dokumentasi Bab IV implementasi" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-[#0056B3]">
+              </div>
+
+              <div class="flex items-center justify-end">
+                <button type="submit" class="px-4 py-2 rounded-xl bg-[#0056B3] hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors">
+                  <span class="material-symbols-outlined text-[15px]">add_circle</span>
+                  <span>Catat Sesi Bimbingan (Sesi Ke-{{ $bimbingansCount + 1 }})</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- SUB-FORM 2: EVALUASI AKADEMIK F6 (BOBOT 40%) & TRIGGER FUZZY PYTHON -->
+          <div class="p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-bold font-heading text-slate-800 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#02796B]">grade</span>
+                <span>Evaluasi Nilai Akademik Dosen (Form F6 - 40%)</span>
+              </h3>
+              @if($evalF6)
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Skor F6: {{ $evalF6->rata_rata_f6 }}</span>
+              @endif
+            </div>
+
+            <form method="POST" action="{{ route('dosen.evaluasi_f6.store', $activePengajuan->id) }}" class="space-y-3">
+              @csrf
+              <div class="grid grid-cols-3 gap-2">
+                <div class="bg-white p-2 rounded-lg border border-slate-200">
+                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Kesesuaian Judul</label>
+                  <input type="number" step="0.5" min="0" max="100" name="skor_kesesuaian_judul" required value="{{ old('skor_kesesuaian_judul', $evalF6?->skor_kesesuaian_judul ?? 90) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
+                </div>
+                <div class="bg-white p-2 rounded-lg border border-slate-200">
+                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Tata Bahasa</label>
+                  <input type="number" step="0.5" min="0" max="100" name="skor_tata_bahasa" required value="{{ old('skor_tata_bahasa', $evalF6?->skor_tata_bahasa ?? 85) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
+                </div>
+                <div class="bg-white p-2 rounded-lg border border-slate-200">
+                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Format Laporan</label>
+                  <input type="number" step="0.5" min="0" max="100" name="skor_format_laporan" required value="{{ old('skor_format_laporan', $evalF6?->skor_format_laporan ?? 88) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
+                </div>
+                <div class="bg-white p-2 rounded-lg border border-slate-200">
+                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Pengetahuan Subjek</label>
+                  <input type="number" step="0.5" min="0" max="100" name="skor_pengetahuan" required value="{{ old('skor_pengetahuan', $evalF6?->skor_pengetahuan ?? 90) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
+                </div>
+                <div class="bg-white p-2 rounded-lg border border-slate-200">
+                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Tanya Jawab</label>
+                  <input type="number" step="0.5" min="0" max="100" name="skor_tanya_jawab" required value="{{ old('skor_tanya_jawab', $evalF6?->skor_tanya_jawab ?? 88) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
+                </div>
+                <div class="bg-white p-2 rounded-lg border border-slate-200">
+                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Etika &amp; Sikap</label>
+                  <input type="number" step="0.5" min="0" max="100" name="skor_etika" required value="{{ old('skor_etika', $evalF6?->skor_etika ?? 95) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
+                </div>
+                <div class="bg-white p-2 rounded-lg border border-slate-200">
+                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Justifikasi Solusi</label>
+                  <input type="number" step="0.5" min="0" max="100" name="skor_justifikasi" required value="{{ old('skor_justifikasi', $evalF6?->skor_justifikasi ?? 86) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
+                </div>
+                <div class="bg-white p-2 rounded-lg border border-slate-200">
+                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Rutinitas Bimbingan</label>
+                  <input type="number" step="0.5" min="0" max="100" name="skor_rutinitas_bimbingan" required value="{{ old('skor_rutinitas_bimbingan', $evalF6?->skor_rutinitas_bimbingan ?? 95) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
+                </div>
+                <div class="bg-white p-2 rounded-lg border border-slate-200">
+                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Progres PKL</label>
+                  <input type="number" step="0.5" min="0" max="100" name="skor_progres" required value="{{ old('skor_progres', $evalF6?->skor_progres ?? 88) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 uppercase mb-0.5">Catatan Evaluasi Akademik Dosen</label>
+                <input type="text" name="catatan_dosen" value="{{ old('catatan_dosen', $evalF6?->catatan_dosen) }}" placeholder="Catatan apresiasi atau rekomendasi penyempurnaan..." class="w-full text-xs rounded-xl border-slate-200 p-2 focus:border-[#02796B]">
+              </div>
+
+              <div class="flex items-center justify-end">
+                <button type="submit" class="px-4 py-2 rounded-xl bg-[#02796B] hover:bg-teal-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors">
+                  <span class="material-symbols-outlined text-[15px]">save</span>
+                  <span>Simpan Nilai F6 (Bobot 40%)</span>
+                </button>
+              </div>
+            </form>
+
+            <!-- TRIGGER ACTION BUTTON: KALKULASI & TRANSMISI FUZZY LOGIC PYTHON -->
+            <div class="p-4 rounded-xl bg-gradient-to-r from-slate-900 to-teal-950 text-white mt-4 border border-teal-500/40">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div class="flex items-center gap-1.5 text-teal-300 text-xs font-bold font-mono">
+                    <span class="material-symbols-outlined text-[16px]">terminal</span>
+                    <span>PYTHON FUZZY LOGIC SCORING ENGINE</span>
+                  </div>
+                  <p class="text-[11px] text-slate-300 mt-0.5">
+                    Mengeksekusi inferensi Tsukamoto/Mamdani: F5 (60%) + F6 (40%) &rarr; Output rasio skala 50.
+                  </p>
+                </div>
+
+                <form method="POST" action="{{ route('dosen.kalkulasi-fuzzy', $activePengajuan->id) }}">
+                  @csrf
+                  <button type="submit" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-400 to-emerald-400 hover:from-teal-300 hover:to-emerald-300 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md transition-all">
+                    <span class="material-symbols-outlined text-[16px]">play_arrow</span>
+                    <span>Kalkulasi &amp; Transmit Nilai</span>
+                  </button>
+                </form>
+              </div>
+
+              @if($activePengajuan->nilai_akhir_fuzzy)
+                <div class="mt-3 pt-3 border-t border-teal-500/30 flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs text-teal-200">Skor Terkini:</span>
+                    <span class="text-base font-black font-mono text-emerald-400">{{ $activePengajuan->nilai_akhir_fuzzy }}</span>
+                    <span class="text-xs text-slate-300">({{ $activePengajuan->fuzzy_percentage }}%)</span>
+                  </div>
+                  <a href="{{ route('dokumen.f7', $activePengajuan->id) }}" target="_blank" class="text-xs font-bold text-teal-300 hover:underline flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">file_open</span>
+                    <span>Form F7 Resmi</span>
+                  </a>
+                </div>
+              @endif
+            </div>
+          </div>
+        </div>
+      </div>
+      @endif
+
     </main>
 
     <!-- Footer -->

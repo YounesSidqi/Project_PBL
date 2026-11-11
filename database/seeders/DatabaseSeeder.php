@@ -2,23 +2,79 @@
 
 namespace Database\Seeders;
 
+use App\Models\BimbinganF4;
+use App\Models\EvaluasiF5;
+use App\Models\EvaluasiF6;
 use App\Models\F1Application;
+use App\Models\Industri;
 use App\Models\Logbook;
+use App\Models\PengajuanMagang;
+use App\Models\TugasF2;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database.
+     * Seed the application's database with essential accounts only (no dummy transactions).
      */
     public function run(): void
     {
-        // 1. Daftar Dosen Pembimbing PKL Jurusan TIK
+        // 1. Bersihkan seluruh data transaksi dummy
+        EvaluasiF6::query()->delete();
+        EvaluasiF5::query()->delete();
+        BimbinganF4::query()->delete();
+        Logbook::query()->delete();
+        TugasF2::query()->delete();
+        F1Application::query()->delete();
+        PengajuanMagang::query()->delete();
+
+        // 2. Akun Admin Jurusan TIK PNJ (PRD 3 & 5.1)
+        User::updateOrCreate(
+            ['email' => 'admin.jurusan@pnj.ac.id'],
+            [
+                'name' => 'Biro Administrasi Akademik Jurusan TIK',
+                'identifier' => '198001012005011001',
+                'role' => 'admin',
+                'prodi' => 'Jurusan Teknik Informatika & Komputer',
+                'phone' => '021-7270036',
+                'dosen_id' => null,
+                'password' => Hash::make('password123'),
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'admin.tik@pnj.ac.id'],
+            [
+                'name' => 'Admin Jurusan TIK',
+                'identifier' => '198001012005011002',
+                'role' => 'admin',
+                'prodi' => 'Jurusan TIK PNJ',
+                'phone' => '021-7270037',
+                'dosen_id' => null,
+                'password' => Hash::make('password123'),
+            ]
+        );
+
+        // 3. Akun Koordinator Program Studi (KPS) Jurusan TIK PNJ (PRD 3 & 5.2)
+        User::updateOrCreate(
+            ['email' => 'kps.ti@pnj.ac.id'],
+            [
+                'name' => 'Dr. Eng. Nur Aisyah, S.Kom., M.T. (KPS)',
+                'identifier' => '197508102000031001',
+                'role' => 'kps',
+                'prodi' => 'Teknik Informatika (D4)',
+                'phone' => '081298765433',
+                'dosen_id' => null,
+                'password' => Hash::make('password123'),
+            ]
+        );
+
+        // 4. Daftar Akun Dosen Pembimbing PKL Jurusan TIK PNJ (PRD 3 & 5.4)
         $dosenList = [
             [
                 'name' => 'Dr. Bambang Sutrisno, M.T.',
@@ -27,7 +83,8 @@ class DatabaseSeeder extends Seeder
                 'role' => 'dosen',
                 'prodi' => 'Teknik Informatika',
                 'phone' => '081298765432',
-                'password' => bcrypt('password123'),
+                'dosen_id' => null,
+                'password' => Hash::make('password123'),
             ],
             [
                 'name' => 'Dr. Eng. Nur Aisyah, S.Kom., M.T.',
@@ -36,7 +93,8 @@ class DatabaseSeeder extends Seeder
                 'role' => 'dosen',
                 'prodi' => 'Teknik Informatika',
                 'phone' => '081298765433',
-                'password' => bcrypt('password123'),
+                'dosen_id' => null,
+                'password' => Hash::make('password123'),
             ],
             [
                 'name' => 'Drs. Bambang Wahyudi, M.T.',
@@ -45,7 +103,8 @@ class DatabaseSeeder extends Seeder
                 'role' => 'dosen',
                 'prodi' => 'Teknik Komputer & Jaringan',
                 'phone' => '081298765434',
-                'password' => bcrypt('password123'),
+                'dosen_id' => null,
+                'password' => Hash::make('password123'),
             ],
             [
                 'name' => 'Ade Hendrawan, S.Kom., M.Kom.',
@@ -54,7 +113,8 @@ class DatabaseSeeder extends Seeder
                 'role' => 'dosen',
                 'prodi' => 'Teknik Informatika',
                 'phone' => '081298765435',
-                'password' => bcrypt('password123'),
+                'dosen_id' => null,
+                'password' => Hash::make('password123'),
             ],
             [
                 'name' => 'Siti Fatimah, S.T., M.Kom.',
@@ -63,7 +123,8 @@ class DatabaseSeeder extends Seeder
                 'role' => 'dosen',
                 'prodi' => 'Broadband Multimedia',
                 'phone' => '081298765436',
-                'password' => bcrypt('password123'),
+                'dosen_id' => null,
+                'password' => Hash::make('password123'),
             ],
             [
                 'name' => 'Muhammad Rizky, S.T., M.T.',
@@ -72,202 +133,122 @@ class DatabaseSeeder extends Seeder
                 'role' => 'dosen',
                 'prodi' => 'Teknik Informatika',
                 'phone' => '081298765437',
-                'password' => bcrypt('password123'),
+                'dosen_id' => null,
+                'password' => Hash::make('password123'),
             ],
         ];
 
-        $dosenUsers = [];
         foreach ($dosenList as $d) {
-            $dosenUsers[] = User::updateOrCreate(['email' => $d['email']], $d);
+            User::updateOrCreate(['email' => $d['email']], $d);
         }
-        $dosenUtama = $dosenUsers[0]; // Dr. Bambang Sutrisno, M.T.
 
-        // 1.5. Akun Koordinator Program Studi (KPS) Jurusan TIK PNJ
-        $kpsUser = User::updateOrCreate(
-            ['email' => 'kps.ti@pnj.ac.id'],
+        // 5. Akun Pembimbing Industri / DUDI (PRD 3 & 5.3)
+        $userTelkomsel = User::updateOrCreate(
+            ['email' => 'pembimbing.telkomsel@mitra.pnj.ac.id'],
             [
-                'name' => 'Dr. Eng. Nur Aisyah, S.Kom., M.T. (KPS)',
-                'identifier' => '197508102000031001',
-                'role' => 'kps',
-                'prodi' => 'Teknik Informatika (D4)',
-                'phone' => '081298765433',
-                'password' => bcrypt('password123'),
+                'name' => 'Bagas Wicaksono, S.T.',
+                'identifier' => 'DUDI-0001',
+                'role' => 'industri',
+                'prodi' => 'Cloud Platform & DevOps',
+                'phone' => '081198765432',
+                'dosen_id' => null,
+                'password' => Hash::make('password123'),
             ]
         );
 
-        // Akun Admin / KPS alternatif
-        User::updateOrCreate(
-            ['email' => 'admin.tik@pnj.ac.id'],
+        $userTokopedia = User::updateOrCreate(
+            ['email' => 'pembimbing.tokopedia@mitra.pnj.ac.id'],
             [
-                'name' => 'Koordinator PKL TIK PNJ',
-                'identifier' => 'KPS-TIK-01',
-                'role' => 'kps',
-                'prodi' => 'Jurusan TIK PNJ',
-                'phone' => '081298765400',
-                'password' => bcrypt('password123'),
+                'name' => 'Rian Pratama, S.Kom.',
+                'identifier' => 'DUDI-0002',
+                'role' => 'industri',
+                'prodi' => 'Backend Core Services',
+                'phone' => '081287654321',
+                'dosen_id' => null,
+                'password' => Hash::make('password123'),
             ]
         );
 
-        // 2. Mahasiswa: Ahmad Fauzi (Telah ditetapkan KPS ke Dr. Bambang Sutrisno)
-        $mhs = User::updateOrCreate(
-            ['email' => '2107411002@stu.pnj.ac.id'],
+        // Profil Perusahaan Mitra DUDI Resmi (agar akun industri langsung terkait dengan instansinya)
+        Industri::updateOrCreate(
+            ['nama_perusahaan' => 'PT Telekomunikasi Seluler (Telkomsel)'],
+            [
+                'user_id' => $userTelkomsel->id,
+                'bidang_usaha' => 'Telekomunikasi Digital & Cloud Infrastructure',
+                'alamat' => 'Telkom Landmark Tower Lt. 18, Jl. Jend. Gatot Subroto Kav. 52, Jakarta Selatan',
+                'kota' => 'Jakarta Selatan',
+                'kontak_person' => 'Bagas Wicaksono, S.T.',
+                'email_pj' => 'pembimbing.telkomsel@mitra.pnj.ac.id',
+                'telepon' => '021-5240123',
+                'status_verifikasi' => 'acc',
+                'catatan_admin' => 'Mitra industri terverifikasi resmi Jurusan TIK PNJ.',
+            ]
+        );
+
+        Industri::updateOrCreate(
+            ['nama_perusahaan' => 'PT Tokopedia (GoTo Group)'],
+            [
+                'user_id' => $userTokopedia->id,
+                'bidang_usaha' => 'E-Commerce & Technology Platform',
+                'alamat' => 'Tokopedia Tower Ciputra World 2, Jl. Prof. DR. Satrio No.Kav. 11, Jakarta Selatan',
+                'kota' => 'Jakarta Selatan',
+                'kontak_person' => 'Rian Pratama, S.Kom.',
+                'email_pj' => 'pembimbing.tokopedia@mitra.pnj.ac.id',
+                'telepon' => '021-80647300',
+                'status_verifikasi' => 'acc',
+                'catatan_admin' => 'Mitra industri terverifikasi resmi Jurusan TIK PNJ.',
+            ]
+        );
+
+        // 6. Akun Mahasiswa PKL (Fresh / Bersih dari data penempatan awal)
+        $mahasiswaList = [
             [
                 'name' => 'Ahmad Fauzi',
+                'email' => '2107411002@stu.pnj.ac.id',
                 'identifier' => '2107411002',
                 'role' => 'mahasiswa',
                 'prodi' => 'Teknik Informatika (D4)',
                 'phone' => '081234567890',
-                'dosen_id' => $dosenUtama->id,
-                'password' => bcrypt('password123'),
-            ]
-        );
-
-        // 3. Mahasiswa Tambahan untuk demo request F1: Budi Santoso (Pending penetapan KPS)
-        $mhsPending = User::updateOrCreate(
-            ['email' => '2107411005@stu.pnj.ac.id'],
+                'dosen_id' => null,
+                'password' => Hash::make('password123'),
+            ],
             [
                 'name' => 'Budi Santoso',
+                'email' => '2107411005@stu.pnj.ac.id',
                 'identifier' => '2107411005',
                 'role' => 'mahasiswa',
                 'prodi' => 'Teknik Informatika (D4)',
                 'phone' => '081233445566',
-                'dosen_id' => null, // Belum ditetapkan KPS
-                'password' => bcrypt('password123'),
-            ]
-        );
-
-        // Mahasiswa Tambahan: Siti Rahmawati (Pending penetapan KPS)
-        $mhsPending2 = User::updateOrCreate(
-            ['email' => '2107411012@stu.pnj.ac.id'],
+                'dosen_id' => null,
+                'password' => Hash::make('password123'),
+            ],
             [
                 'name' => 'Siti Rahmawati',
+                'email' => '2107411012@stu.pnj.ac.id',
                 'identifier' => '2107411012',
                 'role' => 'mahasiswa',
                 'prodi' => 'Teknik Informatika (D4)',
                 'phone' => '081277889900',
-                'dosen_id' => null, // Belum ditetapkan KPS
-                'password' => bcrypt('password123'),
-            ]
-        );
-
-        // Mahasiswa Tambahan: Dimas Prasetyo (Belum mengajukan / belum terplot)
-        $mhsUnassigned = User::updateOrCreate(
-            ['email' => '2107411020@stu.pnj.ac.id'],
+                'dosen_id' => null,
+                'password' => Hash::make('password123'),
+            ],
             [
                 'name' => 'Dimas Prasetyo',
+                'email' => '2107411020@stu.pnj.ac.id',
                 'identifier' => '2107411020',
                 'role' => 'mahasiswa',
                 'prodi' => 'Teknik Informatika (D4)',
                 'phone' => '081244556677',
                 'dosen_id' => null,
-                'password' => bcrypt('password123'),
-            ]
-        );
+                'password' => Hash::make('password123'),
+            ],
+        ];
 
-        // Create sample PDF for Surat Pernyataan Kesediaan
-        Storage::disk('public')->makeDirectory('surat_f1');
-        $samplePdfPath = 'surat_f1/surat_pernyataan_bambang_sutrisno.pdf';
-        if (! Storage::disk('public')->exists($samplePdfPath)) {
-            $pdfContent = "%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj\n4 0 obj << /Length 320 >> stream\nBT\n/F1 16 Tf\n50 720 Td\n(KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI) Tj\n/F1 14 Tf\n0 -25 Td\n(POLITEKNIK NEGERI JAKARTA - JURUSAN TIK) Tj\n/F1 12 Tf\n0 -40 Td\n(SURAT PERNYATAAN KESEDIAAN DOSEN PEMBIMBING PKL (FORM F1)) Tj\n0 -30 Td\n(Menyatakan bersedia membimbing mahasiswa Ahmad Fauzi (NIM: 2107411002).) Tj\n0 -20 Td\n(Instansi PKL: PT Telekomunikasi Seluler (Telkomsel)) Tj\n0 -40 Td\n(Dosen Pembimbing: Dr. Bambang Sutrisno, M.T. | NIP: 198503152010121002) Tj\nET\nendstream\nendobj\n5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\nxref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000244 00000 n \n0000000615 00000 n \ntrailer << /Size 6 /Root 1 0 R >>\nstartxref\n690\n%%EOF";
-            Storage::disk('public')->put($samplePdfPath, $pdfContent);
+        foreach ($mahasiswaList as $m) {
+            User::updateOrCreate(['email' => $m['email']], $m);
         }
 
-        // 4. Form F1 Applications
-        // Ahmad Fauzi: Approved oleh KPS
-        F1Application::updateOrCreate(
-            [
-                'student_id' => $mhs->id,
-                'dosen_id' => $dosenUtama->id,
-            ],
-            [
-                'company_name' => 'PT Telekomunikasi Seluler (Telkomsel)',
-                'internship_title' => 'Cloud Infrastructure & Kubernetes Microservices Platform',
-                'status' => 'approved',
-                'surat_pernyataan_path' => $samplePdfPath,
-                'surat_pernyataan_name' => 'Surat_Pernyataan_Bambang_Sutrisno.pdf',
-                'signature_hash' => hash('sha256', '198503152010121002_TELKOMSEL_F1'),
-                'approved_at' => now()->subDays(10),
-                'notes' => 'Telah diverifikasi dan disahkan secara resmi oleh Koordinator Program Studi (KPS).',
-            ]
-        );
-
-        // Budi Santoso: Pending penetapan KPS ke Dr. Bambang Sutrisno
-        F1Application::updateOrCreate(
-            [
-                'student_id' => $mhsPending->id,
-                'dosen_id' => $dosenUtama->id,
-            ],
-            [
-                'company_name' => 'PT Tokopedia (GoTo Group)',
-                'internship_title' => 'Backend Microservices Engineering & Kafka Event-Driven Architecture',
-                'status' => 'pending',
-                'surat_pernyataan_path' => null,
-                'surat_pernyataan_name' => null,
-                'signature_hash' => null,
-                'approved_at' => null,
-                'notes' => 'Menunggu verifikasi dan penetapan resmi oleh Koordinator Program Studi (KPS).',
-            ]
-        );
-
-        // Siti Rahmawati: Pending penetapan KPS ke Dr. Bambang Sutrisno
-        F1Application::updateOrCreate(
-            [
-                'student_id' => $mhsPending2->id,
-                'dosen_id' => $dosenUtama->id,
-            ],
-            [
-                'company_name' => 'PT Bank Central Asia Tbk (BCA)',
-                'internship_title' => 'Quality Assurance & Automated API Security Testing',
-                'status' => 'pending',
-                'surat_pernyataan_path' => null,
-                'surat_pernyataan_name' => null,
-                'signature_hash' => null,
-                'approved_at' => null,
-                'notes' => 'Menunggu verifikasi dan penetapan resmi oleh Koordinator Program Studi (KPS).',
-            ]
-        );
-
-        // 5. Real Logbooks for Ahmad Fauzi
-        Logbook::updateOrCreate(
-            [
-                'user_id' => $mhs->id,
-                'subject' => 'Konfigurasi Multi-Cloud Terraform Manifest & Provisioning EKS',
-                'tanggal' => '2026-02-18',
-            ],
-            [
-                'dosen_id' => $dosenUtama->id,
-                'content' => "Hari ini saya bersama tim Cloud Platform Telkomsel melakukan audit manifest Terraform untuk automated provisioning cluster Elastic Kubernetes Service (EKS). Aktivitas yang diselesaikan meliputi:\n1. Menyusun modul VPC, subnet publik-privat, dan Security Group sesuai security baseline Telkomsel.\n2. Melakukan deployment dry-run dengan perintah `terraform plan` dan memastikan resource tag sesuai konvensi unit enterprise.\n3. Mengonfigurasi Ingress NGINX controller dan menguji routing trafik simulasi beban tinggi.\n\nKendala yang dihadapi: Sempat terjadi latency timeout pada NAT Gateway zone B, namun berhasil dimitigasi setelah re-routing VPC route table.",
-                'status' => 'pending',
-                'feedback' => null,
-            ]
-        );
-
-        Logbook::updateOrCreate(
-            [
-                'user_id' => $mhs->id,
-                'subject' => 'Implementasi CI/CD Pipeline GitLab Runner & Docker Registry',
-                'tanggal' => '2026-02-14',
-            ],
-            [
-                'dosen_id' => $dosenUtama->id,
-                'content' => 'Melakukan integrasi GitLab CI/CD runner pada server staging internal Telkomsel Smart Office. Menyiapkan skrip otomatisasi build container Docker, scanning image vulnerability menggunakan Trivy, dan deployment otomatis ke namespace staging EKS cluster.',
-                'status' => 'approved',
-                'feedback' => 'Implementasi pipeline sangat baik dan terstruktur. Lanjutkan dokumentasi Bab II laporan PKL.',
-            ]
-        );
-
-        Logbook::updateOrCreate(
-            [
-                'user_id' => $mhs->id,
-                'subject' => 'Pengujian Load Testing API Gateway dengan k6 & Locust',
-                'tanggal' => '2026-02-10',
-            ],
-            [
-                'dosen_id' => $dosenUtama->id,
-                'content' => 'Melakukan pengujian performa high-concurrency pada endpoint autentikasi OAuth2 Telkomsel Cloud Platform. Pengujian dilakukan dengan 5.000 virtual users selama 15 menit menggunakan k6 framework. Hasil: Throughput 3.200 RPS dengan error rate 0.02% dan latency p95 di bawah 85ms.',
-                'status' => 'approved',
-                'feedback' => 'Logbook terperinci dan progres implementasi sesuai dengan timeline. Lanjutkan ke tahap berikutnya.',
-            ]
-        );
+        // Pastikan seluruh mahasiswa memiliki dosen_id null
+        User::where('role', 'mahasiswa')->update(['dosen_id' => null]);
     }
 }

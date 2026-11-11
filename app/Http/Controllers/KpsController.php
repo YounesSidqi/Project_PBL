@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\F1Application;
+use App\Models\PengajuanMagang;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -122,6 +123,27 @@ class KpsController extends Controller
             $student->update([
                 'dosen_id' => $dosen->id,
             ]);
+
+            // Sinkronisasi status_dosen dan dosen_id pada PengajuanMagang
+            $pengajuan = PengajuanMagang::where('mahasiswa_id', $student->id)->latest()->first();
+            if ($pengajuan) {
+                $pengajuan->update([
+                    'dosen_id' => $dosen->id,
+                    'status_dosen' => 'acc_kps',
+                    'judul_magang' => $pengajuan->judul_magang ?: $application->internship_title,
+                    'updated_at' => $now,
+                ]);
+            } else {
+                PengajuanMagang::create([
+                    'mahasiswa_id' => $student->id,
+                    'dosen_id' => $dosen->id,
+                    'status_dosen' => 'acc_kps',
+                    'judul_magang' => $application->internship_title,
+                    'status_surat_pengantar' => 'draft',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
         }
 
         return redirect()->route('dashboard.kps', ['tab' => 'plotting'])
@@ -147,6 +169,16 @@ class KpsController extends Controller
             'notes' => "Ditolak oleh KPS ({$kpsName}): ".$request->input('notes'),
             'updated_at' => $now,
         ]);
+
+        // Sinkronisasi PengajuanMagang jika sebelumnya berstatus usulan
+        $pengajuan = PengajuanMagang::where('mahasiswa_id', $application->student_id)->latest()->first();
+        if ($pengajuan && $pengajuan->status_dosen === 'usulan') {
+            $pengajuan->update([
+                'dosen_id' => null,
+                'status_dosen' => 'pending',
+                'updated_at' => $now,
+            ]);
+        }
 
         return redirect()->route('dashboard.kps', ['tab' => 'plotting'])
             ->with('info', "Pengajuan Form F1 mahasiswa {$application->student->name} telah ditolak. Mahasiswa dapat mengajukan preferensi dosen baru.");
@@ -199,6 +231,28 @@ class KpsController extends Controller
             ]
         );
 
+        // Sinkronisasi status_dosen dan dosen_id pada PengajuanMagang
+        $internshipTitle = $request->input('internship_title') ?: 'Praktik Kerja Lapangan Vokasi';
+        $pengajuan = PengajuanMagang::where('mahasiswa_id', $student->id)->latest()->first();
+        if ($pengajuan) {
+            $pengajuan->update([
+                'dosen_id' => $dosen->id,
+                'status_dosen' => 'acc_kps',
+                'judul_magang' => $pengajuan->judul_magang ?: $internshipTitle,
+                'updated_at' => $now,
+            ]);
+        } else {
+            PengajuanMagang::create([
+                'mahasiswa_id' => $student->id,
+                'dosen_id' => $dosen->id,
+                'status_dosen' => 'acc_kps',
+                'judul_magang' => $internshipTitle,
+                'status_surat_pengantar' => 'draft',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
         return redirect()->route('dashboard.kps', ['tab' => 'plotting'])
             ->with('success', "Mahasiswa {$student->name} (NIM: {$student->identifier}) berhasil langsung di-plot ke dosen pembimbing {$dosen->name}.");
     }
@@ -244,6 +298,16 @@ class KpsController extends Controller
             ]);
         }
 
+        // Sinkronisasi PengajuanMagang
+        $pengajuan = PengajuanMagang::where('mahasiswa_id', $student->id)->latest()->first();
+        if ($pengajuan) {
+            $pengajuan->update([
+                'dosen_id' => $newDosen->id,
+                'status_dosen' => 'acc_kps',
+                'updated_at' => $now,
+            ]);
+        }
+
         return redirect()->route('dashboard.kps', ['tab' => 'kuota'])
             ->with('success', "Mahasiswa {$student->name} berhasil dialihkan dari {$oldDosenName} ke {$newDosen->name}.");
     }
@@ -264,6 +328,16 @@ class KpsController extends Controller
             $f1->update([
                 'status' => 'cancelled',
                 'notes' => 'Penempatan dibatalkan oleh KPS. Mahasiswa kembali ke status belum terplot.',
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Sinkronisasi PengajuanMagang
+        $pengajuan = PengajuanMagang::where('mahasiswa_id', $student->id)->latest()->first();
+        if ($pengajuan) {
+            $pengajuan->update([
+                'dosen_id' => null,
+                'status_dosen' => 'pending',
                 'updated_at' => now(),
             ]);
         }

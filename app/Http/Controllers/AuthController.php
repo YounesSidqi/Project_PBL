@@ -29,7 +29,7 @@ class AuthController extends Controller
         $request->validate([
             'identifier' => ['required', 'string'],
             'password' => ['required', 'string'],
-            'role' => ['nullable', 'string', 'in:mahasiswa,dosen,dudi,admin,kps'],
+            'role' => ['nullable', 'string', 'in:mahasiswa,dosen,dudi,industri,admin,kps'],
         ], [
             'identifier.required' => 'NIM, NIP, atau Email wajib diisi.',
             'password.required' => 'Kata sandi wajib diisi.',
@@ -50,21 +50,27 @@ class AuthController extends Controller
             'password' => $password,
         ];
 
-        // If a specific role is passed, enforce role checking (admin and kps are treated equivalently for coordinator portal)
+        // If a specific role is passed, enforce role checking
         if (! empty($role)) {
-            if ($role === 'admin' || $role === 'kps') {
+            if ($role === 'dudi' || $role === 'industri') {
                 $userExists = User::where($field, $identifier)->first();
-                if ($userExists && ! in_array($userExists->role, ['admin', 'kps'])) {
-                    $roleLabels = [
-                        'mahasiswa' => 'Mahasiswa',
-                        'dosen' => 'Dosen Pembimbing',
-                        'dudi' => 'Mitra DUDI',
-                        'admin' => 'Admin / KPS',
-                        'kps' => 'Admin / KPS',
-                    ];
-                    $actualRole = $roleLabels[$userExists->role] ?? $userExists->role;
+                if ($userExists && ! in_array($userExists->role, ['industri', 'dudi'])) {
                     throw ValidationException::withMessages([
-                        'identifier' => "Akun ini terdaftar sebagai peran \"{$actualRole}\". Silakan pilih tab {$actualRole}.",
+                        'identifier' => 'Akun ini bukan merupakan akun Mitra DUDI / Industri.',
+                    ]);
+                }
+            } elseif ($role === 'admin') {
+                $userExists = User::where($field, $identifier)->first();
+                if ($userExists && $userExists->role !== 'admin') {
+                    throw ValidationException::withMessages([
+                        'identifier' => 'Akun ini bukan merupakan akun Admin Jurusan.',
+                    ]);
+                }
+            } elseif ($role === 'kps') {
+                $userExists = User::where($field, $identifier)->first();
+                if ($userExists && ! in_array($userExists->role, ['kps', 'admin'])) {
+                    throw ValidationException::withMessages([
+                        'identifier' => 'Akun ini bukan merupakan akun KPS.',
                     ]);
                 }
             } else {
@@ -79,7 +85,9 @@ class AuthController extends Controller
             $authUser = Auth::user();
 
             $targetRoute = match ($authUser->role) {
-                'kps', 'admin' => route('dashboard.kps'),
+                'admin' => route('dashboard.admin'),
+                'kps' => route('dashboard.kps'),
+                'industri', 'dudi' => route('dashboard.industri'),
                 'dosen' => route('dashboard.dosen'),
                 default => route('dashboard.mahasiswa'),
             };

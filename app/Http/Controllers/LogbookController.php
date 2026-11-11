@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Logbook;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -41,26 +42,37 @@ class LogbookController extends Controller
         }
 
         $now = now();
+        $entryDate = Carbon::parse($validated['tanggal'])->startOfDay();
+        $today = Carbon::today();
+        $hariTerlambat = $today->greaterThan($entryDate) ? $entryDate->diffInDays($today) : 0;
+
+        $pengajuanAktif = $user->pengajuanMagangAktif;
+
         $logbook = Logbook::create([
             'user_id' => $user->id,
             'dosen_id' => $dosenId,
+            'pengajuan_magang_id' => $pengajuanAktif?->id,
             'subject' => $validated['subject'],
             'tanggal' => $validated['tanggal'] ?? $now->format('Y-m-d'),
+            'hari_terlambat' => $hariTerlambat,
             'content' => $validated['content'],
             'status' => 'pending',
+            'status_industri' => 'pending',
             'created_at' => $now,
             'updated_at' => $now,
         ]);
 
+        $lateNotice = $hariTerlambat > 0 ? " (Penanda Backdate: Terlambat {$hariTerlambat} Hari)" : '';
+
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Logbook berhasil disimpan pada '.$now->translatedFormat('d M Y, H:i').' WIB dan siap ditinjau oleh Dosen Pembimbing.',
+                'message' => 'Logbook berhasil disimpan pada '.$now->translatedFormat('d M Y, H:i')." WIB{$lateNotice} dan siap ditinjau oleh Pembimbing Industri & Dosen.",
                 'logbook' => $logbook->load('student', 'dosen'),
             ]);
         }
 
-        return redirect()->back()->with('success', 'Logbook berhasil dikirim pada '.$now->translatedFormat('d M Y, H:i').' WIB dan siap ditinjau oleh Dosen Pembimbing!');
+        return redirect()->back()->with('success', 'Logbook berhasil dikirim pada '.$now->translatedFormat('d M Y, H:i')." WIB{$lateNotice} dan siap ditinjau oleh Pembimbing Industri & Dosen!");
     }
 
     /**

@@ -34,21 +34,33 @@
 <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
   <div class="flex items-center gap-4">
     <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#0056B3] to-[#02796B] text-white flex items-center justify-center font-bold text-lg shadow-sm">
-      AF
+      {{ strtoupper(substr($selectedPengajuan?->mahasiswa?->name ?? 'M', 0, 2)) }}
     </div>
     <div>
       <div class="flex items-center gap-2">
-        <h3 class="text-base font-bold text-slate-800 font-heading">Ahmad Fauzi</h3>
-        <span class="px-2 py-0.5 rounded bg-blue-50 text-[#0056B3] text-xs font-mono font-semibold">NIM: 2107411002</span>
+        <h3 class="text-base font-bold text-slate-800 font-heading">{{ $selectedPengajuan?->mahasiswa?->name ?? 'Belum Ada Mahasiswa Bimbingan' }}</h3>
+        <span class="px-2 py-0.5 rounded bg-blue-50 text-[#0056B3] text-xs font-mono font-semibold">NIM: {{ $selectedPengajuan?->mahasiswa?->nim ?? '-' }}</span>
       </div>
-      <p class="text-xs text-slate-500 mt-0.5">PT Telekomunikasi Seluler • Cloud Platform &amp; DevOps Engineering</p>
+      <p class="text-xs text-slate-500 mt-0.5">{{ $selectedPengajuan?->nama_perusahaan ?? '-' }} • {{ $selectedPengajuan?->alamat_perusahaan ?? '-' }}</p>
     </div>
   </div>
 
-  <div class="flex items-center gap-2">
-    <button type="button" onclick="showToast('Rekapitulasi capaian Form F2 diekspor.')" class="h-9 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors flex items-center gap-1.5 shadow-sm">
-      <span class="material-symbols-outlined text-[16px]">file_download</span> Unduh Form F2
-    </button>
+  <div class="flex items-center gap-3">
+    @if($students->count() > 1)
+      <select onchange="window.location.href='{{ route('form.f2.dosen') }}?pengajuan_id=' + this.value" class="h-9 px-3 rounded-xl border border-slate-300 text-xs font-medium bg-slate-50 text-slate-700">
+        @foreach($students as $st)
+          <option value="{{ $st->id }}" {{ ($selectedPengajuan && $selectedPengajuan->id == $st->id) ? 'selected' : '' }}>
+            {{ $st->mahasiswa->name }} ({{ $st->nama_perusahaan }})
+          </option>
+        @endforeach
+      </select>
+    @endif
+
+    @if($selectedPengajuan)
+      <a href="{{ route('dokumen.f2', $selectedPengajuan->id) }}" target="_blank" class="h-9 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors flex items-center gap-1.5 shadow-sm">
+        <span class="material-symbols-outlined text-[16px]">file_download</span> Unduh Form F2
+      </a>
+    @endif
   </div>
 </div>
 
@@ -60,59 +72,81 @@
       <p class="text-xs text-slate-500">Hasil sinkronisasi backlog kompetensi mahasiswa di tempat magang.</p>
     </div>
     <span class="text-xs font-semibold px-3 py-1 bg-teal-50 text-[#02796B] rounded-lg">
-      3 Selesai • 1 Berjalan • 2 Direncanakan
+      {{ $tasksDone->count() }} Selesai • {{ $tasksProgress->count() }} Berjalan • {{ $tasksTodo->count() }} Direncanakan
     </span>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-    <!-- To Do -->
-    <div class="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-3">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-200">
-        <span class="text-xs font-bold text-slate-700">Direncanakan (To-Do)</span>
-        <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">2</span>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
-        <span class="text-[10px] text-slate-400 font-mono">REQ-TIK-05</span>
-        <h4 class="text-xs sm:text-sm font-bold text-slate-800">Disaster Recovery Multi-Region Drill</h4>
-        <p class="text-xs text-slate-500">Mahasiswa: Ahmad Fauzi • Target: Mei 2026</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
-        <span class="text-[10px] text-slate-400 font-mono">REQ-TIK-06</span>
-        <h4 class="text-xs sm:text-sm font-bold text-slate-800">Audit Keamanan CIS Benchmark K8s</h4>
-        <p class="text-xs text-slate-500">Mahasiswa: Ahmad Fauzi • Target: Mei 2026</p>
-      </div>
+  @if($allTasks->isEmpty())
+    <div class="text-center py-12 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
+      <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">assignment_late</span>
+      <h4 class="text-sm font-bold text-slate-700">Belum Ada Backlog Tugas Form F2</h4>
+      <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Mitra Industri (DUDI) belum menginput spesifikasi tugas untuk mahasiswa ini.</p>
     </div>
+  @else
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <!-- To Do -->
+      <div class="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-3">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+          <span class="text-xs font-bold text-slate-700">Direncanakan (To-Do)</span>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">{{ $tasksTodo->count() }}</span>
+        </div>
+        @forelse($tasksTodo as $task)
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
+            <span class="text-[10px] text-slate-400 font-mono">{{ $task->kode_kebutuhan }}</span>
+            <h4 class="text-xs sm:text-sm font-bold text-slate-800">{{ $task->judul_tugas }}</h4>
+            <p class="text-xs text-slate-500">{{ $task->deskripsi }}</p>
+            <div class="flex items-center justify-between pt-1 text-[11px] text-slate-400">
+              <span>Target: {{ $task->target_minggu ?? '-' }}</span>
+              <span class="px-2 py-0.5 bg-slate-100 rounded text-slate-600">{{ $task->kategori ?? 'Teknis' }}</span>
+            </div>
+          </div>
+        @empty
+          <p class="text-xs text-slate-400 italic text-center py-4">Kosong</p>
+        @endforelse
+      </div>
 
-    <!-- In Progress -->
-    <div class="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-3">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-200">
-        <span class="text-xs font-bold text-amber-800">Sedang Berjalan</span>
-        <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">1</span>
+      <!-- In Progress -->
+      <div class="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-3">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+          <span class="text-xs font-bold text-amber-800">Sedang Berjalan</span>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">{{ $tasksProgress->count() }}</span>
+        </div>
+        @forelse($tasksProgress as $task)
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
+            <span class="text-[10px] text-amber-700 font-mono font-bold">{{ $task->kode_kebutuhan }}</span>
+            <h4 class="text-xs sm:text-sm font-bold text-slate-800">{{ $task->judul_tugas }}</h4>
+            <p class="text-xs text-slate-500">{{ $task->deskripsi }}</p>
+            <div class="flex items-center justify-between pt-1 text-[11px] text-slate-400">
+              <span class="text-amber-700 font-medium">Dalam Pengerjaan</span>
+              <span class="px-2 py-0.5 bg-amber-50 rounded text-amber-700">{{ $task->kategori ?? 'Teknis' }}</span>
+            </div>
+          </div>
+        @empty
+          <p class="text-xs text-slate-400 italic text-center py-4">Kosong</p>
+        @endforelse
       </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
-        <span class="text-[10px] text-amber-700 font-mono font-bold">REQ-TIK-04</span>
-        <h4 class="text-xs sm:text-sm font-bold text-slate-800">Penerapan Observability Stack (Tempo &amp; Loki)</h4>
-        <p class="text-xs text-slate-500">Mahasiswa: Ahmad Fauzi • Progres: 65%</p>
-      </div>
-    </div>
 
-    <!-- Done -->
-    <div class="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-3">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-200">
-        <span class="text-xs font-bold text-[#02796B]">Selesai &amp; Terverifikasi</span>
-        <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-800">3</span>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
-        <span class="text-[10px] text-[#02796B] font-mono font-bold">REQ-TIK-01</span>
-        <h4 class="text-xs sm:text-sm font-bold text-slate-800">Otomasi Provisioning VM via Terraform</h4>
-        <p class="text-xs text-slate-500">Telah diverifikasi pada logbook sesi #22</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
-        <span class="text-[10px] text-[#02796B] font-mono font-bold">REQ-TIK-02</span>
-        <h4 class="text-xs sm:text-sm font-bold text-slate-800">Setup CI/CD Pipeline GitOps ArgoCD</h4>
-        <p class="text-xs text-slate-500">Telah diverifikasi pada logbook sesi #23</p>
+      <!-- Done -->
+      <div class="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-3">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+          <span class="text-xs font-bold text-teal-800">Selesai &amp; Terverifikasi DUDI</span>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-800">{{ $tasksDone->count() }}</span>
+        </div>
+        @forelse($tasksDone as $task)
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
+            <span class="text-[10px] text-[#02796B] font-mono font-bold">{{ $task->kode_kebutuhan }}</span>
+            <h4 class="text-xs sm:text-sm font-bold text-slate-800">{{ $task->judul_tugas }}</h4>
+            <p class="text-xs text-slate-500">{{ $task->deskripsi }}</p>
+            <div class="flex items-center justify-between pt-1 text-[11px] text-[#02796B]">
+              <span class="font-bold flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">check_circle</span> Terverifikasi</span>
+              <span class="px-2 py-0.5 bg-teal-50 rounded font-semibold">{{ $task->kategori ?? 'Teknis' }}</span>
+            </div>
+          </div>
+        @empty
+          <p class="text-xs text-slate-400 italic text-center py-4">Kosong</p>
+        @endforelse
       </div>
     </div>
-  </div>
+  @endif
 </div>
 @endsection

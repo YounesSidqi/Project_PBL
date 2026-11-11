@@ -241,6 +241,40 @@
         </div>
       </div>
 
+      <!-- Card Hasil Evaluasi Akhir Berbasis Python Fuzzy Logic (PRD 9.2) -->
+      @if($pengajuanAktif && $pengajuanAktif->nilai_akhir_fuzzy)
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white p-6 sm:p-7 shadow-lg border border-teal-500/30">
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div class="flex items-start gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-500 to-emerald-400 text-slate-950 flex items-center justify-center font-black text-2xl shadow-lg shrink-0">
+              <span class="material-symbols-outlined text-[32px]">psychology</span>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-teal-400/20 text-teal-300 border border-teal-400/30">
+                  Kalkulasi Python Fuzzy Logic (Mamdani/Tsukamoto)
+                </span>
+                <span class="text-xs text-teal-200/70">• Integrasi F5 (60%) + F6 (40%)</span>
+              </div>
+              <h3 class="text-xl sm:text-2xl font-black font-heading tracking-tight text-white">
+                Hasil Penilaian Akhir PKL: <span class="text-teal-300 font-mono text-2xl sm:text-3xl ml-1">{{ $pengajuanAktif->nilai_akhir_fuzzy }}</span>
+              </h3>
+              <p class="text-xs text-slate-300 mt-1 max-w-2xl">
+                Skor gabungan terdefuzzifikasi dengan bobot 60% Pembimbing Industri dan 40% Dosen Pembimbing PNJ. Status: <strong class="text-emerald-400 font-bold">LULUS DENGAN PREDIKAT SANGAT MEMUASKAN ({{ $pengajuanAktif->fuzzy_percentage }}%)</strong>.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 shrink-0">
+            <a href="{{ route('dokumen.f7', $pengajuanAktif->id) }}" target="_blank" class="px-5 py-3 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md transition-all">
+              <span class="material-symbols-outlined text-[18px]">verified</span>
+              <span>Unduh Form F7 (Pernyataan Lulus)</span>
+            </a>
+          </div>
+        </div>
+      </div>
+      @endif
+
       <!-- Dual Column Layout: Left (Placement & Official Letter) + Right (F1 Endorsement & Guidance Agenda) -->
       <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
         
@@ -253,40 +287,57 @@
             <!-- Placement Header -->
             <div class="flex items-start justify-between gap-4">
               <div class="flex items-start gap-4">
-                <div class="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center flex-shrink-0 shadow-sm">
-                  <span class="material-symbols-outlined text-[32px]">cell_tower</span>
+                <div class="w-14 h-14 rounded-2xl bg-teal-50 text-[#02796B] border border-teal-100 flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <span class="material-symbols-outlined text-[32px]">domain</span>
                 </div>
                 <div>
                   <span class="text-xs font-bold uppercase tracking-wider text-[#02796B]">Industri Mitra PKL (DUDI)</span>
                   <h3 class="text-xl font-bold font-heading text-slate-800 leading-tight mt-0.5">
-                    PT Telekomunikasi Seluler (Telkomsel)
+                    {{ $pengajuanAktif?->industri?->nama_perusahaan ?? $pengajuanAktif?->nama_perusahaan ?? 'Belum Ada Penempatan Perusahaan' }}
                   </h3>
                   <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-                    Smart Office Jakarta • Unit Cloud Platform &amp; DevOps Architecture
+                    {{ $pengajuanAktif?->industri?->bidang_usaha ?? $pengajuanAktif?->alamat_perusahaan ?? 'Silakan ajukan Surat Pengantar PKL atau daftarkan perusahaan tempat Anda magang.' }}
                   </p>
                 </div>
               </div>
             </div>
 
             <!-- Official Status Banner -->
-            <div class="p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50/50 border border-emerald-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div class="flex items-center gap-3">
-                <span class="relative flex h-3 w-3">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-600"></span>
-                </span>
-                <div>
-                  <span class="text-[11px] text-slate-500 font-medium">Keputusan Seleksi Mitra</span>
-                  <p class="text-xs sm:text-sm font-bold text-emerald-800 font-heading">
-                    STATUS: DITERIMA RESMI OLEH MITRA DUDI
-                  </p>
+            @if($pengajuanAktif)
+              <div class="p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50/50 border border-emerald-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                  <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-600"></span>
+                  </span>
+                  <div>
+                    <span class="text-[11px] text-slate-500 font-medium">Status Penempatan Mahasiswa</span>
+                    <p class="text-xs sm:text-sm font-bold text-emerald-800 font-heading">
+                      STATUS: DITERIMA RESMI OLEH MITRA DUDI
+                    </p>
+                  </div>
                 </div>
+                <span class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold shadow-sm self-start sm:self-auto">
+                  <span class="material-symbols-outlined text-[14px]">done_all</span>
+                  <span>Terkonfirmasi</span>
+                </span>
               </div>
-              <span class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold shadow-sm self-start sm:self-auto">
-                <span class="material-symbols-outlined text-[14px]">done_all</span>
-                <span>Kuota Terkonfirmasi</span>
-              </span>
-            </div>
+            @else
+              <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                  <span class="w-3 h-3 rounded-full bg-slate-400"></span>
+                  <div>
+                    <span class="text-[11px] text-slate-500 font-medium">Status Penempatan Mahasiswa</span>
+                    <p class="text-xs sm:text-sm font-bold text-slate-700 font-heading">
+                      BELUM DITEMPATKAN / BELUM MENGAJUKAN
+                    </p>
+                  </div>
+                </div>
+                <span class="inline-flex items-center gap-1 px-3 py-1 bg-slate-200 text-slate-700 rounded-lg text-xs font-bold">
+                  Belum Ada Data
+                </span>
+              </div>
+            @endif
 
             <!-- Placement Metadata Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -295,8 +346,14 @@
                   <span class="material-symbols-outlined text-[18px]">calendar_today</span>
                   <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Periode Pelaksanaan</span>
                 </div>
-                <p class="text-sm font-bold text-slate-800 font-heading">10 Feb 2026 s/d 11 Jul 2026</p>
-                <span class="text-xs text-slate-500 mt-0.5 block">Durasi: 5 Bulan Penuh (20 Minggu)</span>
+                <p class="text-sm font-bold text-slate-800 font-heading">
+                  @if($pengajuanAktif?->tanggal_mulai && $pengajuanAktif?->tanggal_selesai)
+                    {{ $pengajuanAktif->tanggal_mulai->format('d M Y') }} s/d {{ $pengajuanAktif->tanggal_selesai->format('d M Y') }}
+                  @else
+                    Belum Ditetapkan
+                  @endif
+                </p>
+                <span class="text-xs text-slate-500 mt-0.5 block">Durasi: Sesuai Kalender Akademik PKL</span>
               </div>
 
               <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200/60">
@@ -304,42 +361,28 @@
                   <span class="material-symbols-outlined text-[18px]">supervised_user_circle</span>
                   <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Pembimbing Industri (Mentor)</span>
                 </div>
-                <p class="text-sm font-bold text-slate-800 font-heading">Bagas Wicaksono, S.T.</p>
-                <span class="text-xs text-slate-500 mt-0.5 block">Lead Infrastructure Cloud Architect</span>
+                <p class="text-sm font-bold text-slate-800 font-heading">{{ $pengajuanAktif?->industri?->kontak_person ?? $pengajuanAktif?->mentor_industri ?? 'Belum Ditetapkan' }}</p>
+                <span class="text-xs text-slate-500 mt-0.5 block">{{ $pengajuanAktif?->posisi_magang ?? 'Posisi Magang Belum Dipilih' }}</span>
               </div>
             </div>
 
-            <!-- Workplace Snapshot Visual -->
-            <div class="relative h-44 w-full rounded-xl overflow-hidden bg-slate-900 shadow-inner group">
-              <img class="w-full h-full object-cover opacity-60 mix-blend-luminosity group-hover:scale-105 transition-transform duration-500" 
-                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAZNGiaRXJwH59iVNwUufz5bYtuLtiOC0hXCETTFkxFw7JXgv5ZzysoHf-mMLgrHDUqLGc8enUfg_As9hoHqZgHZMRAKXuwvdSw7V_12b63Tq2groTZGWbKqbsbP1lES2TQxqG_exQ31bySRBRQMUgMH5lMywmdAu5GpLCzxLRyhjy7SBhaPFRyStGxOSxOMDKv2Jzmo48jJdwiW3vomzvfoQrZpvwH9WFIbD5c85n14Z9S5K7l-rd" 
-                   alt="Modern telecommunications corporate office Telkomsel">
-              <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/50 to-transparent p-5 flex flex-col justify-end">
-                <span class="text-[11px] font-bold text-[#009688] uppercase tracking-wider">Lokasi Penempatan Magang</span>
-                <p class="text-sm sm:text-base font-bold text-white font-heading mt-0.5">
-                  Telkomsel Smart Office (TSO) - Gatot Subroto Kav. 52, Jakarta Selatan
-                </p>
-                <p class="text-xs text-slate-300 mt-1">Mode: Hybrid Working (3 Hari Onsite, 2 Hari Remote)</p>
-              </div>
-            </div>
-
-            <!-- Quick Metrics Bar -->
-            <div class="grid grid-cols-2 gap-3 pt-1 text-center">
-              <div class="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/60">
-                <span class="text-[11px] font-semibold text-slate-500">Logbook Terverifikasi</span>
-                <p class="text-lg sm:text-xl font-extrabold text-[#0056B3] font-heading mt-1">
-                  16 <span class="text-xs font-normal text-slate-400">/ 20 Hari</span>
-                </p>
-              </div>
-              <div class="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/60">
-                <span class="text-[11px] font-semibold text-slate-500">Kehadiran (Absensi)</span>
-                <p class="text-lg sm:text-xl font-extrabold text-[#02796B] font-heading mt-1">100%</p>
-              </div>
+            <!-- Document Actions Row -->
+            <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
+              @if($pengajuanAktif)
+                <a href="{{ route('dokumen.f2', $pengajuanAktif->id) }}" target="_blank" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors">
+                  <span class="material-symbols-outlined text-[16px]">print</span>
+                  <span>Cetak Form F2 (Matriks Tugas)</span>
+                </a>
+                <a href="{{ route('dokumen.f3', $pengajuanAktif->id) }}" target="_blank" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors">
+                  <span class="material-symbols-outlined text-[16px]">print</span>
+                  <span>Cetak Form F3 (Rekap Logbook)</span>
+                </a>
+              @endif
             </div>
 
           </div>
 
-          <!-- Official Document Card: Surat Pengantar Kajur TIK -->
+          <!-- Official Document Card: Surat Pengantar Kajur TIK (PRD 5.1 & 6) -->
           <div class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-card space-y-5">
             <div class="flex items-start justify-between gap-4">
               <div class="flex items-center gap-3.5">
@@ -351,10 +394,27 @@
                   <h4 class="text-lg font-bold font-heading text-slate-800">Surat Pengantar Resmi Jurusan</h4>
                 </div>
               </div>
-              <span class="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200/70 text-xs font-semibold rounded-lg flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[14px]">lock_open</span>
-                <span>Terbit &amp; Berlaku</span>
-              </span>
+
+              @if($pengajuanAktif?->status_surat_pengantar === 'diterbitkan')
+                <span class="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200/70 text-xs font-semibold rounded-lg flex items-center gap-1.5">
+                  <span class="material-symbols-outlined text-[14px]">lock_open</span>
+                  <span>Terbit &amp; Berlaku</span>
+                </span>
+              @elseif($pengajuanAktif?->status_surat_pengantar === 'pending')
+                <span class="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200/70 text-xs font-semibold rounded-lg flex items-center gap-1.5 animate-pulse">
+                  <span class="material-symbols-outlined text-[14px]">schedule</span>
+                  <span>Menunggu Verifikasi Admin</span>
+                </span>
+              @elseif($pengajuanAktif?->status_surat_pengantar === 'ditolak')
+                <span class="px-3 py-1 bg-rose-50 text-rose-700 border border-rose-200/70 text-xs font-semibold rounded-lg flex items-center gap-1.5">
+                  <span class="material-symbols-outlined text-[14px]">cancel</span>
+                  <span>Pengajuan Ditolak</span>
+                </span>
+              @else
+                <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-lg">
+                  Belum Diajukan
+                </span>
+              @endif
             </div>
 
             <!-- Letter Detail Container -->
@@ -363,7 +423,7 @@
                 <div class="flex items-center gap-2">
                   <span class="text-xs text-slate-500 uppercase font-mono">No. Dokumen:</span>
                   <span class="text-xs font-bold text-[#0056B3] font-mono bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
-                    042/PL3.TIK/PKL/2026
+                    {{ $pengajuanAktif?->nomor_surat_pengantar ?? 'Belum Diterbitkan' }}
                   </span>
                 </div>
                 <p class="text-xs sm:text-sm font-medium text-slate-700">
@@ -371,21 +431,24 @@
                 </p>
                 <div class="flex items-center gap-2 text-xs text-slate-600">
                   <span class="material-symbols-outlined text-[16px] text-[#009688]">verified_user</span>
-                  <span>Ditandatangani: <strong>Dr. Anita Hidayati, S.Kom., M.Kom.</strong> (Ketua Jurusan TIK)</span>
+                  <span>Legalisasi Berkas: <strong>Ketua Jurusan TIK PNJ</strong> (Checklist Oval + Stempel Digital)</span>
                 </div>
               </div>
             </div>
 
             <!-- Action & Note -->
             <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-              <span class="text-xs text-slate-500 flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-amber-500 text-[16px]">info</span>
-                <span>Wajib diarsipkan dalam Bab I Laporan Akhir PKL.</span>
-              </span>
-              <button type="button" onclick="handleDocumentAction(this, 'Mengunduh Surat Pengantar...')" class="w-full sm:w-auto bg-[#0056B3] hover:bg-[#00428A] text-white px-5 py-2.5 rounded-xl font-bold font-heading text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-sm">
-                <span class="material-symbols-outlined text-[18px]">download</span>
-                <span>Unduh Surat Pengantar (PDF)</span>
+              <button type="button" onclick="document.getElementById('modal-request-surat').classList.remove('hidden')" class="text-xs font-bold text-[#0056B3] hover:underline flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px]">edit_document</span>
+                <span>Permohonan Surat Pengantar Baru</span>
               </button>
+
+              @if($pengajuanAktif && $pengajuanAktif->status_surat_pengantar === 'diterbitkan')
+                <a href="{{ route('dokumen.surat-pengantar', $pengajuanAktif->id) }}" target="_blank" class="w-full sm:w-auto bg-[#0056B3] hover:bg-[#00428A] text-white px-5 py-2.5 rounded-xl font-bold font-heading text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-sm">
+                  <span class="material-symbols-outlined text-[18px]">download</span>
+                  <span>Unduh Surat Pengantar (PDF KOP)</span>
+                </a>
+              @endif
             </div>
           </div>
 
@@ -403,8 +466,8 @@
               $isF1Pending = ($activeF1 && $activeF1->status === 'pending') && !$hasAssignedDosen;
 
               $dospem = $dosen ?? ($activeF1?->dosen ?? null);
-              $dospemName = $dospem?->name ?? 'Dr. Bambang Sutrisno, M.T.';
-              $dospemNip = $dospem?->identifier ?? '198503152010121002';
+              $dospemName = $dospem?->name ?? 'Belum Ditetapkan';
+              $dospemNip = $dospem?->identifier ?? '-';
               $words = explode(' ', trim($dospemName));
               $initials = '';
               foreach ($words as $w) {
@@ -414,7 +477,7 @@
                   if (strlen($initials) >= 2) break;
                 }
               }
-              if (!$initials) $initials = 'BS';
+              if (!$initials) $initials = 'DP';
             @endphp
 
             <div class="flex items-start justify-between gap-3">
@@ -534,39 +597,30 @@
 
             <!-- Schedule List -->
             <div class="space-y-2.5">
-              
-              <!-- Event 1 (Completed) -->
-              <div class="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/60 flex items-center justify-between gap-3">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-[#0056B3] text-white flex flex-col items-center justify-center font-mono font-bold leading-none shadow-sm flex-shrink-0">
-                    <span class="text-[9px]">FEB</span>
-                    <span class="text-xs">20</span>
-                  </div>
-                  <div>
-                    <h5 class="text-xs sm:text-sm font-bold text-slate-800 font-heading">Bimbingan Bab I &amp; II (Logbook F3-1)</h5>
-                    <p class="text-xs text-slate-500">Metode: Daring via Zoom PKL • 15:30 WIB</p>
-                  </div>
-                </div>
-                <span class="material-symbols-outlined text-emerald-500 text-[20px]" title="Bimbingan Selesai">task_alt</span>
-              </div>
+              @php
+                $upcomingBimbingans = $pengajuanAktif?->bimbingans ? $pengajuanAktif->bimbingans->take(3) : collect();
+              @endphp
 
-              <!-- Event 2 (Upcoming) -->
-              <div class="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/60 flex items-center justify-between gap-3">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-slate-200 text-slate-700 flex flex-col items-center justify-center font-mono font-bold leading-none flex-shrink-0">
-                    <span class="text-[9px]">MAR</span>
-                    <span class="text-xs">12</span>
+              @forelse($upcomingBimbingans as $sesiBimb)
+                <div class="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/60 flex items-center justify-between gap-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-[#0056B3] text-white flex flex-col items-center justify-center font-mono font-bold leading-none shadow-sm flex-shrink-0">
+                      <span class="text-[9px] uppercase">{{ \Carbon\Carbon::parse($sesiBimb->tanggal_bimbingan)->translatedFormat('M') }}</span>
+                      <span class="text-xs">{{ \Carbon\Carbon::parse($sesiBimb->tanggal_bimbingan)->format('d') }}</span>
+                    </div>
+                    <div>
+                      <h5 class="text-xs sm:text-sm font-bold text-slate-800 font-heading">Sesi {{ $sesiBimb->sesi_ke }}: {{ Str::limit($sesiBimb->materi_bimbingan, 30) }}</h5>
+                      <p class="text-xs text-slate-500">{{ $sesiBimb->catatan_dosen ? Str::limit($sesiBimb->catatan_dosen, 38) : 'Terverifikasi Dosen' }}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h5 class="text-xs sm:text-sm font-bold text-slate-800 font-heading">Review Kemajuan Lapangan (Logbook F3-2)</h5>
-                    <p class="text-xs text-slate-500">Laporan Docker &amp; CI/CD pipeline</p>
-                  </div>
+                  <span class="material-symbols-outlined text-emerald-500 text-[20px]" title="Terlaksana">task_alt</span>
                 </div>
-                <span class="px-2 py-0.5 rounded-full bg-blue-100 text-[#0056B3] text-[10px] font-bold uppercase tracking-wider">
-                  Mendatang
-                </span>
-              </div>
-
+              @empty
+                <div class="p-6 text-center bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
+                  <span class="material-symbols-outlined text-3xl text-slate-300 mb-1">event_busy</span>
+                  <p class="text-xs text-slate-500 font-medium">Belum ada agenda bimbingan yang tercatat.</p>
+                </div>
+              @endforelse
             </div>
           </div>
 
@@ -581,7 +635,7 @@
             <div class="flex items-center gap-2">
               <span class="text-xs font-bold uppercase tracking-wider text-[#02796B]">Logbook Kegiatan PKL</span>
               <span class="text-xs text-slate-400">•</span>
-              <span class="text-xs text-slate-500 font-medium">Terhubung ke Dosen Pembimbing ({{ $dospemName ?? 'Dr. Bambang Sutrisno, M.T.' }})</span>
+              <span class="text-xs text-slate-500 font-medium">Terhubung ke Dosen Pembimbing ({{ $dospemName ?? 'Belum Ditetapkan' }})</span>
             </div>
             <h3 class="text-lg sm:text-xl font-bold font-heading text-slate-800 mt-0.5">
               Jurnal Harian &amp; Lembar Kerja Bimbingan
@@ -604,23 +658,50 @@
                   </span>
                   <div>
                     <h4 class="text-sm sm:text-base font-bold font-heading text-slate-800">{{ $lb->subject }}</h4>
-                    <span class="text-xs text-slate-500 font-mono flex items-center gap-1 mt-0.5">
-                      <span class="material-symbols-outlined text-[14px]">calendar_today</span>
-                      <span>{{ $lb->tanggal->translatedFormat('d F Y') }}</span>
-                    </span>
+                    <div class="flex flex-wrap items-center gap-2 mt-1">
+                      <span class="text-xs text-slate-500 font-mono flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]">calendar_today</span>
+                        <span>{{ $lb->tanggal->translatedFormat('d F Y') }}</span>
+                      </span>
+
+                      <!-- Badge Keterlambatan Backdate Sesuai PRD 7.2 -->
+                      @if($lb->hari_terlambat > 0)
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300">
+                          <span class="material-symbols-outlined text-[12px]">alarm</span>
+                          <span>Terlambat {{ $lb->hari_terlambat }} Hari (Backdate)</span>
+                        </span>
+                      @else
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span class="material-symbols-outlined text-[12px]">schedule</span>
+                          <span>Tepat Waktu</span>
+                        </span>
+                      @endif
+
+                      <!-- Badge ACC Industri (DUDI) -->
+                      @if($lb->status_industri === 'acc')
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-[#02796B] border border-teal-200">
+                          <span class="material-symbols-outlined text-[12px]">check</span>
+                          <span>ACC Industri</span>
+                        </span>
+                      @elseif($lb->status_industri === 'revisi')
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                          <span>Revisi Industri</span>
+                        </span>
+                      @endif
+                    </div>
                   </div>
                 </div>
 
-                <div>
+                <div class="flex items-center gap-2">
                   @if($lb->status === 'approved')
                     <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
                       <span class="material-symbols-outlined text-[14px]">check_circle</span>
-                      <span>Disetujui Dosen Pembimbing</span>
+                      <span>Disetujui Dosen</span>
                     </span>
                   @else
                     <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold">
                       <span class="material-symbols-outlined text-[14px] animate-spin">refresh</span>
-                      <span>Menunggu Validasi Dosen</span>
+                      <span>Menunggu Validasi</span>
                     </span>
                   @endif
                 </div>
@@ -825,6 +906,75 @@
           <button type="submit" class="bg-[#0056B3] hover:bg-[#00428A] text-white px-5 py-2.5 rounded-xl text-xs font-bold font-heading flex items-center gap-2 transition-all shadow-md">
             <span class="material-symbols-outlined text-[18px]">send</span>
             <span>Kirim Pengajuan Form F1</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Permohonan Surat Pengantar PKL & Registrasi Industri (PRD 5.1 & 5.2) -->
+  <div id="modal-request-surat" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-6 sm:p-7 text-left shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+        <div>
+          <h3 class="text-base sm:text-lg font-bold font-heading text-slate-800">Permohonan Surat Pengantar PKL</h3>
+          <p class="text-xs text-slate-500">Input data instansi / perusahaan tempat Anda diterima magang.</p>
+        </div>
+        <button type="button" onclick="document.getElementById('modal-request-surat').classList.add('hidden')" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <form method="POST" action="{{ route('mahasiswa.request-surat') }}" class="space-y-4">
+        @csrf
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Perusahaan / Instansi Magang</label>
+          <input type="text" name="nama_perusahaan" required placeholder="Contoh: PT Telekomunikasi Indonesia Tbk" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Kota Perusahaan</label>
+            <input type="text" name="kota" placeholder="Contoh: Jakarta Selatan" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Posisi / Divisi Magang</label>
+            <input type="text" name="posisi_magang" placeholder="Contoh: Cloud Engineer Intern" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Alamat Lengkap Perusahaan</label>
+          <textarea name="alamat" rows="2" placeholder="Jl. Gatot Subroto Kav. 52, Kuningan Barat..." class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500"></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Kontak Person (PIC)</label>
+            <input type="text" name="kontak_person" placeholder="Contoh: Bagas Wicaksono (HRD)" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email PIC / Perusahaan</label>
+            <input type="email" name="email_pj" placeholder="recruitment@telkom.co.id" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tanggal Mulai Magang</label>
+            <input type="date" name="tanggal_mulai" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tanggal Selesai Magang</label>
+            <input type="date" name="tanggal_selesai" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+          <button type="button" onclick="document.getElementById('modal-request-surat').classList.add('hidden')" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors">Batal</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-[#0056B3] hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-colors">
+            <span class="material-symbols-outlined text-[16px]">send</span>
+            <span>Kirim Permohonan ke Admin</span>
           </button>
         </div>
       </form>
