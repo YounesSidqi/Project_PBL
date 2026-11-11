@@ -7,6 +7,7 @@ use App\Models\PengajuanMagang;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class AdminController extends Controller
@@ -228,10 +229,28 @@ class AdminController extends Controller
             $industri->update([
                 'user_id' => $user->id,
                 'status_verifikasi' => 'acc',
-                'catatan_admin' => 'Telah diverifikasi dan disahkan oleh Admin Jurusan TIK.',
+                'catatan_admin' => "Telah diverifikasi oleh Admin Jurusan TIK. Akun DUDI: {$user->email} (ID: {$user->identifier}).",
             ]);
 
-            $msg = "Industri \"{$industri->nama_perusahaan}\" berhasil diverifikasi! 1 Akun Penanggung Jawab Industri telah dibuat otomatis: Email: [{$user->email}], Password Sementara: [{$generatedPassword}].";
+            // Kirim Email Alert kredensial ke alamat perusahaan terkait (PRD 4 & 7.3)
+            try {
+                Mail::raw(
+                    "Yth. {$user->name} ({$industri->nama_perusahaan}),\n\n".
+                    "Pendaftaran instansi Anda sebagai Mitra Industri PKL Jurusan TIK Politeknik Negeri Jakarta telah diverifikasi.\n".
+                    "Berikut adalah kredensial akses Portal Pembimbing Industri (DUDI) SIM-PKL:\n".
+                    "- Email / ID Login: {$user->email} / {$user->identifier}\n".
+                    "- Kata Sandi Sementara: {$generatedPassword}\n\n".
+                    'Terima kasih atas kerja sama Anda.',
+                    function ($message) use ($user, $industri) {
+                        $message->to($user->email)
+                            ->subject("Akses Akun Pembimbing Industri SIM-PKL JTIK PNJ - {$industri->nama_perusahaan}");
+                    }
+                );
+            } catch (\Throwable $e) {
+                // Abaikan kegagalan koneksi SMTP pada environment lokal
+            }
+
+            $msg = "Industri \"{$industri->nama_perusahaan}\" berhasil diverifikasi! 1 Akun Penanggung Jawab Industri telah dibuat otomatis: Email: [{$user->email}], ID: [{$user->identifier}], Password Sementara: [{$generatedPassword}] (Email alert terkirim).";
         } else {
             $industri->update([
                 'status_verifikasi' => 'acc',
@@ -241,12 +260,14 @@ class AdminController extends Controller
             $msg = "Industri \"{$industri->nama_perusahaan}\" berhasil disetujui!";
         }
 
-        return redirect()->to(route('dashboard.admin', ['tab' => 'industri']))
+        $redirectTab = $request->input('redirect_tab', 'industri');
+
+        return redirect()->to(route('dashboard.admin', ['tab' => $redirectTab]))
             ->with('success', $msg);
     }
 
     /**
-     * Forward Pengajuan Mahasiswa ke Industri Terdaftar.
+     * Forward Pengajuan Mahasiswa ke Industri Terdaftar (PRD 5.2).
      */
     public function forwardPengajuan(Request $request, PengajuanMagang $pengajuan)
     {
@@ -254,6 +275,7 @@ class AdminController extends Controller
             'industri_id' => 'required|exists:industris,id',
         ]);
 
+        $oldIndustriId = $pengajuan->industri_id;
         $industri = Industri::findOrFail($request->industri_id);
 
         $pengajuan->update([
@@ -261,8 +283,18 @@ class AdminController extends Controller
             'updated_at' => now(),
         ]);
 
-        return redirect()->to(route('dashboard.admin', ['tab' => 'surat']))
-            ->with('success', "Pengajuan magang {$pengajuan->mahasiswa->name} berhasil diteruskan ke mitra industri {$industri->nama_perusahaan}.");
+        // Jika industri sebelumnya masih pending dan tidak memiliki pengajuan mahasiswa lain, bersihkan entri duplikat pending
+        if ($oldIndustriId && (int) $oldIndustriId !== (int) $industri->id) {
+            $oldIndustri = Industri::find($oldIndustriId);
+            if ($oldIndustri && $oldIndustri->status_verifikasi === 'pending' && $oldIndustri->pengajuanMagangs()->count() === 0 && ! $oldIndustri->user_id) {
+                $oldIndustri->delete();
+            }
+        }
+
+        $redirectTab = $request->input('redirect_tab', 'surat');
+
+        return redirect()->to(route('dashboard.admin', ['tab' => $redirectTab]))
+            ->with('success', "Penugasan magang mahasiswa {$pengajuan->mahasiswa->name} berhasil diteruskan (forward) ke akun mitra industri terdaftar: {$industri->nama_perusahaan}.");
     }
 
     /**

@@ -134,16 +134,19 @@
 
 <!-- TAB 1: VERIFIKASI & TERBITKAN SURAT PENGANTAR (PRD 5.1 & 7.1) -->
 @if($tab === 'surat' || $tab === 'overview')
+@php
+  $verifiedIndustris = $industris->where('status_verifikasi', 'acc');
+@endphp
 <div class="space-y-6">
   <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
       <div>
         <h2 class="text-lg font-bold font-heading text-slate-800 flex items-center gap-2">
           <span class="material-symbols-outlined text-[#0056B3]">description</span>
-          <span>Daftar Permintaan Surat Pengantar PKL Mahasiswa</span>
+          <span>Daftar Permintaan Surat Pengantar &amp; Penempatan Industri Mahasiswa</span>
         </h2>
         <p class="text-xs text-slate-500 mt-1">
-          Verifikasi data instansi tujuan, lalu terbitkan Surat Pengantar digital ber-KOP resmi PNJ dengan stempel digital.
+          Verifikasi perusahaan tujuan (ACC perusahaan baru atau forward ke mitra terdaftar), lalu terbitkan Surat Pengantar digital ber-KOP resmi PNJ.
         </p>
       </div>
     </div>
@@ -153,10 +156,10 @@
         <thead class="bg-slate-50 text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200">
           <tr>
             <th class="py-3 px-4">Mahasiswa &amp; NIM</th>
-            <th class="py-3 px-4">Perusahaan / Industri</th>
+            <th class="py-3 px-4">Perusahaan / Industri &amp; Status DUDI</th>
             <th class="py-3 px-4">Posisi &amp; Periode</th>
             <th class="py-3 px-4">Nomor Surat</th>
-            <th class="py-3 px-4">Status</th>
+            <th class="py-3 px-4">Status Surat</th>
             <th class="py-3 px-4 text-center">Aksi Admin</th>
           </tr>
         </thead>
@@ -170,7 +173,27 @@
             </td>
             <td class="py-3.5 px-4">
               <div class="font-bold text-slate-800">{{ $sp->industri->nama_perusahaan ?? 'Belum ditentukan' }}</div>
-              <div class="text-[10px] text-slate-500">{{ $sp->industri->kota ?? 'Jakarta' }}</div>
+              <div class="text-[10px] text-slate-500">
+                {{ $sp->industri->kota ?? 'Jakarta' }}
+                @if($sp->industri?->kontak_person)
+                  • PIC: {{ $sp->industri->kontak_person }}
+                @endif
+              </div>
+              <div class="mt-1">
+                @if($sp->industri?->status_verifikasi === 'acc')
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-50 text-[#02796B] border border-teal-200">
+                    <span class="material-symbols-outlined text-[12px]">verified</span> Mitra Terverifikasi
+                  </span>
+                @elseif($sp->industri?->status_verifikasi === 'reject')
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                    <span class="material-symbols-outlined text-[12px]">cancel</span> Industri Ditolak
+                  </span>
+                @elseif($sp->industri)
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                    <span class="material-symbols-outlined text-[12px]">pending</span> Industri Baru (Perlu ACC)
+                  </span>
+                @endif
+              </div>
             </td>
             <td class="py-3.5 px-4">
               <div class="text-slate-800 font-semibold">{{ $sp->posisi_magang ?: 'Internship Track' }}</div>
@@ -211,7 +234,17 @@
               @endif
             </td>
             <td class="py-3.5 px-4 text-center">
-              <div class="flex items-center justify-center gap-2">
+              <div class="flex flex-wrap items-center justify-center gap-1.5">
+                @if($sp->industri && $sp->industri->status_verifikasi === 'pending')
+                  <form method="POST" action="{{ route('admin.industri.acc', $sp->industri->id) }}" onsubmit="return confirm('ACC Industri Baru {{ $sp->industri->nama_perusahaan }} dan buat 1 akun Penanggung Jawab DUDI?')">
+                    @csrf
+                    <input type="hidden" name="redirect_tab" value="surat">
+                    <button type="submit" class="px-2.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-colors" title="Verifikasi perusahaan baru & buat akun DUDI otomatis (PRD 5.2)">
+                      <span class="material-symbols-outlined text-[14px]">domain_verification</span> ACC Industri
+                    </button>
+                  </form>
+                @endif
+
                 @if($sp->status_surat_pengantar === 'pending' || $sp->status_surat_pengantar === 'draft')
                   <form method="POST" action="{{ route('admin.surat.terbitkan', $sp->id) }}" onsubmit="return confirm('Terbitkan Surat Pengantar resmi untuk {{ $sp->mahasiswa->name }}?')">
                     @csrf
@@ -226,6 +259,13 @@
                   </button>
                 @endif
 
+                <!-- Tombol Forward ke Industri Terdaftar (PRD 5.2) -->
+                @if($verifiedIndustris->count() > 0)
+                  <button type="button" onclick="document.getElementById('modal-forward-{{ $sp->id }}').classList.remove('hidden')" class="px-2.5 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-[#02796B] border border-teal-200 font-bold text-xs flex items-center gap-1 transition-colors" title="Forward penugasan mahasiswa ke akun industri yang sudah terdaftar (PRD 5.2)">
+                    <span class="material-symbols-outlined text-[15px]">forward</span> Forward Mitra
+                  </button>
+                @endif
+
                 @if($sp->status_surat_pengantar === 'diterbitkan')
                   <!-- PRD 11.3: Reset ke Draft jika Ditolak Perusahaan -->
                   <button type="button" onclick="document.getElementById('modal-reset-draft-{{ $sp->id }}').classList.remove('hidden')" class="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs flex items-center gap-1 transition-colors" title="Ditolak Perusahaan? Kembalikan status ke Draft Request (PRD 11.3)">
@@ -236,6 +276,38 @@
                 <a href="{{ route('dokumen.surat-pengantar', $sp->id) }}" target="_blank" class="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold text-xs flex items-center gap-1 shadow-sm transition-colors">
                   <span class="material-symbols-outlined text-[15px]">print</span> Berkas KOP
                 </a>
+              </div>
+
+              <!-- Modal Forward Pengajuan ke Industri Terdaftar (PRD 5.2) -->
+              <div id="modal-forward-{{ $sp->id }}" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl max-w-md w-full p-6 text-left shadow-2xl border border-slate-200">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-[#02796B] text-2xl">forward</span>
+                    <h3 class="text-base font-bold text-slate-900">Forward ke Mitra Industri Terdaftar</h3>
+                  </div>
+                  <p class="text-xs text-slate-500 mb-4">
+                    Sesuai <strong>PRD 5.2</strong>: Jika perusahaan tempat mahasiswa magang sudah terdaftar sebagai Mitra DUDI resmi, teruskan (forward) penugasan <strong>{{ $sp->mahasiswa->name }}</strong> ke akun industri yang sudah ada.
+                  </p>
+
+                  <form method="POST" action="{{ route('admin.pengajuan.forward', $sp->id) }}">
+                    @csrf
+                    <input type="hidden" name="redirect_tab" value="surat">
+                    <div class="mb-4">
+                      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Pilih Akun Mitra Industri Terverifikasi</label>
+                      <select name="industri_id" required class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-teal-500 focus:ring-teal-500">
+                        @foreach($verifiedIndustris as $vInd)
+                          <option value="{{ $vInd->id }}" {{ $sp->industri_id === $vInd->id ? 'selected' : '' }}>
+                            {{ $vInd->nama_perusahaan }} (Akun: {{ $vInd->user->email ?? 'Aktif' }})
+                          </option>
+                        @endforeach
+                      </select>
+                    </div>
+                    <div class="flex items-center justify-end gap-2">
+                      <button type="button" onclick="document.getElementById('modal-forward-{{ $sp->id }}').classList.add('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Batal</button>
+                      <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold bg-[#02796B] hover:bg-teal-800 text-white shadow-sm">Forward Penugasan</button>
+                    </div>
+                  </form>
+                </div>
               </div>
 
               <!-- Modal Tolak Permintaan -->
@@ -298,6 +370,9 @@
 
 <!-- TAB 2: REGISTRASI & MITRA INDUSTRI (PRD 5.2 & 7.3) -->
 @if($tab === 'industri')
+@php
+  $verifiedIndustris = $industris->where('status_verifikasi', 'acc');
+@endphp
 <div class="space-y-6">
   <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
@@ -307,7 +382,7 @@
           <span>Verifikasi Mitra Industri &amp; Otomasi Akun Penanggung Jawab DUDI</span>
         </h2>
         <p class="text-xs text-slate-500 mt-1">
-          Menyetujui pendaftaran industri baru secara otomatis men-generate 1 akun Penanggung Jawab Industri dengan temporary password.
+          Menyetujui pendaftaran industri baru secara otomatis men-generate 1 akun Penanggung Jawab Industri dengan temporary password, atau teruskan (forward) pengajuan mahasiswa ke industri yang sudah terdaftar.
         </p>
       </div>
     </div>
@@ -316,8 +391,8 @@
       <table class="w-full text-left text-xs text-slate-600">
         <thead class="bg-slate-50 text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200">
           <tr>
-            <th class="py-3 px-4">Nama Perusahaan / DUDI</th>
-            <th class="py-3 px-4">Alamat &amp; Kontak</th>
+            <th class="py-3 px-4">Nama Perusahaan &amp; Mahasiswa Pengaju</th>
+            <th class="py-3 px-4">Alamat &amp; Kontak PIC</th>
             <th class="py-3 px-4">Akun Penanggung Jawab</th>
             <th class="py-3 px-4">Status Verifikasi</th>
             <th class="py-3 px-4 text-center">Aksi Verifikasi</th>
@@ -329,12 +404,26 @@
             <td class="py-3.5 px-4">
               <div class="font-bold text-slate-900 text-sm">{{ $ind->nama_perusahaan }}</div>
               <div class="text-[10px] text-[#02796B] font-semibold">{{ $ind->bidang_usaha ?: 'Teknologi Informasi & Digital' }}</div>
-              <div class="text-[10px] text-slate-400 mt-0.5">{{ $ind->pengajuanMagangs->count() }} mahasiswa terdaftar</div>
+              @if($ind->pengajuanMagangs->isNotEmpty())
+                <div class="mt-1.5 space-y-1">
+                  @foreach($ind->pengajuanMagangs as $pm)
+                    <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-50 text-[#0056B3] border border-blue-200/70 text-[10px] font-bold">
+                      <span class="material-symbols-outlined text-[12px]">person</span>
+                      <span>{{ $pm->mahasiswa->name ?? 'Mahasiswa' }} ({{ $pm->mahasiswa->identifier ?? '-' }})</span>
+                    </div>
+                  @endforeach
+                </div>
+              @else
+                <div class="text-[10px] text-slate-400 mt-0.5">Belum ada mahasiswa terkait</div>
+              @endif
             </td>
             <td class="py-3.5 px-4">
               <div class="text-slate-800 font-semibold">{{ $ind->kontak_person ?: 'Divisi HRD / Talent Acquisition' }}</div>
-              <div class="text-[11px] text-slate-500">{{ $ind->telepon ?: '021-xxxxxxxx' }}</div>
-              <div class="text-[10px] text-slate-400 truncate max-w-xs">{{ $ind->alamat ?: 'Jakarta' }}</div>
+              @if($ind->email_pj)
+                <div class="text-[11px] font-mono text-[#0056B3]">{{ $ind->email_pj }}</div>
+              @endif
+              <div class="text-[11px] text-slate-500">{{ $ind->telepon ?: '021-xxxxxxxx' }} • {{ $ind->kota ?: 'Jakarta' }}</div>
+              <div class="text-[10px] text-slate-400 truncate max-w-xs" title="{{ $ind->alamat }}">{{ $ind->alamat ?: 'Alamat belum dilengkapi' }}</div>
             </td>
             <td class="py-3.5 px-4">
               @if($ind->user)
@@ -370,7 +459,7 @@
               @if($ind->status_verifikasi === 'acc')
                 <span class="text-slate-400 text-xs font-semibold">Telah Terverifikasi</span>
               @else
-                <div class="flex items-center justify-center gap-2">
+                <div class="flex flex-wrap items-center justify-center gap-1.5">
                   <form method="POST" action="{{ route('admin.industri.acc', $ind->id) }}" onsubmit="return confirm('ACC Industri {{ $ind->nama_perusahaan }} dan generate 1 akun penanggung jawab?')">
                     @csrf
                     <button type="submit" class="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-colors">
@@ -378,10 +467,51 @@
                     </button>
                   </form>
 
+                  @if($ind->pengajuanMagangs->isNotEmpty() && $verifiedIndustris->count() > 0)
+                    <button type="button" onclick="document.getElementById('modal-forward-ind-{{ $ind->id }}').classList.remove('hidden')" class="px-2.5 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-[#02796B] border border-teal-200 font-bold text-xs flex items-center gap-1 transition-colors" title="Perusahaan sudah terdaftar? Forward mahasiswa ke mitra terdaftar">
+                      <span class="material-symbols-outlined text-[14px]">forward</span> Forward Mitra
+                    </button>
+                  @endif
+
                   <button type="button" onclick="document.getElementById('modal-reject-ind-{{ $ind->id }}').classList.remove('hidden')" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-bold text-xs border border-slate-200 transition-colors">
                     Tolak
                   </button>
                 </div>
+
+                @if($ind->pengajuanMagangs->isNotEmpty() && $verifiedIndustris->count() > 0)
+                  @php $firstPm = $ind->pengajuanMagangs->first(); @endphp
+                  <!-- Modal Forward Mahasiswa dari Industri Pending ke Mitra Terdaftar (PRD 5.2) -->
+                  <div id="modal-forward-ind-{{ $ind->id }}" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+                    <div class="bg-white rounded-2xl max-w-md w-full p-6 text-left shadow-2xl border border-slate-200">
+                      <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined text-[#02796B] text-2xl">forward</span>
+                        <h3 class="text-base font-bold text-slate-900">Forward ke Industri yang Sudah Terdaftar</h3>
+                      </div>
+                      <p class="text-xs text-slate-500 mb-4">
+                        Jika <strong>{{ $ind->nama_perusahaan }}</strong> merupakan perusahaan yang sudah terdaftar di sistem, teruskan pengajuan mahasiswa <strong>{{ $firstPm->mahasiswa->name ?? '' }}</strong> ke akun mitra industri yang sudah ada (PRD 5.2).
+                      </p>
+
+                      <form method="POST" action="{{ route('admin.pengajuan.forward', $firstPm->id) }}">
+                        @csrf
+                        <input type="hidden" name="redirect_tab" value="industri">
+                        <div class="mb-4">
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Pilih Mitra Industri Terdaftar</label>
+                          <select name="industri_id" required class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-teal-500 focus:ring-teal-500">
+                            @foreach($verifiedIndustris as $vInd)
+                              <option value="{{ $vInd->id }}">
+                                {{ $vInd->nama_perusahaan }} (Akun: {{ $vInd->user->email ?? 'Aktif' }})
+                              </option>
+                            @endforeach
+                          </select>
+                        </div>
+                        <div class="flex items-center justify-end gap-2">
+                          <button type="button" onclick="document.getElementById('modal-forward-ind-{{ $ind->id }}').classList.add('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Batal</button>
+                          <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold bg-[#02796B] hover:bg-teal-800 text-white shadow-sm">Forward ke Mitra</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                @endif
 
                 <!-- Modal Tolak Pendaftaran Industri -->
                 <div id="modal-reject-ind-{{ $ind->id }}" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">

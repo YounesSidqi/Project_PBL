@@ -281,11 +281,15 @@
         <!-- Left Column (7 Cols on xl) -->
         <div class="xl:col-span-7 space-y-6">
           
-          <!-- DUDI Placement Detail Card -->
+          <!-- DUDI Placement Detail Card (PRD 5.1 & 5.2) -->
           <div class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-card space-y-5">
+            @php
+              $statusVerifikasiInd = $pengajuanAktif?->industri?->status_verifikasi;
+              $statusSurat = $pengajuanAktif?->status_surat_pengantar;
+            @endphp
             
             <!-- Placement Header -->
-            <div class="flex items-start justify-between gap-4">
+            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div class="flex items-start gap-4">
                 <div class="w-14 h-14 rounded-2xl bg-teal-50 text-[#02796B] border border-teal-100 flex items-center justify-center flex-shrink-0 shadow-sm">
                   <span class="material-symbols-outlined text-[32px]">domain</span>
@@ -296,32 +300,101 @@
                     {{ $pengajuanAktif?->industri?->nama_perusahaan ?? $pengajuanAktif?->nama_perusahaan ?? 'Belum Ada Penempatan Perusahaan' }}
                   </h3>
                   <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-                    {{ $pengajuanAktif?->industri?->bidang_usaha ?? $pengajuanAktif?->alamat_perusahaan ?? 'Silakan ajukan Surat Pengantar PKL atau daftarkan perusahaan tempat Anda magang.' }}
+                    {{ $pengajuanAktif?->industri?->bidang_usaha ?? $pengajuanAktif?->alamat_perusahaan ?? 'Silakan input data perusahaan tempat Anda magang untuk diverifikasi oleh Admin Jurusan.' }}
                   </p>
+                  @if($pengajuanAktif?->industri?->alamat)
+                    <p class="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[14px]">location_on</span>
+                      <span>{{ $pengajuanAktif->industri->alamat }}{{ $pengajuanAktif->industri->kota ? ', ' . $pengajuanAktif->industri->kota : '' }}</span>
+                    </p>
+                  @endif
                 </div>
               </div>
+
+              <button type="button" onclick="document.getElementById('modal-request-surat').classList.remove('hidden')" class="px-3.5 py-2 rounded-xl {{ $pengajuanAktif ? 'bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-[#0056B3] border border-slate-200' : 'bg-gradient-to-r from-[#0056B3] to-[#02796B] text-white shadow-sm' }} font-bold font-heading text-xs flex items-center gap-1.5 transition-all shrink-0 self-start">
+                <span class="material-symbols-outlined text-[16px]">{{ $pengajuanAktif ? 'edit_square' : 'add_business' }}</span>
+                <span>{{ $pengajuanAktif ? 'Ubah / Input Perusahaan' : 'Input Perusahaan Magang' }}</span>
+              </button>
             </div>
 
             <!-- Official Status Banner -->
             @if($pengajuanAktif)
-              <div class="p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50/50 border border-emerald-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div class="flex items-center gap-3">
-                  <span class="relative flex h-3 w-3">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-600"></span>
-                  </span>
-                  <div>
-                    <span class="text-[11px] text-slate-500 font-medium">Status Penempatan Mahasiswa</span>
-                    <p class="text-xs sm:text-sm font-bold text-emerald-800 font-heading">
-                      STATUS: DITERIMA RESMI OLEH MITRA DUDI
-                    </p>
+              @if($statusVerifikasiInd === 'reject' || $statusSurat === 'ditolak' || $statusSurat === 'draft')
+                <div class="p-4 rounded-xl bg-rose-50 border border-rose-200/80 space-y-2">
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div class="flex items-center gap-3">
+                      <span class="w-3 h-3 rounded-full bg-rose-600 shrink-0"></span>
+                      <div>
+                        <span class="text-[11px] text-rose-600 font-semibold uppercase">Status Verifikasi Penempatan &amp; Industri</span>
+                        <p class="text-xs sm:text-sm font-bold text-rose-900 font-heading">
+                          @if($statusVerifikasiInd === 'reject')
+                            PENDAFTARAN PERUSAHAAN DITOLAK OLEH ADMIN JURUSAN
+                          @elseif($statusSurat === 'draft')
+                            DIKEMBALIKAN KE DRAFT REQUEST (SILAKAN AJUKAN PERUSAHAAN BARU)
+                          @else
+                            PERMOHONAN SURAT PENGANTAR DITOLAK OLEH ADMIN
+                          @endif
+                        </p>
+                      </div>
+                    </div>
+                    <button type="button" onclick="document.getElementById('modal-request-surat').classList.remove('hidden')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shadow-sm self-start sm:self-auto transition-colors">
+                      <span class="material-symbols-outlined text-[14px]">refresh</span>
+                      <span>Ajukan Ulang Perusahaan</span>
+                    </button>
                   </div>
+                  @if($pengajuanAktif->catatan_penolakan || $pengajuanAktif->industri?->catatan_admin)
+                    <div class="text-xs text-rose-800 bg-white/80 rounded-lg p-2.5 border border-rose-200/60">
+                      <strong>Catatan Admin Jurusan:</strong> {{ $pengajuanAktif->catatan_penolakan ?: $pengajuanAktif->industri?->catatan_admin }}
+                    </div>
+                  @endif
                 </div>
-                <span class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold shadow-sm self-start sm:self-auto">
-                  <span class="material-symbols-outlined text-[14px]">done_all</span>
-                  <span>Terkonfirmasi</span>
-                </span>
-              </div>
+              @elseif($statusVerifikasiInd === 'pending')
+                <div class="p-4 rounded-xl bg-amber-50/90 border border-amber-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div class="flex items-center gap-3">
+                    <span class="relative flex h-3 w-3 shrink-0">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                    </span>
+                    <div>
+                      <span class="text-[11px] text-amber-800 font-semibold">Status Verifikasi Perusahaan (PRD 5.2)</span>
+                      <p class="text-xs sm:text-sm font-bold text-amber-900 font-heading">
+                        MENUNGGU VERIFIKASI PERUSAHAAN OLEH ADMIN JURUSAN
+                      </p>
+                      <p class="text-[11px] text-amber-700 mt-0.5">
+                        Perusahaan baru sedang ditinjau Admin Jurusan untuk disahkan &amp; dibuatkan akun Pembimbing Industri (DUDI).
+                      </p>
+                    </div>
+                  </div>
+                  <span class="inline-flex items-center gap-1 px-3 py-1 bg-amber-500 text-white rounded-lg text-xs font-bold shadow-sm self-start sm:self-auto shrink-0">
+                    <span class="material-symbols-outlined text-[14px]">hourglass_top</span>
+                    <span>Menunggu ACC Admin</span>
+                  </span>
+                </div>
+              @else
+                <div class="p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50/50 border border-emerald-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div class="flex items-center gap-3">
+                    <span class="relative flex h-3 w-3 shrink-0">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-600"></span>
+                    </span>
+                    <div>
+                      <span class="text-[11px] text-slate-500 font-medium">Status Penempatan &amp; Verifikasi Mitra DUDI</span>
+                      <p class="text-xs sm:text-sm font-bold text-emerald-800 font-heading">
+                        STATUS: MITRA INDUSTRI TERVERIFIKASI RESMI OLEH ADMIN JURUSAN
+                      </p>
+                      @if($pengajuanAktif->industri?->email_pj)
+                        <p class="text-[11px] text-emerald-700 mt-0.5">
+                          Email PIC Terdaftar: <span class="font-mono font-semibold">{{ $pengajuanAktif->industri->email_pj }}</span>
+                        </p>
+                      @endif
+                    </div>
+                  </div>
+                  <span class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold shadow-sm self-start sm:self-auto shrink-0">
+                    <span class="material-symbols-outlined text-[14px]">done_all</span>
+                    <span>Terverifikasi</span>
+                  </span>
+                </div>
+              @endif
             @else
               <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
@@ -329,13 +402,14 @@
                   <div>
                     <span class="text-[11px] text-slate-500 font-medium">Status Penempatan Mahasiswa</span>
                     <p class="text-xs sm:text-sm font-bold text-slate-700 font-heading">
-                      BELUM DITEMPATKAN / BELUM MENGAJUKAN
+                      BELUM DITEMPATKAN / BELUM MENGINPUT PERUSAHAAN
                     </p>
                   </div>
                 </div>
-                <span class="inline-flex items-center gap-1 px-3 py-1 bg-slate-200 text-slate-700 rounded-lg text-xs font-bold">
-                  Belum Ada Data
-                </span>
+                <button type="button" onclick="document.getElementById('modal-request-surat').classList.remove('hidden')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0056B3] hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors">
+                  <span class="material-symbols-outlined text-[14px]">add</span>
+                  <span>Input Perusahaan</span>
+                </button>
               </div>
             @endif
 
@@ -359,10 +433,15 @@
               <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200/60">
                 <div class="flex items-center gap-2 text-slate-400 mb-1">
                   <span class="material-symbols-outlined text-[18px]">supervised_user_circle</span>
-                  <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Pembimbing Industri (Mentor)</span>
+                  <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Pembimbing Industri (PIC / Mentor)</span>
                 </div>
                 <p class="text-sm font-bold text-slate-800 font-heading">{{ $pengajuanAktif?->industri?->kontak_person ?? $pengajuanAktif?->mentor_industri ?? 'Belum Ditetapkan' }}</p>
-                <span class="text-xs text-slate-500 mt-0.5 block">{{ $pengajuanAktif?->posisi_magang ?? 'Posisi Magang Belum Dipilih' }}</span>
+                <span class="text-xs text-slate-500 mt-0.5 block">
+                  {{ $pengajuanAktif?->posisi_magang ?? 'Posisi Magang Belum Dipilih' }}
+                  @if($pengajuanAktif?->industri?->telepon)
+                    • {{ $pengajuanAktif->industri->telepon }}
+                  @endif
+                </span>
               </div>
             </div>
 
@@ -829,7 +908,7 @@
             <label for="f1-company-name" class="block text-xs font-bold text-slate-700 mb-1">
               Instansi / Perusahaan Tempat PKL <span class="text-rose-500">*</span>
             </label>
-            <input type="text" id="f1-company-name" name="company_name" required value="" placeholder="Contoh: PT Telekomunikasi Seluler (Telkomsel)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0056B3]/20 focus:border-[#0056B3]">
+            <input type="text" id="f1-company-name" name="company_name" required value="{{ $pengajuanAktif?->industri?->nama_perusahaan ?? '' }}" placeholder="Contoh: PT Telekomunikasi Seluler (Telkomsel)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0056B3]/20 focus:border-[#0056B3]">
           </div>
           <div>
             <label for="f1-internship-title" class="block text-xs font-bold text-slate-700 mb-1">
@@ -914,59 +993,114 @@
 
   <!-- Modal Permohonan Surat Pengantar PKL & Registrasi Industri (PRD 5.1 & 5.2) -->
   <div id="modal-request-surat" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-xl w-full p-6 sm:p-7 text-left shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-7 text-left shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
         <div>
-          <h3 class="text-base sm:text-lg font-bold font-heading text-slate-800">Permohonan Surat Pengantar PKL</h3>
-          <p class="text-xs text-slate-500">Input data instansi / perusahaan tempat Anda diterima magang.</p>
+          <span class="text-xs font-bold uppercase tracking-wider text-[#02796B]">Tahap 1 &amp; 2: Registrasi Perusahaan &amp; Surat Pengantar</span>
+          <h3 class="text-base sm:text-lg font-bold font-heading text-slate-800 mt-0.5">Input Perusahaan Magang &amp; Permohonan Surat Pengantar</h3>
+          <p class="text-xs text-slate-500">Pilih mitra industri terdaftar atau daftarkan perusahaan baru untuk diverifikasi Admin Jurusan.</p>
         </div>
         <button type="button" onclick="document.getElementById('modal-request-surat').classList.add('hidden')" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
           <span class="material-symbols-outlined text-[20px]">close</span>
         </button>
       </div>
 
+      <!-- Mode Switcher: Perusahaan Baru vs Mitra Terdaftar -->
+      <div class="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-100 border border-slate-200/80 mb-4">
+        <button type="button" id="tab-industri-baru" onclick="switchIndustriMode('baru')" class="py-2 px-3 rounded-lg text-xs font-bold font-heading transition-all bg-[#0056B3] text-white shadow-sm flex items-center justify-center gap-1.5">
+          <span class="material-symbols-outlined text-[16px]">add_business</span>
+          <span>Input Perusahaan Baru</span>
+        </button>
+        <button type="button" id="tab-industri-terdaftar" onclick="switchIndustriMode('terdaftar')" class="py-2 px-3 rounded-lg text-xs font-bold font-heading transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5">
+          <span class="material-symbols-outlined text-[16px]">verified</span>
+          <span>Pilih Mitra Terdaftar ({{ isset($industris) ? $industris->count() : 0 }})</span>
+        </button>
+      </div>
+
       <form method="POST" action="{{ route('mahasiswa.request-surat') }}" class="space-y-4">
         @csrf
-        <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Perusahaan / Instansi Magang</label>
-          <input type="text" name="nama_perusahaan" required placeholder="Contoh: PT Telekomunikasi Indonesia Tbk" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+
+        <!-- SECTION A: Pilih dari Mitra Industri Terdaftar -->
+        <div id="section-industri-terdaftar" class="hidden space-y-3 p-4 rounded-xl bg-teal-50/50 border border-teal-200/80">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Pilih Mitra Industri Terverifikasi <span class="text-rose-500">*</span></label>
+            <select name="industri_id" id="select-industri-id" disabled class="w-full text-xs rounded-xl border-slate-200 p-2.5 bg-white focus:border-blue-500 focus:ring-blue-500">
+              <option value="">-- Pilih Perusahaan Mitra Resmi PNJ --</option>
+              @foreach($industris ?? [] as $indItem)
+                <option value="{{ $indItem->id }}" {{ $pengajuanAktif?->industri_id === $indItem->id ? 'selected' : '' }}>
+                  {{ $indItem->nama_perusahaan }} ({{ $indItem->kota ?: 'Jakarta' }} — PIC: {{ $indItem->kontak_person ?: 'HRD' }})
+                </option>
+              @endforeach
+            </select>
+          </div>
+          <p class="text-[11px] text-[#02796B] flex items-start gap-1.5">
+            <span class="material-symbols-outlined text-[15px] shrink-0 mt-0.5">info</span>
+            <span>Perusahaan di atas telah terverifikasi resmi oleh Jurusan TIK PNJ. Admin Jurusan akan meneruskan (forward) penugasan Anda ke akun Pembimbing Industri terkait.</span>
+          </p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Kota Perusahaan</label>
-            <input type="text" name="kota" placeholder="Contoh: Jakarta Selatan" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+        <!-- SECTION B: Input Perusahaan Baru -->
+        <div id="section-industri-baru" class="space-y-3.5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Perusahaan / Instansi <span class="text-rose-500">*</span></label>
+              <input type="text" name="nama_perusahaan" id="input-nama-perusahaan" required value="{{ $pengajuanAktif?->industri?->status_verifikasi !== 'acc' ? ($pengajuanAktif?->industri?->nama_perusahaan ?? '') : '' }}" placeholder="Contoh: PT Telekomunikasi Indonesia Tbk" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Bidang Usaha / Sektor Industri</label>
+              <input type="text" name="bidang_usaha" value="{{ $pengajuanAktif?->industri?->status_verifikasi !== 'acc' ? ($pengajuanAktif?->industri?->bidang_usaha ?? '') : '' }}" placeholder="Contoh: Teknologi Informasi & Cloud" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+            </div>
           </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Kota Perusahaan</label>
+              <input type="text" name="kota" value="{{ $pengajuanAktif?->industri?->status_verifikasi !== 'acc' ? ($pengajuanAktif?->industri?->kota ?? '') : '' }}" placeholder="Contoh: Jakarta Selatan" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">No. Telepon / WhatsApp Perusahaan</label>
+              <input type="text" name="telepon" value="{{ $pengajuanAktif?->industri?->status_verifikasi !== 'acc' ? ($pengajuanAktif?->industri?->telepon ?? '') : '' }}" placeholder="Contoh: 021-5240123 / 0812xxxx" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Alamat Lengkap Perusahaan</label>
+            <textarea name="alamat" rows="2" placeholder="Jl. Gatot Subroto Kav. 52, Kuningan Barat, Jakarta Selatan..." class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">{{ $pengajuanAktif?->industri?->status_verifikasi !== 'acc' ? ($pengajuanAktif?->industri?->alamat ?? '') : '' }}</textarea>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Kontak Person (PIC / HRD)</label>
+              <input type="text" name="kontak_person" value="{{ $pengajuanAktif?->industri?->status_verifikasi !== 'acc' ? ($pengajuanAktif?->industri?->kontak_person ?? '') : '' }}" placeholder="Contoh: Bagas Wicaksono, S.T." class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email Resmi PIC / Perusahaan</label>
+              <input type="email" name="email_pj" value="{{ $pengajuanAktif?->industri?->status_verifikasi !== 'acc' ? ($pengajuanAktif?->industri?->email_pj ?? '') : '' }}" placeholder="recruitment@perusahaan.co.id" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-amber-50/80 border border-amber-200/80 text-[11px] text-amber-800 flex items-start gap-2">
+            <span class="material-symbols-outlined text-[16px] text-amber-600 shrink-0 mt-0.5">verified_user</span>
+            <span><strong>Alur Verifikasi Admin (PRD 5.2 &amp; 7.3):</strong> Data perusahaan baru akan diverifikasi oleh Admin Jurusan TIK. Saat di-ACC, sistem otomatis membuatkan 1 Akun Penanggung Jawab Industri (DUDI) dan mengirimkan kredensialnya ke Email PIC di atas.</span>
+          </div>
+        </div>
+
+        <!-- Detail Penempatan Mahasiswa (Berlaku untuk kedua mode) -->
+        <div class="pt-3 border-t border-slate-100 space-y-3">
           <div>
             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Posisi / Divisi Magang</label>
-            <input type="text" name="posisi_magang" placeholder="Contoh: Cloud Engineer Intern" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+            <input type="text" name="posisi_magang" value="{{ $pengajuanAktif?->posisi_magang ?? '' }}" placeholder="Contoh: Cloud & DevOps Engineer Intern" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
           </div>
-        </div>
 
-        <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Alamat Lengkap Perusahaan</label>
-          <textarea name="alamat" rows="2" placeholder="Jl. Gatot Subroto Kav. 52, Kuningan Barat..." class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500"></textarea>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Kontak Person (PIC)</label>
-            <input type="text" name="kontak_person" placeholder="Contoh: Bagas Wicaksono (HRD)" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email PIC / Perusahaan</label>
-            <input type="email" name="email_pj" placeholder="recruitment@telkom.co.id" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tanggal Mulai Magang</label>
-            <input type="date" name="tanggal_mulai" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tanggal Selesai Magang</label>
-            <input type="date" name="tanggal_selesai" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tanggal Mulai Magang</label>
+              <input type="date" name="tanggal_mulai" value="{{ $pengajuanAktif?->tanggal_mulai?->format('Y-m-d') ?? '' }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tanggal Selesai Magang</label>
+              <input type="date" name="tanggal_selesai" value="{{ $pengajuanAktif?->tanggal_selesai?->format('Y-m-d') ?? '' }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-blue-500 focus:ring-blue-500">
+            </div>
           </div>
         </div>
 
@@ -974,7 +1108,7 @@
           <button type="button" onclick="document.getElementById('modal-request-surat').classList.add('hidden')" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors">Batal</button>
           <button type="submit" class="px-5 py-2.5 rounded-xl bg-[#0056B3] hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-colors">
             <span class="material-symbols-outlined text-[16px]">send</span>
-            <span>Kirim Permohonan ke Admin</span>
+            <span>Simpan Perusahaan &amp; Kirim ke Admin</span>
           </button>
         </div>
       </form>
@@ -1038,6 +1172,35 @@
         const text = item.getAttribute('data-search') || '';
         item.style.display = text.includes(query) ? 'flex' : 'none';
       });
+    }
+
+    function switchIndustriMode(mode) {
+      const tabBaru = document.getElementById('tab-industri-baru');
+      const tabTerdaftar = document.getElementById('tab-industri-terdaftar');
+      const secBaru = document.getElementById('section-industri-baru');
+      const secTerdaftar = document.getElementById('section-industri-terdaftar');
+      const selectIndustri = document.getElementById('select-industri-id');
+      const inputNamaPerusahaan = document.getElementById('input-nama-perusahaan');
+
+      if (mode === 'terdaftar') {
+        tabTerdaftar.className = 'py-2 px-3 rounded-lg text-xs font-bold font-heading transition-all bg-[#0056B3] text-white shadow-sm flex items-center justify-center gap-1.5';
+        tabBaru.className = 'py-2 px-3 rounded-lg text-xs font-bold font-heading transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5';
+        secTerdaftar.classList.remove('hidden');
+        secBaru.classList.add('hidden');
+        selectIndustri.disabled = false;
+        selectIndustri.required = true;
+        inputNamaPerusahaan.disabled = true;
+        inputNamaPerusahaan.required = false;
+      } else {
+        tabBaru.className = 'py-2 px-3 rounded-lg text-xs font-bold font-heading transition-all bg-[#0056B3] text-white shadow-sm flex items-center justify-center gap-1.5';
+        tabTerdaftar.className = 'py-2 px-3 rounded-lg text-xs font-bold font-heading transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5';
+        secBaru.classList.remove('hidden');
+        secTerdaftar.classList.add('hidden');
+        selectIndustri.disabled = true;
+        selectIndustri.required = false;
+        inputNamaPerusahaan.disabled = false;
+        inputNamaPerusahaan.required = true;
+      }
     }
 
     // Interactive button state demonstration for PDF actions

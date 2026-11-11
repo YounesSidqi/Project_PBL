@@ -465,4 +465,61 @@ class PrdCompleteFlowTest extends TestCase
         ]);
         $this->assertNull($this->mahasiswa->fresh()->dosen_id);
     }
+
+    public function test_mahasiswa_inputs_company_and_admin_verifies_or_forwards_to_existing_industri(): void
+    {
+        // 1. Mahasiswa menginput perusahaan baru beserta detail lengkap (PRD 5.2)
+        $response = $this->actingAs($this->mahasiswa)->post(route('mahasiswa.request-surat'), [
+            'nama_perusahaan' => 'PT Nusantara Cloud Digital',
+            'bidang_usaha' => 'Cloud & AI Infrastructure',
+            'alamat' => 'Jl. Jend. Sudirman Kav. 21, Jakarta Pusat',
+            'kota' => 'Jakarta Pusat',
+            'kontak_person' => 'Hendra Wijaya, M.Kom.',
+            'email_pj' => 'hendra.wijaya@nusantaracloud.id',
+            'telepon' => '081122334455',
+            'posisi_magang' => 'DevOps Engineer Intern',
+            'tanggal_mulai' => '2026-03-01',
+            'tanggal_selesai' => '2026-08-31',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('industris', [
+            'nama_perusahaan' => 'PT Nusantara Cloud Digital',
+            'bidang_usaha' => 'Cloud & AI Infrastructure',
+            'email_pj' => 'hendra.wijaya@nusantaracloud.id',
+            'status_verifikasi' => 'pending',
+        ]);
+
+        $newIndustri = Industri::where('nama_perusahaan', 'PT Nusantara Cloud Digital')->first();
+        $pengajuan = PengajuanMagang::where('mahasiswa_id', $this->mahasiswa->id)->first();
+        $this->assertEquals($newIndustri->id, $pengajuan->industri_id);
+
+        // 2. Skenario A: Admin mem-forward penugasan mahasiswa ke industri yang sudah terdaftar (PRD 5.2 poin 2)
+        $forwardResponse = $this->actingAs($this->admin)->post(route('admin.pengajuan.forward', $pengajuan->id), [
+            'industri_id' => $this->industri->id,
+        ]);
+
+        $forwardResponse->assertRedirect();
+        $this->assertEquals($this->industri->id, $pengajuan->fresh()->industri_id);
+    }
+
+    public function test_kps_can_login_using_kps_admin_tab(): void
+    {
+        User::create([
+            'name' => 'Dr. Eng. Nur Aisyah, S.Kom., M.T. (KPS)',
+            'identifier' => '197508102000031001',
+            'email' => 'kps.ti@pnj.ac.id',
+            'password' => bcrypt('password123'),
+            'role' => 'kps',
+        ]);
+
+        $response = $this->post(route('login.post'), [
+            'identifier' => 'kps.ti@pnj.ac.id',
+            'password' => 'password123',
+            'role' => 'admin', // Tab "KPS / Admin" mengirim role=admin
+        ]);
+
+        $response->assertRedirect(route('dashboard.kps'));
+        $this->assertAuthenticated();
+    }
 }

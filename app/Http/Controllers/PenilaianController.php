@@ -14,12 +14,14 @@ use Illuminate\Support\Facades\Auth;
 class PenilaianController extends Controller
 {
     /**
-     * Mahasiswa mengajukan Permintaan Surat Pengantar PKL & Data Industri.
+     * Mahasiswa mengajukan Permintaan Surat Pengantar PKL & Data Industri (PRD 5.1 & 5.2).
      */
     public function requestSuratPengantar(Request $request)
     {
         $request->validate([
-            'nama_perusahaan' => 'required|string|max:255',
+            'industri_id' => 'nullable|exists:industris,id',
+            'nama_perusahaan' => 'required_without:industri_id|nullable|string|max:255',
+            'bidang_usaha' => 'nullable|string|max:150',
             'alamat' => 'nullable|string|max:500',
             'kota' => 'nullable|string|max:100',
             'kontak_person' => 'nullable|string|max:150',
@@ -28,40 +30,69 @@ class PenilaianController extends Controller
             'posisi_magang' => 'nullable|string|max:150',
             'tanggal_mulai' => 'nullable|date',
             'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
+        ], [
+            'nama_perusahaan.required_without' => 'Nama perusahaan wajib diisi jika tidak memilih mitra industri terdaftar.',
         ]);
 
         /** @var User $student */
         $student = Auth::user();
 
-        // Cek atau buat entitas Industri baru jika belum ada
-        $industri = Industri::firstOrCreate(
-            ['nama_perusahaan' => trim($request->nama_perusahaan)],
-            [
-                'alamat' => $request->alamat,
-                'kota' => $request->kota ?: 'Jakarta',
-                'kontak_person' => $request->kontak_person,
-                'email_pj' => $request->email_pj,
-                'telepon' => $request->telepon,
-                'status_verifikasi' => 'pending',
-                'catatan_admin' => 'Pendaftaran diajukan oleh mahasiswa melalui permohonan Surat Pengantar.',
-            ]
-        );
+        if ($request->filled('industri_id')) {
+            $industri = Industri::findOrFail($request->industri_id);
+        } else {
+            $namaPerusahaan = trim((string) $request->nama_perusahaan);
+            $industri = Industri::where('nama_perusahaan', $namaPerusahaan)->first();
+
+            if (! $industri) {
+                $industri = Industri::create([
+                    'nama_perusahaan' => $namaPerusahaan,
+                    'bidang_usaha' => $request->bidang_usaha,
+                    'alamat' => $request->alamat,
+                    'kota' => $request->kota ?: 'Jakarta',
+                    'kontak_person' => $request->kontak_person,
+                    'email_pj' => $request->email_pj,
+                    'telepon' => $request->telepon,
+                    'status_verifikasi' => 'pending',
+                    'catatan_admin' => 'Pendaftaran diajukan oleh mahasiswa melalui permohonan Surat Pengantar & Registrasi Industri.',
+                ]);
+            } elseif ($industri->status_verifikasi !== 'acc') {
+                $industri->update([
+                    'bidang_usaha' => $request->bidang_usaha ?: $industri->bidang_usaha,
+                    'alamat' => $request->alamat ?: $industri->alamat,
+                    'kota' => $request->kota ?: $industri->kota,
+                    'kontak_person' => $request->kontak_person ?: $industri->kontak_person,
+                    'email_pj' => $request->email_pj ?: $industri->email_pj,
+                    'telepon' => $request->telepon ?: $industri->telepon,
+                    'status_verifikasi' => 'pending',
+                    'catatan_admin' => 'Data perusahaan diperbarui oleh mahasiswa dan menunggu verifikasi Admin Jurusan.',
+                ]);
+            }
+        }
+
+        $existingPengajuan = PengajuanMagang::where('mahasiswa_id', $student->id)->latest()->first();
+        $keepSuratStatus = $existingPengajuan
+            && $existingPengajuan->industri_id === $industri->id
+            && $existingPengajuan->status_surat_pengantar === 'diterbitkan';
 
         // Ambil atau buat PengajuanMagang aktif mahasiswa
-        $pengajuan = PengajuanMagang::updateOrCreate(
+        PengajuanMagang::updateOrCreate(
             ['mahasiswa_id' => $student->id],
             [
                 'industri_id' => $industri->id,
-                'posisi_magang' => $request->posisi_magang ?: 'Software Engineer Intern',
-                'tanggal_mulai' => $request->tanggal_mulai,
-                'tanggal_selesai' => $request->tanggal_selesai,
-                'status_surat_pengantar' => 'pending',
-                'dosen_id' => $student->dosen_id,
+                'posisi_magang' => $request->posisi_magang ?: ($existingPengajuan?->posisi_magang ?: 'Software Engineer Intern'),
+                'tanggal_mulai' => $request->tanggal_mulai ?: $existingPengajuan?->tanggal_mulai,
+                'tanggal_selesai' => $request->tanggal_selesai ?: $existingPengajuan?->tanggal_selesai,
+                'status_surat_pengantar' => $keepSuratStatus ? 'diterbitkan' : 'pending',
+                'catatan_penolakan' => $keepSuratStatus ? $existingPengajuan->catatan_penolakan : null,
+                'dosen_id' => $student->dosen_id ?: $existingPengajuan?->dosen_id,
             ]
         );
 
-        return redirect()->back()
-            ->with('success', "Permohonan Surat Pengantar PKL untuk PT/Instansi \"{$industri->nama_perusahaan}\" berhasil dikirimkan ke Admin Jurusan TIK!");
+        $statusMsg = $industri->status_verifikasi === 'acc'
+            ? "Pengajuan penempatan PKL & Surat Pengantar pada mitra terdaftar \"{$industri->nama_perusahaan}\" berhasil dikirim ke Admin Jurusan TIK!"
+            : "Data perusahaan baru \"{$industri->nama_perusahaan}\" & permohonan Surat Pengantar berhasil dikirimkan untuk diverifikasi oleh Admin Jurusan TIK!";
+
+        return redirect()->back()->with('success', $statusMsg);
     }
 
     /**
