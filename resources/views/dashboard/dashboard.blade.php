@@ -286,6 +286,9 @@
             @php
               $statusVerifikasiInd = $pengajuanAktif?->industri?->status_verifikasi;
               $statusSurat = $pengajuanAktif?->status_surat_pengantar;
+              $canSubmitPengajuan = !$pengajuanAktif
+                || in_array($statusSurat, ['draft', 'ditolak'], true)
+                || $statusVerifikasiInd === 'reject';
             @endphp
             
             <!-- Placement Header -->
@@ -300,7 +303,7 @@
                     {{ $pengajuanAktif?->industri?->nama_perusahaan ?? $pengajuanAktif?->nama_perusahaan ?? 'Belum Ada Penempatan Perusahaan' }}
                   </h3>
                   <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-                    {{ $pengajuanAktif?->industri?->bidang_usaha ?? $pengajuanAktif?->alamat_perusahaan ?? 'Silakan input data perusahaan tempat Anda magang untuk diverifikasi oleh Admin Jurusan.' }}
+                    {{ $pengajuanAktif?->industri?->bidang_usaha ?? $pengajuanAktif?->alamat_perusahaan ?? 'Silakan isi form usulan perusahaan magang untuk diperiksa dan didaftarkan oleh Admin Jurusan.' }}
                   </p>
                   @if($pengajuanAktif?->industri?->alamat)
                     <p class="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
@@ -311,10 +314,17 @@
                 </div>
               </div>
 
-              <button type="button" onclick="document.getElementById('modal-request-surat').classList.remove('hidden')" class="px-3.5 py-2 rounded-xl {{ $pengajuanAktif ? 'bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-[#0056B3] border border-slate-200' : 'bg-gradient-to-r from-[#0056B3] to-[#02796B] text-white shadow-sm' }} font-bold font-heading text-xs flex items-center gap-1.5 transition-all shrink-0 self-start">
-                <span class="material-symbols-outlined text-[16px]">{{ $pengajuanAktif ? 'edit_square' : 'add_business' }}</span>
-                <span>{{ $pengajuanAktif ? 'Ubah / Input Perusahaan' : 'Input Perusahaan Magang' }}</span>
-              </button>
+              @if($canSubmitPengajuan)
+                <button type="button" onclick="document.getElementById('modal-request-surat').classList.remove('hidden')" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#0056B3] to-[#02796B] text-white shadow-sm font-bold font-heading text-xs flex items-center gap-1.5 transition-all shrink-0 self-start">
+                  <span class="material-symbols-outlined text-[16px]">add_business</span>
+                  <span>{{ $pengajuanAktif ? 'Ajukan Ulang Perusahaan' : 'Isi Form Perusahaan' }}</span>
+                </button>
+              @else
+                <span class="px-3.5 py-2 rounded-xl bg-slate-100 text-slate-500 border border-slate-200 font-bold font-heading text-xs flex items-center gap-1.5 shrink-0 self-start cursor-not-allowed" title="Proteksi Anti-Spam: Form dikunci selama pengajuan sedang ditinjau atau telah disahkan oleh Admin Jurusan">
+                  <span class="material-symbols-outlined text-[16px] text-amber-600">lock</span>
+                  <span>{{ $statusVerifikasiInd === 'pending' || $statusSurat === 'pending' ? 'Sedang Ditinjau Admin (Terkunci)' : 'Penempatan Terkunci' }}</span>
+                </span>
+              @endif
             </div>
 
             <!-- Official Status Banner -->
@@ -517,10 +527,17 @@
 
             <!-- Action & Note -->
             <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-              <button type="button" onclick="document.getElementById('modal-request-surat').classList.remove('hidden')" class="text-xs font-bold text-[#0056B3] hover:underline flex items-center gap-1">
-                <span class="material-symbols-outlined text-[16px]">edit_document</span>
-                <span>Permohonan Surat Pengantar Baru</span>
-              </button>
+              @if($canSubmitPengajuan)
+                <button type="button" onclick="document.getElementById('modal-request-surat').classList.remove('hidden')" class="text-xs font-bold text-[#0056B3] hover:underline flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[16px]">edit_document</span>
+                  <span>{{ $pengajuanAktif ? 'Ajukan Ulang Permohonan & Perusahaan' : 'Isi Form Permohonan Surat Pengantar & Perusahaan' }}</span>
+                </button>
+              @else
+                <span class="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
+                  <span class="material-symbols-outlined text-[16px] text-amber-600">shield_lock</span>
+                  <span>Proteksi Anti-Spam Aktif: Form dikunci selama pengajuan dalam pengawasan/verifikasi Admin.</span>
+                </span>
+              @endif
 
               @if($pengajuanAktif && $pengajuanAktif->status_surat_pengantar === 'diterbitkan')
                 <a href="{{ route('dokumen.surat-pengantar', $pengajuanAktif->id) }}" target="_blank" class="w-full sm:w-auto bg-[#0056B3] hover:bg-[#00428A] text-white px-5 py-2.5 rounded-xl font-bold font-heading text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-sm">

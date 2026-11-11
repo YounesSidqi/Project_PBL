@@ -23,7 +23,7 @@ class AdminController extends Controller
         $stats = [
             'total_mahasiswa' => User::where('role', 'mahasiswa')->count(),
             'total_dosen' => User::where('role', 'dosen')->count(),
-            'total_industri' => Industri::count(),
+            'total_industri' => Industri::where('status_verifikasi', 'acc')->count(),
             'surat_pending' => PengajuanMagang::where('status_surat_pengantar', 'pending')->count(),
             'surat_diterbitkan' => PengajuanMagang::where('status_surat_pengantar', 'diterbitkan')->count(),
             'industri_pending' => Industri::where('status_verifikasi', 'pending')->count(),
@@ -159,7 +159,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Verifikasi & Terbitkan Surat Pengantar PKL Ber-KOP Resmi.
+     * Verifikasi Pengajuan Tempat PKL Mahasiswa & Terbitkan Surat Pengantar Ber-KOP Resmi.
      */
     public function terbitkanSuratPengantar(Request $request, PengajuanMagang $pengajuan)
     {
@@ -172,8 +172,17 @@ class AdminController extends Controller
             'updated_at' => now(),
         ]);
 
+        // Jika perusahaan yang diajukan mahasiswa masih berstatus pending, otomatis sahkan & buat 1 akun DUDI
+        $extraDudiMsg = '';
+        if ($pengajuan->industri && $pengajuan->industri->status_verifikasi !== 'acc') {
+            $dudiInfo = $this->activateIndustriAndCreateAccount($pengajuan->industri);
+            if ($dudiInfo) {
+                $extraDudiMsg = " Mitra industri \"{$pengajuan->industri->nama_perusahaan}\" turut disahkan (Akun DUDI: {$dudiInfo['email']} | Password: {$dudiInfo['password']}).";
+            }
+        }
+
         return redirect()->to(route('dashboard.admin', ['tab' => 'surat']))
-            ->with('success', "Surat Pengantar PKL untuk {$pengajuan->mahasiswa->name} berhasil diterbitkan dengan nomor {$nomorSurat}!");
+            ->with('success', "Pengajuan tempat PKL & Surat Pengantar untuk {$pengajuan->mahasiswa->name} berhasil di-Accept (Nomor: {$nomorSurat})!{$extraDudiMsg}");
     }
 
     /**
@@ -196,11 +205,86 @@ class AdminController extends Controller
     }
 
     /**
-     * Verifikasi & ACC Industri Baru + Auto Generate 1 Akun Penanggung Jawab Industri (DUDI).
+     * Admin mendaftarkan Mitra Industri Resmi secara langsung beserta 1 Akun Penanggung Jawab (DUDI).
+     */
+    public function storeIndustri(Request $request)
+    {
+        $request->validate([
+            'nama_perusahaan' => 'required|string|max:255',
+            'bidang_usaha' => 'nullable|string|max:150',
+            'kota' => 'nullable|string|max:100',
+            'alamat' => 'nullable|string|max:500',
+            'kontak_person' => 'nullable|string|max:150',
+            'email_pj' => 'nullable|email|max:150',
+            'telepon' => 'nullable|string|max:50',
+        ]);
+
+        $industri = Industri::create([
+            'nama_perusahaan' => trim($request->nama_perusahaan),
+            'bidang_usaha' => $request->bidang_usaha,
+            'kota' => $request->kota ?: 'Jakarta',
+            'alamat' => $request->alamat,
+            'kontak_person' => $request->kontak_person,
+            'email_pj' => $request->email_pj,
+            'telepon' => $request->telepon,
+            'status_verifikasi' => 'pending',
+            'catatan_admin' => 'Didaftarkan langsung oleh Admin Jurusan TIK.',
+        ]);
+
+        return $this->accIndustri($request, $industri);
+    }
+
+    /**
+     * Verifikasi & ACC Industri Baru (Oleh Admin) + Auto Generate 1 Akun Penanggung Jawab Industri (DUDI).
      */
     public function accIndustri(Request $request, Industri $industri)
     {
-        // 1. Buat / Ambil akun user untuk penanggung jawab industri jika belum ada
+        // Jika Admin mengoreksi / melengkapi data perusahaan saat verifikasi, simpan pembaruannya terlebih dahulu
+        $industri->update([
+            'nama_perusahaan' => $request->filled('nama_perusahaan') ? trim((string) $request->nama_perusahaan) : $industri->nama_perusahaan,
+            'bidang_usaha' => $request->filled('bidang_usaha') ? $request->bidang_usaha : $industri->bidang_usaha,
+            'kota' => $request->filled('kota') ? $request->kota : $industri->kota,
+            'alamat' => $request->filled('alamat') ? $request->alamat : $industri->alamat,
+            'kontak_person' => $request->filled('kontak_person') ? $request->kontak_person : $industri->kontak_person,
+            'email_pj' => $request->filled('email_pj') ? $request->email_pj : $industri->email_pj,
+            'telepon' => $request->filled('telepon') ? $request->telepon : $industri->telepon,
+        ]);
+
+        $dudiInfo = $this->activateIndustriAndCreateAccount($industri);
+
+        // Setujui juga pengajuan magang mahasiswa yang menunggu pada industri ini
+        $pendingPengajuans = PengajuanMagang::where('industri_id', $industri->id)
+            ->where('status_surat_pengantar', 'pending')
+            ->get();
+
+        foreach ($pendingPengajuans as $pm) {
+            $nomorSurat = $pm->nomor_surat_pengantar ?: 'B/'.str_pad($pm->id, 3, '0', STR_PAD_LEFT).'/PL3.TIK/PKL/'.date('Y');
+            $pm->update([
+                'status_surat_pengantar' => 'diterbitkan',
+                'nomor_surat_pengantar' => $nomorSurat,
+                'catatan_penolakan' => null,
+            ]);
+        }
+
+        if ($dudiInfo) {
+            $msg = "Industri \"{$industri->nama_perusahaan}\" berhasil di-Accept! 1 Akun Penanggung Jawab Industri telah dibuat otomatis: Email: [{$dudiInfo['email']}], ID: [{$dudiInfo['identifier']}], Password Sementara: [{$dudiInfo['password']}].";
+        } else {
+            $msg = "Industri \"{$industri->nama_perusahaan}\" berhasil di-Accept dan disetujui!";
+        }
+
+        $redirectTab = $request->input('redirect_tab', 'industri');
+
+        return redirect()->to(route('dashboard.admin', ['tab' => $redirectTab]))
+            ->with('success', $msg);
+    }
+
+    /**
+     * Helper internal untuk mengaktifkan status verifikasi industri & men-generate 1 akun DUDI jika belum ada.
+     *
+     * @return array{email: string, identifier: string, password: string}|null
+     */
+    private function activateIndustriAndCreateAccount(Industri $industri): ?array
+    {
         $user = $industri->user;
         $generatedPassword = 'dudi'.rand(1000, 9999);
 
@@ -208,8 +292,6 @@ class AdminController extends Controller
             $slug = Str::slug($industri->nama_perusahaan, '.');
             $email = $industri->email_pj ?: "pembimbing.{$slug}@mitra.pnj.ac.id";
 
-            // Pastikan email unik
-            $baseEmail = $email;
             $counter = 1;
             while (User::where('email', $email)->exists()) {
                 $email = "pembimbing.{$slug}{$counter}@mitra.pnj.ac.id";
@@ -232,7 +314,6 @@ class AdminController extends Controller
                 'catatan_admin' => "Telah diverifikasi oleh Admin Jurusan TIK. Akun DUDI: {$user->email} (ID: {$user->identifier}).",
             ]);
 
-            // Kirim Email Alert kredensial ke alamat perusahaan terkait (PRD 4 & 7.3)
             try {
                 Mail::raw(
                     "Yth. {$user->name} ({$industri->nama_perusahaan}),\n\n".
@@ -250,20 +331,19 @@ class AdminController extends Controller
                 // Abaikan kegagalan koneksi SMTP pada environment lokal
             }
 
-            $msg = "Industri \"{$industri->nama_perusahaan}\" berhasil diverifikasi! 1 Akun Penanggung Jawab Industri telah dibuat otomatis: Email: [{$user->email}], ID: [{$user->identifier}], Password Sementara: [{$generatedPassword}] (Email alert terkirim).";
-        } else {
-            $industri->update([
-                'status_verifikasi' => 'acc',
-                'catatan_admin' => 'Telah diverifikasi dan disahkan oleh Admin Jurusan TIK.',
-            ]);
-
-            $msg = "Industri \"{$industri->nama_perusahaan}\" berhasil disetujui!";
+            return [
+                'email' => $user->email,
+                'identifier' => $user->identifier,
+                'password' => $generatedPassword,
+            ];
         }
 
-        $redirectTab = $request->input('redirect_tab', 'industri');
+        $industri->update([
+            'status_verifikasi' => 'acc',
+            'catatan_admin' => 'Telah diverifikasi dan disahkan oleh Admin Jurusan TIK.',
+        ]);
 
-        return redirect()->to(route('dashboard.admin', ['tab' => $redirectTab]))
-            ->with('success', $msg);
+        return null;
     }
 
     /**
@@ -329,8 +409,16 @@ class AdminController extends Controller
             'updated_at' => now(),
         ]);
 
+        // Tandai pengajuan mahasiswa terkait sebagai ditolak agar form mahasiswa terbuka kembali untuk perbaikan
+        PengajuanMagang::where('industri_id', $industri->id)
+            ->where('status_surat_pengantar', 'pending')
+            ->update([
+                'status_surat_pengantar' => 'ditolak',
+                'catatan_penolakan' => 'Usulan perusahaan ditolak Admin: '.$request->catatan_admin,
+            ]);
+
         return redirect()->to(route('dashboard.admin', ['tab' => 'industri']))
-            ->with('info', "Pendaftaran Industri \"{$industri->nama_perusahaan}\" ditolak dengan alasan: {$request->catatan_admin}");
+            ->with('info', "Usulan Industri \"{$industri->nama_perusahaan}\" ditolak dengan alasan: {$request->catatan_admin}");
     }
 
     /**

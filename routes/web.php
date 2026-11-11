@@ -61,6 +61,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/mahasiswa/import', [AdminController::class, 'importMahasiswa'])->name('admin.mahasiswa.import');
     Route::post('/admin/surat-pengantar/{pengajuan}/terbitkan', [AdminController::class, 'terbitkanSuratPengantar'])->name('admin.surat.terbitkan');
     Route::post('/admin/surat-pengantar/{pengajuan}/tolak', [AdminController::class, 'tolakSuratPengantar'])->name('admin.surat.tolak');
+    Route::post('/admin/industri', [AdminController::class, 'storeIndustri'])->name('admin.industri.store');
     Route::post('/admin/industri/{industri}/acc', [AdminController::class, 'accIndustri'])->name('admin.industri.acc');
     Route::post('/admin/industri/{industri}/reject', [AdminController::class, 'rejectIndustri'])->name('admin.industri.reject');
     Route::post('/admin/pengajuan/{pengajuan}/forward', [AdminController::class, 'forwardPengajuan'])->name('admin.pengajuan.forward');

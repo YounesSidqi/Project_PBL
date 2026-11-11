@@ -37,13 +37,50 @@ class PenilaianController extends Controller
         /** @var User $student */
         $student = Auth::user();
 
+        $existingPengajuan = PengajuanMagang::where('mahasiswa_id', $student->id)
+            ->with('industri')
+            ->latest()
+            ->first();
+
+        // Proteksi Anti-Spam: Mahasiswa tidak dapat mengirim ulang form jika sedang pending verifikasi Admin atau sudah disahkan
+        if ($existingPengajuan) {
+            $industriStatus = $existingPengajuan->industri?->status_verifikasi;
+            $suratStatus = $existingPengajuan->status_surat_pengantar;
+
+            $canResubmit = in_array($suratStatus, ['draft', 'ditolak'], true)
+                || $industriStatus === 'reject';
+
+            if (! $canResubmit) {
+                return redirect()->back()
+                    ->with('error', 'Proteksi Anti-Spam: Usulan perusahaan Anda sedang dalam antrean verifikasi Admin Jurusan (atau telah disahkan). Anda tidak dapat mengirim pengajuan baru kecuali ditolak atau di-reset ke Draft oleh Admin.');
+            }
+        }
+
+        $oldPendingIndustri = ($existingPengajuan && $existingPengajuan->industri && $existingPengajuan->industri->status_verifikasi !== 'acc' && ! $existingPengajuan->industri->user_id)
+            ? $existingPengajuan->industri
+            : null;
+
         if ($request->filled('industri_id')) {
             $industri = Industri::findOrFail($request->industri_id);
         } else {
             $namaPerusahaan = trim((string) $request->nama_perusahaan);
             $industri = Industri::where('nama_perusahaan', $namaPerusahaan)->first();
 
-            if (! $industri) {
+            if (! $industri && $oldPendingIndustri && $oldPendingIndustri->pengajuanMagangs()->where('mahasiswa_id', '!=', $student->id)->count() === 0) {
+                // Gunakan kembali record usulan lama milik mahasiswa ini agar tidak menimbulkan spam data di tabel industris
+                $oldPendingIndustri->update([
+                    'nama_perusahaan' => $namaPerusahaan,
+                    'bidang_usaha' => $request->bidang_usaha,
+                    'alamat' => $request->alamat,
+                    'kota' => $request->kota ?: 'Jakarta',
+                    'kontak_person' => $request->kontak_person,
+                    'email_pj' => $request->email_pj,
+                    'telepon' => $request->telepon,
+                    'status_verifikasi' => 'pending',
+                    'catatan_admin' => 'Usulan perusahaan diperbarui oleh mahasiswa dan menunggu verifikasi Admin Jurusan.',
+                ]);
+                $industri = $oldPendingIndustri;
+            } elseif (! $industri) {
                 $industri = Industri::create([
                     'nama_perusahaan' => $namaPerusahaan,
                     'bidang_usaha' => $request->bidang_usaha,
@@ -53,7 +90,7 @@ class PenilaianController extends Controller
                     'email_pj' => $request->email_pj,
                     'telepon' => $request->telepon,
                     'status_verifikasi' => 'pending',
-                    'catatan_admin' => 'Pendaftaran diajukan oleh mahasiswa melalui permohonan Surat Pengantar & Registrasi Industri.',
+                    'catatan_admin' => 'Usulan perusahaan diajukan oleh mahasiswa. Menunggu pemeriksaan & pengesahan Admin Jurusan.',
                 ]);
             } elseif ($industri->status_verifikasi !== 'acc') {
                 $industri->update([
@@ -64,17 +101,12 @@ class PenilaianController extends Controller
                     'email_pj' => $request->email_pj ?: $industri->email_pj,
                     'telepon' => $request->telepon ?: $industri->telepon,
                     'status_verifikasi' => 'pending',
-                    'catatan_admin' => 'Data perusahaan diperbarui oleh mahasiswa dan menunggu verifikasi Admin Jurusan.',
+                    'catatan_admin' => 'Usulan perusahaan diperbarui oleh mahasiswa dan menunggu verifikasi Admin Jurusan.',
                 ]);
             }
         }
 
-        $existingPengajuan = PengajuanMagang::where('mahasiswa_id', $student->id)->latest()->first();
-        $keepSuratStatus = $existingPengajuan
-            && $existingPengajuan->industri_id === $industri->id
-            && $existingPengajuan->status_surat_pengantar === 'diterbitkan';
-
-        // Ambil atau buat PengajuanMagang aktif mahasiswa
+        // Ambil atau buat PengajuanMagang aktif mahasiswa (status pending menunggu verifikasi Admin)
         PengajuanMagang::updateOrCreate(
             ['mahasiswa_id' => $student->id],
             [
@@ -82,15 +114,20 @@ class PenilaianController extends Controller
                 'posisi_magang' => $request->posisi_magang ?: ($existingPengajuan?->posisi_magang ?: 'Software Engineer Intern'),
                 'tanggal_mulai' => $request->tanggal_mulai ?: $existingPengajuan?->tanggal_mulai,
                 'tanggal_selesai' => $request->tanggal_selesai ?: $existingPengajuan?->tanggal_selesai,
-                'status_surat_pengantar' => $keepSuratStatus ? 'diterbitkan' : 'pending',
-                'catatan_penolakan' => $keepSuratStatus ? $existingPengajuan->catatan_penolakan : null,
+                'status_surat_pengantar' => 'pending',
+                'catatan_penolakan' => null,
                 'dosen_id' => $student->dosen_id ?: $existingPengajuan?->dosen_id,
             ]
         );
 
+        // Bersihkan record industri lama jika mahasiswa berpindah ke industri lain dan record lama tidak dipakai mahasiswa lain
+        if ($oldPendingIndustri && $oldPendingIndustri->id !== $industri->id && $oldPendingIndustri->pengajuanMagangs()->count() === 0) {
+            $oldPendingIndustri->delete();
+        }
+
         $statusMsg = $industri->status_verifikasi === 'acc'
-            ? "Pengajuan penempatan PKL & Surat Pengantar pada mitra terdaftar \"{$industri->nama_perusahaan}\" berhasil dikirim ke Admin Jurusan TIK!"
-            : "Data perusahaan baru \"{$industri->nama_perusahaan}\" & permohonan Surat Pengantar berhasil dikirimkan untuk diverifikasi oleh Admin Jurusan TIK!";
+            ? "Formulir pengajuan penempatan pada mitra terdaftar \"{$industri->nama_perusahaan}\" berhasil dikirim dan menunggu persetujuan Admin Jurusan!"
+            : "Formulir usulan perusahaan \"{$industri->nama_perusahaan}\" berhasil dikirim (Status: Pending). Admin Jurusan akan memeriksa validitas perusahaan dan memasukkannya ke daftar mitra resmi.";
 
         return redirect()->back()->with('success', $statusMsg);
     }

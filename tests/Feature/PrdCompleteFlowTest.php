@@ -494,7 +494,17 @@ class PrdCompleteFlowTest extends TestCase
         $pengajuan = PengajuanMagang::where('mahasiswa_id', $this->mahasiswa->id)->first();
         $this->assertEquals($newIndustri->id, $pengajuan->industri_id);
 
-        // 2. Skenario A: Admin mem-forward penugasan mahasiswa ke industri yang sudah terdaftar (PRD 5.2 poin 2)
+        // 2. Proteksi Anti-Spam: Mahasiswa tidak bisa spam submit perusahaan baru saat status masih pending
+        $spamResponse = $this->actingAs($this->mahasiswa)->post(route('mahasiswa.request-surat'), [
+            'nama_perusahaan' => 'PT Perusahaan Spam Fiktif',
+        ]);
+        $spamResponse->assertRedirect();
+        $spamResponse->assertSessionHas('error');
+        $this->assertDatabaseMissing('industris', [
+            'nama_perusahaan' => 'PT Perusahaan Spam Fiktif',
+        ]);
+
+        // 3. Skenario A: Admin mem-forward penugasan mahasiswa ke industri yang sudah terdaftar (PRD 5.2 poin 2)
         $forwardResponse = $this->actingAs($this->admin)->post(route('admin.pengajuan.forward', $pengajuan->id), [
             'industri_id' => $this->industri->id,
         ]);

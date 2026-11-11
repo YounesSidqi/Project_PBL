@@ -235,21 +235,11 @@
             </td>
             <td class="py-3.5 px-4 text-center">
               <div class="flex flex-wrap items-center justify-center gap-1.5">
-                @if($sp->industri && $sp->industri->status_verifikasi === 'pending')
-                  <form method="POST" action="{{ route('admin.industri.acc', $sp->industri->id) }}" onsubmit="return confirm('ACC Industri Baru {{ $sp->industri->nama_perusahaan }} dan buat 1 akun Penanggung Jawab DUDI?')">
-                    @csrf
-                    <input type="hidden" name="redirect_tab" value="surat">
-                    <button type="submit" class="px-2.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-colors" title="Verifikasi perusahaan baru & buat akun DUDI otomatis (PRD 5.2)">
-                      <span class="material-symbols-outlined text-[14px]">domain_verification</span> ACC Industri
-                    </button>
-                  </form>
-                @endif
-
                 @if($sp->status_surat_pengantar === 'pending' || $sp->status_surat_pengantar === 'draft')
-                  <form method="POST" action="{{ route('admin.surat.terbitkan', $sp->id) }}" onsubmit="return confirm('Terbitkan Surat Pengantar resmi untuk {{ $sp->mahasiswa->name }}?')">
+                  <form method="POST" action="{{ route('admin.surat.terbitkan', $sp->id) }}" onsubmit="return confirm('Accept pengajuan tempat PKL {{ $sp->industri->nama_perusahaan ?? '' }} & terbitkan Surat Pengantar resmi untuk {{ $sp->mahasiswa->name }}?')">
                     @csrf
-                    <button type="submit" class="px-3 py-1.5 rounded-xl bg-[#0056B3] hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-colors">
-                      <span class="material-symbols-outlined text-[15px]">send</span> Terbitkan
+                    <button type="submit" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-colors">
+                      <span class="material-symbols-outlined text-[15px]">check_circle</span> Accept &amp; Terbitkan
                     </button>
                   </form>
 
@@ -379,11 +369,69 @@
       <div>
         <h2 class="text-lg font-bold font-heading text-slate-800 flex items-center gap-2">
           <span class="material-symbols-outlined text-[#02796B]">domain</span>
-          <span>Verifikasi Mitra Industri &amp; Otomasi Akun Penanggung Jawab DUDI</span>
+          <span>Verifikasi Usulan Tempat PKL Mahasiswa &amp; Daftar Mitra Industri</span>
         </h2>
         <p class="text-xs text-slate-500 mt-1">
-          Menyetujui pendaftaran industri baru secara otomatis men-generate 1 akun Penanggung Jawab Industri dengan temporary password, atau teruskan (forward) pengajuan mahasiswa ke industri yang sudah terdaftar.
+          Periksa perusahaan yang diajukan mahasiswa (status <strong>Pending</strong>), lalu klik <strong>Accept</strong> untuk memasukkannya ke sistem &amp; membuat 1 akun DUDI otomatis.
         </p>
+      </div>
+      <button type="button" onclick="document.getElementById('modal-add-industri-admin').classList.remove('hidden')" class="px-4 py-2.5 rounded-xl bg-[#0056B3] hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors shrink-0 self-start sm:self-auto">
+        <span class="material-symbols-outlined text-[16px]">add_business</span>
+        <span>+ Input Mitra Industri (Oleh Admin)</span>
+      </button>
+    </div>
+
+    <!-- Modal Tambah Mitra Industri Langsung oleh Admin -->
+    <div id="modal-add-industri-admin" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-lg w-full p-6 text-left shadow-2xl border border-slate-200">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Input Mitra Industri Resmi Baru</h3>
+            <p class="text-xs text-slate-500">Perusahaan langsung terverifikasi (ACC) dan dibuatkan 1 akun DUDI.</p>
+          </div>
+          <button type="button" onclick="document.getElementById('modal-add-industri-admin').classList.add('hidden')" class="p-1 rounded-lg text-slate-400 hover:text-slate-700">
+            <span class="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
+        <form method="POST" action="{{ route('admin.industri.store') }}" class="space-y-3">
+          @csrf
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Perusahaan / Instansi <span class="text-rose-500">*</span></label>
+            <input type="text" name="nama_perusahaan" required placeholder="Contoh: PT Bank Rakyat Indonesia (Persero) Tbk" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Bidang Usaha</label>
+              <input type="text" name="bidang_usaha" placeholder="Contoh: Perbankan & IT" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Kota</label>
+              <input type="text" name="kota" placeholder="Contoh: Jakarta Pusat" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Alamat Lengkap</label>
+            <textarea name="alamat" rows="2" placeholder="Alamat lengkap perusahaan..." class="w-full text-xs rounded-xl border-slate-200 p-2.5"></textarea>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama PIC</label>
+              <input type="text" name="kontak_person" placeholder="Nama HRD/Mentor" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email PIC</label>
+              <input type="email" name="email_pj" placeholder="hrd@perusahaan.id" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Telepon</label>
+              <input type="text" name="telepon" placeholder="021-xxxxxxx" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            </div>
+          </div>
+          <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            <button type="button" onclick="document.getElementById('modal-add-industri-admin').classList.add('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Batal</button>
+            <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold bg-[#0056B3] hover:bg-blue-700 text-white shadow-sm">Simpan &amp; Buat Akun DUDI</button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -460,12 +508,9 @@
                 <span class="text-slate-400 text-xs font-semibold">Telah Terverifikasi</span>
               @else
                 <div class="flex flex-wrap items-center justify-center gap-1.5">
-                  <form method="POST" action="{{ route('admin.industri.acc', $ind->id) }}" onsubmit="return confirm('ACC Industri {{ $ind->nama_perusahaan }} dan generate 1 akun penanggung jawab?')">
-                    @csrf
-                    <button type="submit" class="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-colors">
-                      <span class="material-symbols-outlined text-[15px]">how_to_reg</span> ACC &amp; Buat Akun
-                    </button>
-                  </form>
+                  <button type="button" onclick="document.getElementById('modal-accept-ind-{{ $ind->id }}').classList.remove('hidden')" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-colors">
+                    <span class="material-symbols-outlined text-[15px]">check_circle</span> Periksa &amp; Accept
+                  </button>
 
                   @if($ind->pengajuanMagangs->isNotEmpty() && $verifiedIndustris->count() > 0)
                     <button type="button" onclick="document.getElementById('modal-forward-ind-{{ $ind->id }}').classList.remove('hidden')" class="px-2.5 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-[#02796B] border border-teal-200 font-bold text-xs flex items-center gap-1 transition-colors" title="Perusahaan sudah terdaftar? Forward mahasiswa ke mitra terdaftar">
@@ -476,6 +521,62 @@
                   <button type="button" onclick="document.getElementById('modal-reject-ind-{{ $ind->id }}').classList.remove('hidden')" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-bold text-xs border border-slate-200 transition-colors">
                     Tolak
                   </button>
+                </div>
+
+                <!-- Modal Periksa & Accept Usulan Perusahaan Mahasiswa -->
+                <div id="modal-accept-ind-{{ $ind->id }}" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+                  <div class="bg-white rounded-2xl max-w-lg w-full p-6 text-left shadow-2xl border border-slate-200">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="material-symbols-outlined text-emerald-600 text-2xl">verified</span>
+                      <h3 class="text-base font-bold text-slate-900">Periksa &amp; Accept Tempat PKL Mahasiswa</h3>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">
+                      Periksa atau lengkapi data perusahaan yang diajukan mahasiswa sebelum dimasukkan secara resmi ke sistem dan dibuatkan akun Pembimbing Industri (DUDI).
+                    </p>
+
+                    <form method="POST" action="{{ route('admin.industri.acc', $ind->id) }}" class="space-y-3">
+                      @csrf
+                      <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Perusahaan Resmi <span class="text-rose-500">*</span></label>
+                        <input type="text" name="nama_perusahaan" required value="{{ $ind->nama_perusahaan }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+                      </div>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Bidang Usaha</label>
+                          <input type="text" name="bidang_usaha" value="{{ $ind->bidang_usaha }}" placeholder="Teknologi Informasi" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+                        </div>
+                        <div>
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Kota</label>
+                          <input type="text" name="kota" value="{{ $ind->kota }}" placeholder="Jakarta" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+                        </div>
+                      </div>
+                      <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Alamat Lengkap</label>
+                        <textarea name="alamat" rows="2" class="w-full text-xs rounded-xl border-slate-200 p-2.5">{{ $ind->alamat }}</textarea>
+                      </div>
+                      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama PIC</label>
+                          <input type="text" name="kontak_person" value="{{ $ind->kontak_person }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+                        </div>
+                        <div>
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email PIC</label>
+                          <input type="email" name="email_pj" value="{{ $ind->email_pj }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+                        </div>
+                        <div>
+                          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Telepon</label>
+                          <input type="text" name="telepon" value="{{ $ind->telepon }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+                        </div>
+                      </div>
+                      <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                        <button type="button" onclick="document.getElementById('modal-accept-ind-{{ $ind->id }}').classList.add('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Batal</button>
+                        <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center gap-1">
+                          <span class="material-symbols-outlined text-[15px]">check_circle</span>
+                          <span>Accept &amp; Masukkan ke Sistem</span>
+                        </button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
 
                 @if($ind->pengajuanMagangs->isNotEmpty() && $verifiedIndustris->count() > 0)
