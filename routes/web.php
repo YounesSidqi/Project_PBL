@@ -109,12 +109,8 @@ Route::get('/dashboard/dosen', function (Request $request) {
         ->get();
 
     $logbooks = Logbook::where('dosen_id', $dosenId)->with('student')->orderBy('tanggal', 'desc')->get();
-    $incomingF1 = F1Application::where('dosen_id', $dosenId)->where('status', 'pending')->with('student')->latest()->get();
 
-    $selectedStudentId = $request->query('student_id');
-    $selectedStudent = $selectedStudentId ? $students->firstWhere('id', $selectedStudentId) : $students->first();
-
-    return view('dashboard.dashboard-dosen', compact('students', 'logbooks', 'dosen', 'incomingF1', 'selectedStudent'));
+    return view('dashboard.dashboard-dosen', compact('students', 'logbooks', 'dosen'));
 })->middleware('auth')->name('dashboard.dosen');
 
 // 5. Dashboard Mahasiswa
@@ -201,18 +197,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/form/f6/dosen', [FormController::class, 'f6Dosen'])->name('form.f6.dosen');
 
     Route::post('/logbooks', [LogbookController::class, 'store'])->name('logbooks.store');
-    Route::get('/logbooks/{logbook}', [LogbookController::class, 'show'])->name('logbooks.show');
     Route::put('/logbooks/{logbook}', [LogbookController::class, 'update'])->name('logbooks.update');
     Route::delete('/logbooks/{logbook}', [LogbookController::class, 'destroy'])->name('logbooks.destroy');
     Route::post('/logbooks/{logbook}/status', [LogbookController::class, 'updateStatus'])->name('logbooks.updateStatus');
 
-    // Form F1 Routes (Pemilihan Dosen, Pengesahan Berkas PDF, & Manajemen Mahasiswa Bimbingan)
+    // Form F1 Routes (Pemilihan Dosen & Pengesahan Berkas PDF)
     Route::post('/f1/select-dosen', [F1Controller::class, 'selectDosen'])->name('f1.select-dosen');
     Route::delete('/f1/{application}/cancel', [F1Controller::class, 'cancel'])->name('f1.cancel');
-    Route::post('/f1/approve', [F1Controller::class, 'approveGeneral'])->name('f1.approve.general');
-    Route::post('/f1/{application}/approve', [F1Controller::class, 'approve'])->name('f1.approve');
-    Route::post('/f1/{application}/reject', [F1Controller::class, 'reject'])->name('f1.reject');
-    Route::delete('/dosen/students/{student}/remove', [F1Controller::class, 'removeStudent'])->name('dosen.students.remove');
     Route::get('/f1/{application}/surat', [F1Controller::class, 'downloadSurat'])->name('f1.surat.download');
 
     // KPS Specific Routes (Penetapan & Plotting Mahasiswa - Dosen)

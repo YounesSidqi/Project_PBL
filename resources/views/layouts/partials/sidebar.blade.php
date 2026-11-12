@@ -151,12 +151,15 @@
     ],
   ];
 
+  $industriStudentId = request()->query('student_id') ?? ($activePengajuan->mahasiswa_id ?? ($selectedPengajuan->mahasiswa_id ?? null));
+  $industriParams = fn (array $extra = []) => array_filter(array_merge($extra, ['student_id' => $industriStudentId]));
+
   $industriNav = [
     [
       'id' => 'industri_mahasiswa',
       'label' => 'Mahasiswa Magang',
       'icon' => 'groups',
-      'route' => route('dashboard.industri', ['tab' => 'mahasiswa']),
+      'route' => route('dashboard.industri', $industriParams(['tab' => 'mahasiswa'])),
       'badge' => null,
       'badgeClass' => '',
     ],
@@ -164,7 +167,7 @@
       'id' => 'industri_f2',
       'label' => 'Matriks Tugas (F2)',
       'icon' => 'task_alt',
-      'route' => route('dashboard.industri', ['tab' => 'f2']),
+      'route' => route('dashboard.industri', $industriParams(['tab' => 'f2'])),
       'badge' => null,
       'badgeClass' => '',
     ],
@@ -172,7 +175,7 @@
       'id' => 'industri_f3',
       'label' => 'Logbook Harian (F3)',
       'icon' => 'history_edu',
-      'route' => route('dashboard.industri', ['tab' => 'f3']),
+      'route' => route('dashboard.industri', $industriParams(['tab' => 'f3'])),
       'badge' => null,
       'badgeClass' => '',
     ],
@@ -180,11 +183,19 @@
       'id' => 'industri_f5',
       'label' => 'Evaluasi Kinerja (F5)',
       'icon' => 'grade',
-      'route' => route('form.f5.industri'),
+      'route' => route('form.f5.industri', $industriParams()),
       'badge' => '60%',
       'badgeClass' => 'bg-teal-100 text-teal-800 font-bold',
     ],
   ];
+
+  $mhsPengajuan = ($user && $role === 'mahasiswa')
+    ? \App\Models\PengajuanMagang::with('industri')->where('mahasiswa_id', $user->id)->latest()->first()
+    : null;
+  $mhsHasCompany = $mhsPengajuan && $mhsPengajuan->industri && $mhsPengajuan->industri->status_verifikasi === 'acc';
+  $mhsHasDosenStep = ($user && !empty($user->dosen_id))
+    || ($mhsPengajuan && !empty($mhsPengajuan->dosen_id))
+    || ($user && \App\Models\F1Application::where('student_id', $user->id)->whereIn('status', ['pending', 'approved'])->exists());
 
   $mahasiswaNav = [
     [
@@ -194,30 +205,34 @@
       'route' => route('dashboard.mahasiswa'),
       'badge' => null,
       'badgeClass' => '',
+      'locked' => false,
     ],
     [
       'id' => 'f2',
       'label' => 'Matriks Tugas (F2)',
       'icon' => 'terminal',
-      'route' => route('form.f2.mahasiswa'),
+      'route' => $mhsHasCompany ? route('form.f2.mahasiswa') : '#',
       'badge' => null,
       'badgeClass' => '',
+      'locked' => !$mhsHasCompany,
     ],
     [
       'id' => 'logbook',
       'label' => 'Logbook Harian (F3)',
       'icon' => 'menu_book',
-      'route' => route('logbook.mahasiswa'),
+      'route' => $mhsHasDosenStep ? route('logbook.mahasiswa') : '#',
       'badge' => null,
       'badgeClass' => '',
+      'locked' => !$mhsHasDosenStep,
     ],
     [
       'id' => 'f4',
       'label' => 'Bimbingan Dosen (F4)',
       'icon' => 'co_present',
-      'route' => route('form.f4.mahasiswa'),
+      'route' => $mhsHasDosenStep ? route('form.f4.mahasiswa') : '#',
       'badge' => null,
       'badgeClass' => '',
+      'locked' => !$mhsHasDosenStep,
     ],
   ];
 
@@ -315,31 +330,43 @@
         @foreach($navItems as $item)
           @php
             $isSelected = ($active === $item['id']);
+            $isLocked = !empty($item['locked']);
           @endphp
 
-          <a href="{{ $item['route'] }}" 
-             data-nav-item="{{ $item['id'] }}"
-             @if(!empty($item['onclick'])) onclick="{!! $item['onclick'] !!}" @endif
-             class="sidebar-nav-link group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm transition-all relative
-                    {{ $isSelected 
-                       ? 'bg-[#0056B3] text-white font-semibold shadow-sm' 
-                       : 'text-slate-600 hover:text-[#0056B3] hover:bg-slate-50 font-medium' }}">
-            
-            <span class="material-symbols-outlined sidebar-nav-icon text-[19px] transition-colors
-                         {{ $isSelected ? 'text-white material-symbols-fill' : 'text-slate-400 group-hover:text-[#0056B3]' }}">
-              {{ $item['icon'] }}
-            </span>
-
-            <span class="truncate flex-1">{{ $item['label'] }}</span>
-
-            @if(!empty($item['badge']))
-              <span data-original-badge="{{ $item['badgeClass'] }}"
-                    class="sidebar-nav-badge text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap
-                           {{ $isSelected ? 'bg-white/20 text-white' : $item['badgeClass'] }}">
-                {{ $item['badge'] }}
+          @if($isLocked)
+            <div title="Selesaikan tahapan sebelumnya di Dashboard untuk membuka menu ini"
+                 class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm text-slate-400 bg-slate-50/50 cursor-not-allowed select-none opacity-65">
+              <span class="material-symbols-outlined text-[19px] text-slate-300">
+                {{ $item['icon'] }}
               </span>
-            @endif
-          </a>
+              <span class="truncate flex-1">{{ $item['label'] }}</span>
+              <span class="material-symbols-outlined text-[15px] text-slate-400">lock</span>
+            </div>
+          @else
+            <a href="{{ $item['route'] }}" 
+               data-nav-item="{{ $item['id'] }}"
+               @if(!empty($item['onclick'])) onclick="{!! $item['onclick'] !!}" @endif
+               class="sidebar-nav-link group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm transition-all relative
+                      {{ $isSelected 
+                         ? 'bg-[#0056B3] text-white font-semibold shadow-sm' 
+                         : 'text-slate-600 hover:text-[#0056B3] hover:bg-slate-50 font-medium' }}">
+              
+              <span class="material-symbols-outlined sidebar-nav-icon text-[19px] transition-colors
+                           {{ $isSelected ? 'text-white material-symbols-fill' : 'text-slate-400 group-hover:text-[#0056B3]' }}">
+                {{ $item['icon'] }}
+              </span>
+
+              <span class="truncate flex-1">{{ $item['label'] }}</span>
+
+              @if(!empty($item['badge']))
+                <span data-original-badge="{{ $item['badgeClass'] }}"
+                      class="sidebar-nav-badge text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap
+                             {{ $isSelected ? 'bg-white/20 text-white' : $item['badgeClass'] }}">
+                  {{ $item['badge'] }}
+                </span>
+              @endif
+            </a>
+          @endif
         @endforeach
       </nav>
     </div>

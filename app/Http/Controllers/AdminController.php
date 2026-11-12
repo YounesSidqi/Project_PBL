@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\F1Application;
 use App\Models\Industri;
 use App\Models\PengajuanMagang;
 use App\Models\User;
@@ -542,6 +543,22 @@ class AdminController extends Controller
                 'status_dosen' => $statusDosen,
                 'nomor_surat_pengantar' => $nomorSurat,
             ]);
+        }
+
+        if ($dosenId) {
+            F1Application::updateOrCreate(
+                ['student_id' => $mahasiswa->id],
+                [
+                    'dosen_id' => $dosenId,
+                    'company_name' => $pengajuan?->industri?->nama_perusahaan ?? 'Instansi Mitra PKL Jurusan TIK',
+                    'internship_title' => $pengajuan?->judul_magang ?? ($pengajuan?->posisi_magang ?? 'Praktik Kerja Lapangan Vokasi'),
+                    'status' => 'approved',
+                    'approved_at' => now(),
+                    'notes' => 'Ditetapkan langsung oleh Admin Jurusan TIK.',
+                ]
+            );
+        } else {
+            F1Application::where('student_id', $mahasiswa->id)->delete();
         }
 
         $redirectTab = $request->input('redirect_tab', 'mahasiswa');

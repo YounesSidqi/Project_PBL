@@ -670,4 +670,74 @@ class PrdCompleteFlowTest extends TestCase
         $step4View->assertSee('Logbook Kegiatan Harian');
         $step4View->assertSee('Riwayat Bimbingan (F4)');
     }
+
+    public function test_form_f2_tasks_appear_in_todo_and_transition_through_progress_to_done(): void
+    {
+        $pengajuan = PengajuanMagang::create([
+            'mahasiswa_id' => $this->mahasiswa->id,
+            'industri_id' => $this->industri->id,
+            'dosen_id' => $this->dosen->id,
+            'posisi_magang' => 'Full Stack Developer',
+            'status_surat_pengantar' => 'diterbitkan',
+            'status_dosen' => 'acc_kps',
+        ]);
+
+        // 1. Tambah tugas baru ke Form F2 (status default: todo)
+        $this->actingAs($this->industriUser)->post(route('industri.tugas_f2.store', $pengajuan->id), [
+            'modul_pekerjaan' => 'Tampilan A',
+            'spesifikasi_kebutuhan' => 'Buatkan Tampilan yang menarik',
+            'target_minggu' => '2',
+        ])->assertRedirect();
+
+        $tugas = TugasF2::where('pengajuan_magang_id', $pengajuan->id)->first();
+        $this->assertNotNull($tugas);
+        $this->assertEquals('todo', $tugas->status);
+
+        // 2. Pastikan tugas muncul di kolom To-Do halaman Mahasiswa & Dosen (Read-Only untuk Mahasiswa)
+        $mhsTodoView = $this->actingAs($this->mahasiswa)->get(route('form.f2.mahasiswa'));
+        $mhsTodoView->assertOk();
+        $mhsTodoView->assertSee('Tampilan A');
+        $mhsTodoView->assertSee('Buatkan Tampilan yang menarik');
+        $mhsTodoView->assertViewHas('tasksTodo', fn ($c) => $c->count() === 1);
+
+        $dosenTodoView = $this->actingAs($this->dosen)->get(route('form.f2.dosen'));
+        $dosenTodoView->assertOk();
+        $dosenTodoView->assertSee('Tampilan A');
+
+        // 3. Mahasiswa tidak boleh mengubah status tugas F2 (hanya pihak Industri/DUDI)
+        $mhsForbiddenResponse = $this->actingAs($this->mahasiswa)->put(route('industri.tugas_f2.update', $tugas->id), [
+            'status' => 'in_progress',
+        ]);
+        $mhsForbiddenResponse->assertRedirect();
+        $mhsForbiddenResponse->assertSessionHas('error');
+        $this->assertEquals('todo', $tugas->fresh()->status);
+
+        // 4. Pihak Industri mengubah status dari To-Do -> Progres (in_progress)
+        $this->actingAs($this->industriUser)->put(route('industri.tugas_f2.update', $tugas->id), [
+            'status' => 'in_progress',
+        ])->assertRedirect();
+
+        $this->assertEquals('in_progress', $tugas->fresh()->status);
+
+        $mhsProgressView = $this->actingAs($this->mahasiswa)->get(route('form.f2.mahasiswa'));
+        $mhsProgressView->assertOk();
+        $mhsProgressView->assertSee('Tampilan A');
+        $mhsProgressView->assertViewHas('tasksTodo', fn ($c) => $c->count() === 0);
+        $mhsProgressView->assertViewHas('tasksProgress', fn ($c) => $c->count() === 1);
+        $mhsProgressView->assertViewHas('tasksDone', fn ($c) => $c->count() === 0);
+
+        // 5. Pihak Industri mengubah status dari Progres (in_progress) -> Selesai (acc)
+        $this->actingAs($this->industriUser)->put(route('industri.tugas_f2.update', $tugas->id), [
+            'status' => 'acc',
+        ])->assertRedirect();
+
+        $this->assertEquals('acc', $tugas->fresh()->status);
+
+        $mhsDoneView = $this->actingAs($this->mahasiswa)->get(route('form.f2.mahasiswa'));
+        $mhsDoneView->assertOk();
+        $mhsDoneView->assertSee('Tampilan A');
+        $mhsDoneView->assertViewHas('tasksTodo', fn ($c) => $c->count() === 0);
+        $mhsDoneView->assertViewHas('tasksProgress', fn ($c) => $c->count() === 0);
+        $mhsDoneView->assertViewHas('tasksDone', fn ($c) => $c->count() === 1);
+    }
 }

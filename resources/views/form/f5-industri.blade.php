@@ -54,9 +54,9 @@
 
   <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
     @if($pengajuans->count() > 1)
-      <select onchange="window.location.href='{{ route('form.f5.industri') }}?pengajuan_id=' + this.value" class="h-9 px-3 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 text-slate-700">
+      <select onchange="window.location.href='{{ route('form.f5.industri') }}?student_id=' + this.value" class="h-9 px-3 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 text-slate-700">
         @foreach($pengajuans as $p)
-          <option value="{{ $p->id }}" {{ $selectedPengajuan->id === $p->id ? 'selected' : '' }}>
+          <option value="{{ $p->mahasiswa_id }}" {{ $selectedPengajuan->id === $p->id ? 'selected' : '' }}>
             {{ $p->mahasiswa->name }} ({{ $p->mahasiswa->identifier }}) {{ $p->evaluasiF5 ? '✓' : '' }}
           </option>
         @endforeach

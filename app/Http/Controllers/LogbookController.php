@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Logbook;
-use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,26 +26,15 @@ class LogbookController extends Controller
         ]);
 
         $user = Auth::user();
-
-        // Get student's assigned lecturer, or fallback to the first dosen pembimbing in database
-        $dosenId = $user->dosen_id;
-        if (! $dosenId) {
-            $defaultDosen = User::where('role', 'dosen')->first();
-            $dosenId = $defaultDosen ? $defaultDosen->id : null;
-
-            // Link student to this lecturer if not yet assigned
-            if ($dosenId) {
-                $user->dosen_id = $dosenId;
-                $user->save();
-            }
-        }
+        $pengajuanAktif = $user->pengajuanMagangAktif;
+        $dosenId = $user->dosen_id
+            ?? $pengajuanAktif?->dosen_id
+            ?? $user->latestF1Application?->dosen_id;
 
         $now = now();
         $entryDate = Carbon::parse($validated['tanggal'])->startOfDay();
         $today = Carbon::today();
         $hariTerlambat = $today->greaterThan($entryDate) ? $entryDate->diffInDays($today) : 0;
-
-        $pengajuanAktif = $user->pengajuanMagangAktif;
 
         $logbook = Logbook::create([
             'user_id' => $user->id,
@@ -76,31 +64,6 @@ class LogbookController extends Controller
     }
 
     /**
-     * Display a specific logbook details (useful for modal / ajax view).
-     */
-    public function show(Logbook $logbook)
-    {
-        $logbook->load('student', 'dosen');
-
-        return response()->json([
-            'success' => true,
-            'logbook' => [
-                'id' => $logbook->id,
-                'subject' => $logbook->subject,
-                'tanggal' => $logbook->tanggal->format('Y-m-d'),
-                'tanggal_formatted' => $logbook->tanggal->translatedFormat('d F Y'),
-                'content' => $logbook->content,
-                'status' => $logbook->status,
-                'feedback' => $logbook->feedback,
-                'student_name' => $logbook->student ? $logbook->student->name : 'Mahasiswa',
-                'student_nim' => $logbook->student ? $logbook->student->identifier : '-',
-                'student_prodi' => $logbook->student ? $logbook->student->prodi : 'Teknik Informatika',
-                'created_at_formatted' => $logbook->created_at ? $logbook->created_at->diffForHumans() : '-',
-            ],
-        ]);
-    }
-
-    /**
      * Update an existing logbook entry (by Mahasiswa).
      */
     public function update(Request $request, Logbook $logbook)
@@ -127,9 +90,12 @@ class LogbookController extends Controller
         $logbook->tanggal = $validated['tanggal'];
         $logbook->content = $validated['content'];
 
-        // If logbook was in revision, reset to pending so dosen can re-verify
+        // If logbook was in revision (Dosen or DUDI), reset to pending so it can be re-verified
         if ($logbook->status === 'revision') {
             $logbook->status = 'pending';
+        }
+        if ($logbook->status_industri === 'revisi') {
+            $logbook->status_industri = 'pending';
         }
 
         $logbook->save();

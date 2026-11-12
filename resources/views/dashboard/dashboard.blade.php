@@ -478,7 +478,7 @@
         </div>
 
         @if($activeF1)
-          <a href="{{ route('f1.surat.download', $activeF1->id) }}" target="_blank" class="w-full bg-[#0056B3] hover:bg-[#00428A] text-white font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all">
+          <a href="{{ route('dokumen.f1', $activeF1->id) }}" target="_blank" class="w-full bg-[#0056B3] hover:bg-[#00428A] text-white font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all">
             <span class="material-symbols-outlined text-[17px]">picture_as_pdf</span>
             <span>Unduh Form F1 (PDF)</span>
           </a>

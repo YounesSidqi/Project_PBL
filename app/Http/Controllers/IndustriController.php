@@ -35,6 +35,10 @@ class IndustriController extends Controller
         $tab = $request->query('tab', 'mahasiswa');
         $selectedStudentId = $request->query('student_id');
 
+        if ($tab === 'f5') {
+            return redirect()->route('form.f5.industri', array_filter(['student_id' => $selectedStudentId]));
+        }
+
         // Daftar mahasiswa yang magang di industri ini
         $pengajuans = PengajuanMagang::where('industri_id', $industri?->id)
             ->with(['mahasiswa', 'dosen', 'tugasF2', 'evaluasiF5'])
@@ -99,10 +103,17 @@ class IndustriController extends Controller
     }
 
     /**
-     * Update Status Tugas F2 (todo / in_progress / acc).
+     * Update Status Tugas F2 (todo / in_progress / acc) oleh Pembimbing Industri (DUDI).
      */
     public function updateTugasF2(Request $request, TugasF2 $tugas)
     {
+        /** @var User|null $authUser */
+        $authUser = Auth::user();
+        if ($authUser && $authUser->role === 'mahasiswa') {
+            return redirect()->back()
+                ->with('error', 'Hanya Pembimbing Industri (DUDI) yang dapat mengubah status tugas Form F2.');
+        }
+
         $request->validate([
             'status' => 'required|in:todo,in_progress,acc',
             'catatan_industri' => 'nullable|string|max:1000',
@@ -110,7 +121,7 @@ class IndustriController extends Controller
 
         $tugas->update([
             'status' => $request->status,
-            'catatan_industri' => $request->catatan_industri,
+            'catatan_industri' => $request->has('catatan_industri') ? $request->catatan_industri : $tugas->catatan_industri,
         ]);
 
         $statusLabels = [
@@ -212,9 +223,9 @@ class IndustriController extends Controller
             ])
         );
 
-        return redirect()->to(route('dashboard.industri', [
-            'tab' => 'f5',
+        return redirect()->route('form.f5.industri', [
+            'pengajuan_id' => $pengajuan->id,
             'student_id' => $pengajuan->mahasiswa_id,
-        ]))->with('success', "Form Evaluasi Industri (F5) untuk mahasiswa {$pengajuan->mahasiswa->name} berhasil disimpan secara rahasia! Rata-rata Skor: {$rataRata}/100 (Bobot 60%).");
+        ])->with('success', "Form Evaluasi Industri (F5) untuk mahasiswa {$pengajuan->mahasiswa->name} berhasil disimpan secara rahasia! Rata-rata Skor: {$rataRata}/100 (Bobot 60%).");
     }
 }

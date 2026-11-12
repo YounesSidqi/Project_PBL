@@ -119,7 +119,7 @@
                   @if($lb->status === 'revision')
                     <div class="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800 flex items-center justify-between gap-2 mt-1">
                       <div>
-                        <strong>Catatan Revisi:</strong> {{ $lb->feedback ?? 'Perbaiki sesuai arahan dosen.' }}
+                        <strong>Catatan Revisi Dosen:</strong> {{ $lb->feedback ?? 'Perbaiki sesuai arahan dosen.' }}
                       </div>
                       <button type="button" onclick="openEditLogbookModal({{ $lb->id }}, '{{ addslashes($lb->subject) }}', '{{ $lb->tanggal->format('Y-m-d') }}', {{ json_encode($lb->content) }})" class="px-2.5 py-1 bg-rose-600 text-white rounded text-[11px] font-bold shrink-0">
                         Perbaiki
@@ -130,26 +130,53 @@
                       <strong>Catatan Dosen:</strong> <span class="text-slate-700">{{ $lb->feedback }}</span>
                     </div>
                   @endif
+
+                  @if($lb->status_industri === 'revisi')
+                    <div class="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800 flex items-center justify-between gap-2 mt-1">
+                      <div>
+                        <strong>Catatan Revisi DUDI:</strong> {{ $lb->catatan_industri ?? 'Perbaiki sesuai arahan pembimbing industri.' }}
+                      </div>
+                      <button type="button" onclick="openEditLogbookModal({{ $lb->id }}, '{{ addslashes($lb->subject) }}', '{{ $lb->tanggal->format('Y-m-d') }}', {{ json_encode($lb->content) }})" class="px-2.5 py-1 bg-rose-600 text-white rounded text-[11px] font-bold shrink-0">
+                        Perbaiki
+                      </button>
+                    </div>
+                  @elseif($lb->catatan_industri)
+                    <div class="p-2 bg-teal-50/80 border border-teal-200/80 rounded-lg text-xs text-[#02796B] mt-1">
+                      <strong>Catatan DUDI:</strong> <span class="text-slate-700">{{ $lb->catatan_industri }}</span>
+                    </div>
+                  @endif
                 </div>
               </td>
 
               <td class="py-3.5 px-4">
-                @if($lb->status === 'approved')
-                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
-                    <span class="material-symbols-outlined text-[13px]">check_circle</span>
-                    <span>Disetujui</span>
-                  </span>
-                @elseif($lb->status === 'revision')
-                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold">
-                    <span class="material-symbols-outlined text-[13px]">error</span>
-                    <span>Revisi</span>
-                  </span>
-                @else
-                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold">
-                    <span class="material-symbols-outlined text-[13px]">hourglass_top</span>
-                    <span>Menunggu</span>
-                  </span>
-                @endif
+                <div class="flex flex-col items-start gap-1">
+                  @if($lb->status === 'approved')
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
+                      <span class="material-symbols-outlined text-[13px]">check_circle</span>
+                      <span>Disetujui</span>
+                    </span>
+                  @elseif($lb->status === 'revision')
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold">
+                      <span class="material-symbols-outlined text-[13px]">error</span>
+                      <span>Revisi</span>
+                    </span>
+                  @else
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold">
+                      <span class="material-symbols-outlined text-[13px]">hourglass_top</span>
+                      <span>Menunggu</span>
+                    </span>
+                  @endif
+
+                  @if($lb->status_industri === 'acc')
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-[#02796B] border border-teal-200">
+                      ACC DUDI
+                    </span>
+                  @elseif($lb->status_industri === 'revisi')
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                      Revisi DUDI
+                    </span>
+                  @endif
+                </div>
               </td>
 
               <td class="py-3.5 px-4 text-right">

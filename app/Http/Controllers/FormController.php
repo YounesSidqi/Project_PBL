@@ -33,9 +33,9 @@ class FormController extends Controller
             ->first();
 
         $allTasks = $pengajuan ? $pengajuan->tugasF2 : collect();
-        $tasksTodo = $allTasks->where('status', 'direncanakan');
-        $tasksProgress = $allTasks->where('status', 'sedang_berjalan');
-        $tasksDone = $allTasks->where('status', 'selesai');
+        $tasksTodo = $allTasks->whereIn('status', ['todo', 'direncanakan']);
+        $tasksProgress = $allTasks->whereIn('status', ['in_progress', 'sedang_berjalan']);
+        $tasksDone = $allTasks->whereIn('status', ['acc', 'selesai']);
 
         return view('form.f2-mahasiswa', compact('pengajuan', 'allTasks', 'tasksTodo', 'tasksProgress', 'tasksDone'));
     }
@@ -46,8 +46,12 @@ class FormController extends Controller
     public function f2Dosen(Request $request)
     {
         $user = Auth::user();
+        $dosenId = ($user && $user->role === 'dosen') ? $user->id : User::where('role', 'dosen')->value('id');
         $students = PengajuanMagang::with(['mahasiswa', 'industri', 'tugasF2'])
-            ->where('dosen_id', $user->id)
+            ->where(function ($q) use ($dosenId) {
+                $q->where('dosen_id', $dosenId)
+                    ->orWhereHas('mahasiswa', fn ($m) => $m->where('dosen_id', $dosenId));
+            })
             ->get();
 
         $selectedPengajuan = $request->has('pengajuan_id')
@@ -55,9 +59,9 @@ class FormController extends Controller
             : $students->first();
 
         $allTasks = $selectedPengajuan ? $selectedPengajuan->tugasF2 : collect();
-        $tasksTodo = $allTasks->where('status', 'direncanakan');
-        $tasksProgress = $allTasks->where('status', 'sedang_berjalan');
-        $tasksDone = $allTasks->where('status', 'selesai');
+        $tasksTodo = $allTasks->whereIn('status', ['todo', 'direncanakan']);
+        $tasksProgress = $allTasks->whereIn('status', ['in_progress', 'sedang_berjalan']);
+        $tasksDone = $allTasks->whereIn('status', ['acc', 'selesai']);
 
         return view('form.f2-dosen', compact('students', 'selectedPengajuan', 'allTasks', 'tasksTodo', 'tasksProgress', 'tasksDone'));
     }
@@ -96,8 +100,12 @@ class FormController extends Controller
     public function f4Dosen(Request $request)
     {
         $user = Auth::user();
+        $dosenId = ($user && $user->role === 'dosen') ? $user->id : User::where('role', 'dosen')->value('id');
         $students = PengajuanMagang::with(['mahasiswa', 'industri', 'bimbingans'])
-            ->where('dosen_id', $user->id)
+            ->where(function ($q) use ($dosenId) {
+                $q->where('dosen_id', $dosenId)
+                    ->orWhereHas('mahasiswa', fn ($m) => $m->where('dosen_id', $dosenId));
+            })
             ->get();
 
         $selectedPengajuan = $request->has('pengajuan_id')

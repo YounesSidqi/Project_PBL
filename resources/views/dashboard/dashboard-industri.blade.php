@@ -173,45 +173,184 @@
     </form>
   </div>
 
-  <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
-    <h3 class="text-sm sm:text-base font-bold font-heading text-slate-800">Daftar Tugas ({{ $tugasList->count() }})</h3>
-    <div class="space-y-2.5">
-      @forelse($tugasList as $t)
-      <div class="rounded-xl border border-slate-200 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 {{ $t->status === 'acc' ? 'bg-teal-50/20' : 'bg-white' }}">
-        <div class="space-y-0.5">
-          <div class="flex items-center gap-2">
-            <h4 class="font-bold text-slate-900 text-xs sm:text-sm">{{ $t->modul_pekerjaan }}</h4>
-            @if($t->target_minggu)
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">{{ $t->target_minggu }}</span>
-            @endif
+  @php
+    $tasksTodo = $tugasList->whereIn('status', ['todo', 'direncanakan']);
+    $tasksProgress = $tugasList->whereIn('status', ['in_progress', 'sedang_berjalan']);
+    $tasksDone = $tugasList->whereIn('status', ['acc', 'selesai']);
+  @endphp
+
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-4">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+      <div>
+        <h3 class="text-sm sm:text-base font-bold font-heading text-slate-800">Matriks Tugas Mahasiswa ({{ $tugasList->count() }})</h3>
+        <p class="text-xs text-slate-500">Ubah status tugas mahasiswa dari To-Do &rarr; Progres &rarr; Selesai (ACC).</p>
+      </div>
+      <span class="text-xs font-bold px-2.5 py-1 bg-teal-50 text-[#02796B] rounded-lg">
+        {{ $tasksDone->count() }}/{{ $tugasList->count() }} Selesai
+      </span>
+    </div>
+
+    @if($tugasList->isEmpty())
+      <div class="py-8 text-center text-slate-400 text-xs bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
+        Belum ada tugas pada Form F2.
+      </div>
+    @else
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Kolom 1: To-Do -->
+        <div class="bg-slate-50/80 rounded-xl p-4 border border-slate-200/80 space-y-2.5">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+            <span class="text-xs font-bold text-slate-700">To-Do (Rencana)</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">{{ $tasksTodo->count() }}</span>
           </div>
-          <p class="text-xs text-slate-500">{{ $t->spesifikasi_kebutuhan }}</p>
+          @forelse($tasksTodo as $t)
+            <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2.5 shadow-sm">
+              <div class="space-y-1">
+                <div class="flex items-start justify-between gap-2">
+                  <h4 class="text-xs sm:text-sm font-bold text-slate-900">{{ $t->modul_pekerjaan }}</h4>
+                  @if($t->target_minggu)
+                    <span class="shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600">
+                      {{ is_numeric($t->target_minggu) ? 'Minggu '.$t->target_minggu : $t->target_minggu }}
+                    </span>
+                  @endif
+                </div>
+                <p class="text-xs text-slate-500">{{ $t->spesifikasi_kebutuhan }}</p>
+              </div>
+
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                <form method="POST" action="{{ route('industri.tugas_f2.destroy', $t->id) }}" onsubmit="return confirm('Hapus tugas ini?')">
+                  @csrf
+                  @method('DELETE')
+                  <button type="submit" class="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50" title="Hapus Tugas">
+                    <span class="material-symbols-outlined text-[16px]">delete</span>
+                  </button>
+                </form>
+
+                <form method="POST" action="{{ route('industri.tugas_f2.update', $t->id) }}">
+                  @csrf
+                  @method('PUT')
+                  <input type="hidden" name="status" value="in_progress">
+                  <button type="submit" class="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-[11px] font-bold flex items-center gap-1 transition-colors">
+                    <span>Progres</span>
+                    <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          @empty
+            <p class="text-xs text-slate-400 italic text-center py-3">Kosong</p>
+          @endforelse
         </div>
 
-        <div class="flex items-center gap-2 shrink-0">
-          <form method="POST" action="{{ route('industri.tugas_f2.update', $t->id) }}">
-            @csrf
-            @method('PUT')
-            <select name="status" onchange="this.form.submit()" class="text-xs font-bold rounded-lg border border-slate-200 py-1.5 px-2.5 {{ $t->status === 'acc' ? 'bg-emerald-50 text-emerald-800' : ($t->status === 'in_progress' ? 'bg-blue-50 text-blue-800' : 'bg-slate-50 text-slate-800') }}">
-              <option value="todo" {{ $t->status === 'todo' ? 'selected' : '' }}>To-Do</option>
-              <option value="in_progress" {{ $t->status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
-              <option value="acc" {{ $t->status === 'acc' ? 'selected' : '' }}>ACC (Selesai)</option>
-            </select>
-          </form>
+        <!-- Kolom 2: Progres (Sedang Berjalan) -->
+        <div class="bg-slate-50/80 rounded-xl p-4 border border-slate-200/80 space-y-2.5">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+            <span class="text-xs font-bold text-amber-800">Progres (Sedang Berjalan)</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">{{ $tasksProgress->count() }}</span>
+          </div>
+          @forelse($tasksProgress as $t)
+            <div class="bg-white p-3.5 rounded-xl border border-amber-200/80 space-y-2.5 shadow-sm">
+              <div class="space-y-1">
+                <div class="flex items-start justify-between gap-2">
+                  <h4 class="text-xs sm:text-sm font-bold text-slate-900">{{ $t->modul_pekerjaan }}</h4>
+                  @if($t->target_minggu)
+                    <span class="shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700">
+                      {{ is_numeric($t->target_minggu) ? 'Minggu '.$t->target_minggu : $t->target_minggu }}
+                    </span>
+                  @endif
+                </div>
+                <p class="text-xs text-slate-500">{{ $t->spesifikasi_kebutuhan }}</p>
+              </div>
 
-          <form method="POST" action="{{ route('industri.tugas_f2.destroy', $t->id) }}" onsubmit="return confirm('Hapus tugas ini?')">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50">
-              <span class="material-symbols-outlined text-[17px]">delete</span>
-            </button>
-          </form>
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5">
+                <div class="flex items-center gap-1">
+                  <form method="POST" action="{{ route('industri.tugas_f2.destroy', $t->id) }}" onsubmit="return confirm('Hapus tugas ini?')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50" title="Hapus Tugas">
+                      <span class="material-symbols-outlined text-[16px]">delete</span>
+                    </button>
+                  </form>
+
+                  <form method="POST" action="{{ route('industri.tugas_f2.update', $t->id) }}">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="status" value="todo">
+                    <button type="submit" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-[11px] font-bold flex items-center gap-0.5 transition-colors">
+                      <span class="material-symbols-outlined text-[13px]">arrow_back</span>
+                      <span>To-Do</span>
+                    </button>
+                  </form>
+                </div>
+
+                <form method="POST" action="{{ route('industri.tugas_f2.update', $t->id) }}">
+                  @csrf
+                  @method('PUT')
+                  <input type="hidden" name="status" value="acc">
+                  <button type="submit" class="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-bold flex items-center gap-1 transition-colors">
+                    <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                    <span>Selesai (ACC)</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          @empty
+            <p class="text-xs text-slate-400 italic text-center py-3">Kosong</p>
+          @endforelse
+        </div>
+
+        <!-- Kolom 3: Selesai (ACC) -->
+        <div class="bg-slate-50/80 rounded-xl p-4 border border-slate-200/80 space-y-2.5">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+            <span class="text-xs font-bold text-teal-800">Selesai (ACC)</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-800">{{ $tasksDone->count() }}</span>
+          </div>
+          @forelse($tasksDone as $t)
+            <div class="bg-white p-3.5 rounded-xl border border-teal-200/80 space-y-2.5 shadow-sm">
+              <div class="space-y-1">
+                <div class="flex items-start justify-between gap-2">
+                  <h4 class="text-xs sm:text-sm font-bold text-slate-900">{{ $t->modul_pekerjaan }}</h4>
+                  @if($t->target_minggu)
+                    <span class="shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold bg-teal-50 text-[#02796B]">
+                      {{ is_numeric($t->target_minggu) ? 'Minggu '.$t->target_minggu : $t->target_minggu }}
+                    </span>
+                  @endif
+                </div>
+                <p class="text-xs text-slate-500">{{ $t->spesifikasi_kebutuhan }}</p>
+              </div>
+
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1">
+                  <form method="POST" action="{{ route('industri.tugas_f2.destroy', $t->id) }}" onsubmit="return confirm('Hapus tugas ini?')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50" title="Hapus Tugas">
+                      <span class="material-symbols-outlined text-[16px]">delete</span>
+                    </button>
+                  </form>
+
+                  <form method="POST" action="{{ route('industri.tugas_f2.update', $t->id) }}">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="status" value="in_progress">
+                    <button type="submit" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-[11px] font-bold flex items-center gap-0.5 transition-colors">
+                      <span class="material-symbols-outlined text-[13px]">arrow_back</span>
+                      <span>Ke Progres</span>
+                    </button>
+                  </form>
+                </div>
+
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-[#02796B]">
+                  <span class="material-symbols-outlined text-[14px]">verified</span>
+                  ACC
+                </span>
+              </div>
+            </div>
+          @empty
+            <p class="text-xs text-slate-400 italic text-center py-3">Kosong</p>
+          @endforelse
         </div>
       </div>
-      @empty
-      <div class="py-6 text-center text-slate-400 text-xs">Belum ada tugas pada Form F2.</div>
-      @endforelse
-    </div>
+    @endif
   </div>
 </div>
 @endif
@@ -295,96 +434,6 @@
     <div class="py-6 text-center text-slate-400 text-xs">Belum ada logbook harian.</div>
     @endforelse
   </div>
-</div>
-@endif
-@endif
-
-<!-- TAB 4: FORM F5 EVALUASI INDUSTRI -->
-@if($tab === 'f5')
-@if(!$activePengajuan)
-  <div class="bg-amber-50 rounded-2xl border border-amber-200 p-5 text-amber-800 text-xs">
-    Pilih mahasiswa terlebih dahulu untuk mengisi evaluasi nilai.
-  </div>
-@else
-<div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-5">
-  <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-    <div>
-      <span class="text-[10px] font-bold uppercase text-teal-700">Bobot 60% Nilai Akhir</span>
-      <h3 class="text-base font-bold font-heading text-slate-800">Form F5: Evaluasi Kinerja Mahasiswa</h3>
-    </div>
-    @if($evaluasiF5)
-      <div class="text-right">
-        <span class="text-[10px] text-slate-400 uppercase font-bold block">Rata-rata</span>
-        <div class="text-xl font-black font-heading text-teal-700">{{ $evaluasiF5->rata_rata_f5 }}/100</div>
-      </div>
-    @endif
-  </div>
-
-  <form method="POST" action="{{ route('industri.evaluasi_f5.store', $activePengajuan->id) }}" class="space-y-5">
-    @csrf
-    <div>
-      <h4 class="text-xs font-bold text-slate-700 uppercase mb-2.5">A. Softskills (0 – 100)</h4>
-      <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-          <label class="block text-[11px] font-bold text-slate-700 mb-1">Komunikasi</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_komunikasi" required value="{{ old('skor_komunikasi', $evaluasiF5?->skor_komunikasi ?? 85) }}" class="w-full text-xs rounded-lg border border-slate-200 font-bold text-teal-800 p-1.5">
-        </div>
-        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-          <label class="block text-[11px] font-bold text-slate-700 mb-1">Berpikir Kritis</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_berpikir_kritis" required value="{{ old('skor_berpikir_kritis', $evaluasiF5?->skor_berpikir_kritis ?? 85) }}" class="w-full text-xs rounded-lg border border-slate-200 font-bold text-teal-800 p-1.5">
-        </div>
-        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-          <label class="block text-[11px] font-bold text-slate-700 mb-1">Kerjasama Tim</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_kerjasama" required value="{{ old('skor_kerjasama', $evaluasiF5?->skor_kerjasama ?? 90) }}" class="w-full text-xs rounded-lg border border-slate-200 font-bold text-teal-800 p-1.5">
-        </div>
-        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-          <label class="block text-[11px] font-bold text-slate-700 mb-1">Inisiatif</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_inisiatif" required value="{{ old('skor_inisiatif', $evaluasiF5?->skor_inisiatif ?? 85) }}" class="w-full text-xs rounded-lg border border-slate-200 font-bold text-teal-800 p-1.5">
-        </div>
-        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-          <label class="block text-[11px] font-bold text-slate-700 mb-1">Literasi Digital</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_literasi" required value="{{ old('skor_literasi', $evaluasiF5?->skor_literasi ?? 88) }}" class="w-full text-xs rounded-lg border border-slate-200 font-bold text-teal-800 p-1.5">
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <h4 class="text-xs font-bold text-slate-700 uppercase mb-2.5">B. Hardskills (0 – 100)</h4>
-      <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-          <label class="block text-[11px] font-bold text-slate-700 mb-1">Deskripsi Produk</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_deskripsi_produk" required value="{{ old('skor_deskripsi_produk', $evaluasiF5?->skor_deskripsi_produk ?? 88) }}" class="w-full text-xs rounded-lg border border-slate-200 font-bold text-[#0056B3] p-1.5">
-        </div>
-        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-          <label class="block text-[11px] font-bold text-slate-700 mb-1">Spesifikasi</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_spesifikasi" required value="{{ old('skor_spesifikasi', $evaluasiF5?->skor_spesifikasi ?? 86) }}" class="w-full text-xs rounded-lg border border-slate-200 font-bold text-[#0056B3] p-1.5">
-        </div>
-        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-          <label class="block text-[11px] font-bold text-slate-700 mb-1">Desain</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_desain" required value="{{ old('skor_desain', $evaluasiF5?->skor_desain ?? 85) }}" class="w-full text-xs rounded-lg border border-slate-200 font-bold text-[#0056B3] p-1.5">
-        </div>
-        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-          <label class="block text-[11px] font-bold text-slate-700 mb-1">Implementasi</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_implementasi" required value="{{ old('skor_implementasi', $evaluasiF5?->skor_implementasi ?? 90) }}" class="w-full text-xs rounded-lg border border-slate-200 font-bold text-[#0056B3] p-1.5">
-        </div>
-        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-          <label class="block text-[11px] font-bold text-slate-700 mb-1">Pengujian</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_pengujian" required value="{{ old('skor_pengujian', $evaluasiF5?->skor_pengujian ?? 87) }}" class="w-full text-xs rounded-lg border border-slate-200 font-bold text-[#0056B3] p-1.5">
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <label class="block text-xs font-bold text-slate-700 mb-1">Catatan / Saran Industri</label>
-      <textarea name="saran_industri" rows="2" placeholder="Saran pengembangan kompetensi untuk mahasiswa..." class="w-full text-xs rounded-xl border border-slate-200 p-2.5">{{ old('saran_industri', $evaluasiF5?->saran_industri) }}</textarea>
-    </div>
-
-    <div class="flex justify-end">
-      <button type="submit" class="px-5 py-2 rounded-xl bg-teal-800 hover:bg-teal-900 text-white font-bold text-xs">
-        Simpan Nilai F5
-      </button>
-    </div>
-  </form>
 </div>
 @endif
 @endif

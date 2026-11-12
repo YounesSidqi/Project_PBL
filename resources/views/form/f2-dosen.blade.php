@@ -69,7 +69,14 @@
         </div>
         @forelse($tasksTodo as $task)
           <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-1">
-            <h4 class="text-xs sm:text-sm font-bold text-slate-800">{{ $task->modul_pekerjaan ?? $task->judul_tugas }}</h4>
+            <div class="flex items-start justify-between gap-2">
+              <h4 class="text-xs sm:text-sm font-bold text-slate-800">{{ $task->modul_pekerjaan ?? $task->judul_tugas }}</h4>
+              @if($task->target_minggu)
+                <span class="shrink-0 text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold">
+                  {{ is_numeric($task->target_minggu) ? 'Minggu '.$task->target_minggu : $task->target_minggu }}
+                </span>
+              @endif
+            </div>
             <p class="text-xs text-slate-500">{{ $task->spesifikasi_kebutuhan ?? $task->deskripsi }}</p>
           </div>
         @empty
@@ -80,12 +87,19 @@
       <!-- In Progress -->
       <div class="bg-slate-50/80 rounded-xl p-4 border border-slate-200/80 space-y-2.5">
         <div class="flex items-center justify-between pb-2 border-b border-slate-200">
-          <span class="text-xs font-bold text-amber-800">Sedang Berjalan</span>
+          <span class="text-xs font-bold text-amber-800">Progres (Sedang Berjalan)</span>
           <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">{{ $tasksProgress->count() }}</span>
         </div>
         @forelse($tasksProgress as $task)
-          <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-1">
-            <h4 class="text-xs sm:text-sm font-bold text-slate-800">{{ $task->modul_pekerjaan ?? $task->judul_tugas }}</h4>
+          <div class="bg-white p-3.5 rounded-xl border border-amber-200/80 space-y-1">
+            <div class="flex items-start justify-between gap-2">
+              <h4 class="text-xs sm:text-sm font-bold text-slate-800">{{ $task->modul_pekerjaan ?? $task->judul_tugas }}</h4>
+              @if($task->target_minggu)
+                <span class="shrink-0 text-[10px] px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-semibold">
+                  {{ is_numeric($task->target_minggu) ? 'Minggu '.$task->target_minggu : $task->target_minggu }}
+                </span>
+              @endif
+            </div>
             <p class="text-xs text-slate-500">{{ $task->spesifikasi_kebutuhan ?? $task->deskripsi }}</p>
           </div>
         @empty
@@ -100,8 +114,15 @@
           <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-800">{{ $tasksDone->count() }}</span>
         </div>
         @forelse($tasksDone as $task)
-          <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-1">
-            <h4 class="text-xs sm:text-sm font-bold text-slate-800">{{ $task->modul_pekerjaan ?? $task->judul_tugas }}</h4>
+          <div class="bg-white p-3.5 rounded-xl border border-teal-200/80 space-y-1">
+            <div class="flex items-start justify-between gap-2">
+              <h4 class="text-xs sm:text-sm font-bold text-slate-800">{{ $task->modul_pekerjaan ?? $task->judul_tugas }}</h4>
+              @if($task->target_minggu)
+                <span class="shrink-0 text-[10px] px-2 py-0.5 rounded bg-teal-50 text-[#02796B] font-semibold">
+                  {{ is_numeric($task->target_minggu) ? 'Minggu '.$task->target_minggu : $task->target_minggu }}
+                </span>
+              @endif
+            </div>
             <p class="text-xs text-slate-500">{{ $task->spesifikasi_kebutuhan ?? $task->deskripsi }}</p>
           </div>
         @empty
