@@ -576,4 +576,98 @@ class PrdCompleteFlowTest extends TestCase
             'id' => $pengajuan->id,
         ]);
     }
+
+    public function test_mahasiswa_dashboard_progressive_step_by_step_flow(): void
+    {
+        // TAHAP 1: Belum mengajukan surat pengantar -> Hanya Card Surat Pengantar yang tampil
+        $step1View = $this->actingAs($this->mahasiswa)->get(route('dashboard.mahasiswa'));
+        $step1View->assertOk();
+        $step1View->assertSee('Pengajuan Surat Pengantar PKL');
+        $step1View->assertDontSee('Tempat Pelaksanaan PKL');
+        $step1View->assertDontSee('Form F1: Dosen Pembimbing');
+        $step1View->assertDontSee('Logbook Kegiatan Harian');
+        $step1View->assertDontSee('Riwayat Bimbingan (F4)');
+
+        // Mahasiswa mengisi form pengajuan surat pengantar (masuk proses pending)
+        $this->actingAs($this->mahasiswa)->post(route('mahasiswa.request-surat'), [
+            'tahap' => 'surat_pengantar',
+            'name' => 'Ahmad Fauzi',
+            'identifier' => '2107411002',
+            'prodi' => 'Teknik Informatika (D4)',
+            'phone' => '081234567890',
+            'posisi_magang' => 'Cloud Engineer Intern',
+            'tanggal_mulai' => '2026-03-01',
+            'tanggal_selesai' => '2026-08-31',
+        ])->assertRedirect();
+
+        $pengajuan = PengajuanMagang::where('mahasiswa_id', $this->mahasiswa->id)->first();
+        $this->assertNotNull($pengajuan);
+        $this->assertEquals('pending', $pengajuan->status_surat_pengantar);
+        $this->assertNull($pengajuan->industri_id);
+
+        // Saat masih pending, card perusahaan belum muncul
+        $pendingSuratView = $this->actingAs($this->mahasiswa)->get(route('dashboard.mahasiswa'));
+        $pendingSuratView->assertSee('Permohonan Surat Pengantar Sedang Diproses Admin');
+        $pendingSuratView->assertDontSee('Tempat Pelaksanaan PKL');
+
+        // Admin menerbitkan surat pengantar
+        $this->actingAs($this->admin)->post(route('admin.surat.terbitkan', $pengajuan->id))->assertRedirect();
+        $this->assertEquals('diterbitkan', $pengajuan->fresh()->status_surat_pengantar);
+
+        // TAHAP 2: Setelah mendapat surat pengantar -> Card Pengajuan Perusahaan muncul
+        $step2View = $this->actingAs($this->mahasiswa)->get(route('dashboard.mahasiswa'));
+        $step2View->assertOk();
+        $step2View->assertSee('Tempat Pelaksanaan PKL');
+        $step2View->assertDontSee('Form F1: Dosen Pembimbing');
+        $step2View->assertDontSee('Logbook Kegiatan Harian');
+        $step2View->assertDontSee('Riwayat Bimbingan (F4)');
+
+        // Mahasiswa mengajukan perusahaan tempat PKL
+        $this->actingAs($this->mahasiswa)->post(route('mahasiswa.request-surat'), [
+            'tahap' => 'perusahaan',
+            'nama_perusahaan' => 'PT Siber Kreasi Nusantara',
+            'bidang_usaha' => 'Cybersecurity & Cloud',
+            'kota' => 'Jakarta Selatan',
+            'alamat' => 'Jl. TB Simatupang Kav. 10',
+            'kontak_person' => 'Rizki Pratama',
+            'email_pj' => 'hrd@siberkreasi.id',
+            'telepon' => '021778899',
+            'posisi_magang' => 'Cloud Security Intern',
+            'tanggal_mulai' => '2026-03-01',
+            'tanggal_selesai' => '2026-08-31',
+        ])->assertRedirect();
+
+        $industriBaru = Industri::where('nama_perusahaan', 'PT Siber Kreasi Nusantara')->first();
+        $this->assertNotNull($industriBaru);
+        $this->assertEquals('pending', $industriBaru->status_verifikasi);
+
+        // Saat perusahaan masih pending Admin, Card Pengajuan Dosen belum muncul
+        $pendingCompanyView = $this->actingAs($this->mahasiswa)->get(route('dashboard.mahasiswa'));
+        $pendingCompanyView->assertSee('Menunggu Verifikasi Perusahaan oleh Admin');
+        $pendingCompanyView->assertDontSee('Form F1: Dosen Pembimbing');
+
+        // Admin meng-Accept perusahaan mahasiswa
+        $this->actingAs($this->admin)->post(route('admin.industri.acc', $industriBaru->id))->assertRedirect();
+        $this->assertEquals('acc', $industriBaru->fresh()->status_verifikasi);
+
+        // TAHAP 3: Setelah terdaftar di perusahaan -> Card Pengajuan Dosen (Form F1) muncul
+        $step3View = $this->actingAs($this->mahasiswa)->get(route('dashboard.mahasiswa'));
+        $step3View->assertOk();
+        $step3View->assertSee('Form F1: Dosen Pembimbing');
+        $step3View->assertDontSee('Logbook Kegiatan Harian');
+        $step3View->assertDontSee('Riwayat Bimbingan (F4)');
+
+        // Mahasiswa melakukan pengajuan dosen pembimbing (Form F1)
+        $this->actingAs($this->mahasiswa)->post(route('f1.select-dosen'), [
+            'dosen_id' => $this->dosen->id,
+            'company_name' => 'PT Siber Kreasi Nusantara',
+            'internship_title' => 'Implementasi Zero Trust Network Architecture',
+        ])->assertRedirect();
+
+        // TAHAP 4: Setelah pengajuan dosen -> Card Logbook Kegiatan Harian & Riwayat Bimbingan muncul
+        $step4View = $this->actingAs($this->mahasiswa)->get(route('dashboard.mahasiswa'));
+        $step4View->assertOk();
+        $step4View->assertSee('Logbook Kegiatan Harian');
+        $step4View->assertSee('Riwayat Bimbingan (F4)');
+    }
 }

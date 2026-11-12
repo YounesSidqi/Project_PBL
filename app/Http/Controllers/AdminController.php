@@ -190,13 +190,29 @@ class AdminController extends Controller
     }
 
     /**
-     * Tolak Permintaan Surat Pengantar PKL.
+     * Tolak Permintaan Surat Pengantar PKL atau Pengajuan Perusahaan.
      */
     public function tolakSuratPengantar(Request $request, PengajuanMagang $pengajuan)
     {
         $request->validate([
             'catatan_penolakan' => 'required|string|max:1000',
         ]);
+
+        if ($pengajuan->status_surat_pengantar === 'diterbitkan' && $pengajuan->industri && $pengajuan->industri->status_verifikasi === 'pending') {
+            $pengajuan->industri->update([
+                'status_verifikasi' => 'reject',
+                'catatan_admin' => $request->catatan_penolakan,
+                'updated_at' => now(),
+            ]);
+
+            $pengajuan->update([
+                'catatan_penolakan' => $request->catatan_penolakan,
+                'updated_at' => now(),
+            ]);
+
+            return redirect()->to(route('dashboard.admin', ['tab' => 'surat']))
+                ->with('info', "Pengajuan perusahaan {$pengajuan->mahasiswa->name} ditolak dengan alasan: {$request->catatan_penolakan}");
+        }
 
         $pengajuan->update([
             'status_surat_pengantar' => 'ditolak',
@@ -418,6 +434,12 @@ class AdminController extends Controller
             ->where('status_surat_pengantar', 'pending')
             ->update([
                 'status_surat_pengantar' => 'ditolak',
+                'catatan_penolakan' => 'Usulan perusahaan ditolak Admin: '.$request->catatan_admin,
+            ]);
+
+        PengajuanMagang::where('industri_id', $industri->id)
+            ->where('status_surat_pengantar', 'diterbitkan')
+            ->update([
                 'catatan_penolakan' => 'Usulan perusahaan ditolak Admin: '.$request->catatan_admin,
             ]);
 

@@ -140,17 +140,21 @@
             <div class="text-[11px] font-mono text-slate-400">{{ $sp->mahasiswa->identifier }} • {{ $sp->mahasiswa->prodi }}</div>
           </td>
           <td class="py-3 px-4">
-            <div class="font-bold text-slate-800">{{ $sp->industri->nama_perusahaan ?? 'Belum ditentukan' }}</div>
-            <div class="flex items-center gap-1.5 mt-1">
-              <span class="text-[11px] text-slate-500">{{ $sp->industri->kota ?? 'Jakarta' }}</span>
-              @if($sp->industri?->status_verifikasi === 'acc')
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-[#02796B] border border-teal-200">Terverifikasi</span>
-              @elseif($sp->industri?->status_verifikasi === 'reject')
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Ditolak</span>
-              @elseif($sp->industri)
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">Perlu ACC</span>
-              @endif
-            </div>
+            @if($sp->industri)
+              <div class="font-bold text-slate-800">{{ $sp->industri->nama_perusahaan }}</div>
+              <div class="flex items-center gap-1.5 mt-1">
+                <span class="text-[11px] text-slate-500">{{ $sp->industri->kota ?: 'Jakarta' }}</span>
+                @if($sp->industri->status_verifikasi === 'acc')
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-[#02796B] border border-teal-200">Terverifikasi</span>
+                @elseif($sp->industri->status_verifikasi === 'reject')
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Ditolak</span>
+                @else
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">Perlu ACC</span>
+                @endif
+              </div>
+            @else
+              <span class="text-slate-400 text-xs">Belum Mengajukan Perusahaan</span>
+            @endif
           </td>
           <td class="py-3 px-4">
             <div class="text-slate-800 font-semibold">{{ $sp->posisi_magang ?: 'Intern' }}</div>
@@ -172,13 +176,17 @@
             @endif
           </td>
           <td class="py-3 px-4 whitespace-nowrap">
-            @if($sp->status_surat_pengantar === 'diterbitkan')
+            @if($sp->status_surat_pengantar === 'diterbitkan' && $sp->industri?->status_verifikasi === 'pending')
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                <span class="material-symbols-outlined text-[13px]">schedule</span> Pending Perusahaan
+              </span>
+            @elseif($sp->status_surat_pengantar === 'diterbitkan')
               <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 <span class="material-symbols-outlined text-[13px]">check_circle</span> Terbit
               </span>
             @elseif($sp->status_surat_pengantar === 'pending')
               <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                <span class="material-symbols-outlined text-[13px]">schedule</span> Pending
+                <span class="material-symbols-outlined text-[13px]">schedule</span> Pending Surat
               </span>
             @elseif($sp->status_surat_pengantar === 'ditolak')
               <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
@@ -190,8 +198,8 @@
           </td>
           <td class="py-3 px-4 text-right whitespace-nowrap">
             <div class="inline-flex items-center justify-end gap-1.5">
-              @if($sp->status_surat_pengantar === 'pending' || $sp->status_surat_pengantar === 'draft')
-                <form method="POST" action="{{ route('admin.surat.terbitkan', $sp->id) }}" onsubmit="return confirm('Setujui pengajuan & terbitkan Surat Pengantar untuk {{ $sp->mahasiswa->name }}?')">
+              @if($sp->status_surat_pengantar === 'pending' || $sp->status_surat_pengantar === 'draft' || $sp->industri?->status_verifikasi === 'pending')
+                <form method="POST" action="{{ route('admin.surat.terbitkan', $sp->id) }}" onsubmit="return confirm('Setujui pengajuan untuk {{ $sp->mahasiswa->name }}?')">
                   @csrf
                   <button type="submit" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs inline-flex items-center gap-1 shadow-sm transition-colors">
                     <span class="material-symbols-outlined text-[14px]">check</span> Accept

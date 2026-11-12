@@ -14,10 +14,59 @@ use Illuminate\Support\Facades\Auth;
 class PenilaianController extends Controller
 {
     /**
-     * Mahasiswa mengajukan Permintaan Surat Pengantar PKL & Data Industri (PRD 5.1 & 5.2).
+     * Mahasiswa mengajukan Permintaan Surat Pengantar PKL (Tahap 1) atau Data Perusahaan PKL (Tahap 2).
      */
     public function requestSuratPengantar(Request $request)
     {
+        /** @var User $student */
+        $student = Auth::user();
+
+        $existingPengajuan = PengajuanMagang::where('mahasiswa_id', $student->id)
+            ->with('industri')
+            ->latest()
+            ->first();
+
+        // TAHAP 1: Pengajuan Surat Pengantar PKL (Data Diri & Rencana Periode PKL)
+        if ($request->input('tahap') === 'surat_pengantar') {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'identifier' => 'required|string|max:50|unique:users,identifier,'.$student->id,
+                'prodi' => 'required|string|max:100',
+                'phone' => 'nullable|string|max:25',
+                'posisi_magang' => 'nullable|string|max:150',
+                'tanggal_mulai' => 'nullable|date',
+                'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
+            ]);
+
+            if ($existingPengajuan && ! in_array($existingPengajuan->status_surat_pengantar, ['draft', 'ditolak'], true)) {
+                return redirect()->back()
+                    ->with('error', 'Permohonan Surat Pengantar Anda sedang diproses Admin atau sudah diterbitkan.');
+            }
+
+            $student->update([
+                'name' => trim((string) $request->name),
+                'identifier' => trim((string) $request->identifier),
+                'prodi' => $request->prodi,
+                'phone' => $request->phone ?: $student->phone,
+            ]);
+
+            PengajuanMagang::updateOrCreate(
+                ['mahasiswa_id' => $student->id],
+                [
+                    'posisi_magang' => $request->posisi_magang ?: ($existingPengajuan?->posisi_magang ?: 'Software Engineer Intern'),
+                    'tanggal_mulai' => $request->tanggal_mulai ?: $existingPengajuan?->tanggal_mulai,
+                    'tanggal_selesai' => $request->tanggal_selesai ?: $existingPengajuan?->tanggal_selesai,
+                    'status_surat_pengantar' => 'pending',
+                    'catatan_penolakan' => null,
+                    'dosen_id' => $student->dosen_id ?: $existingPengajuan?->dosen_id,
+                ]
+            );
+
+            return redirect()->back()
+                ->with('success', 'Permohonan Surat Pengantar PKL berhasil dikirim (Status: Pending). Admin Jurusan akan memverifikasi dan menerbitkan surat pengantar Anda.');
+        }
+
+        // TAHAP 2: Pengajuan Perusahaan / Tempat Pelaksanaan PKL
         $request->validate([
             'industri_id' => 'nullable|exists:industris,id',
             'nama_perusahaan' => 'required_without:industri_id|nullable|string|max:255',
@@ -34,21 +83,14 @@ class PenilaianController extends Controller
             'nama_perusahaan.required_without' => 'Nama perusahaan wajib diisi jika tidak memilih mitra industri terdaftar.',
         ]);
 
-        /** @var User $student */
-        $student = Auth::user();
-
-        $existingPengajuan = PengajuanMagang::where('mahasiswa_id', $student->id)
-            ->with('industri')
-            ->latest()
-            ->first();
-
         // Proteksi Anti-Spam: Mahasiswa tidak dapat mengirim ulang form jika sedang pending verifikasi Admin atau sudah disahkan
         if ($existingPengajuan) {
             $industriStatus = $existingPengajuan->industri?->status_verifikasi;
             $suratStatus = $existingPengajuan->status_surat_pengantar;
 
             $canResubmit = in_array($suratStatus, ['draft', 'ditolak'], true)
-                || $industriStatus === 'reject';
+                || $industriStatus === 'reject'
+                || ($suratStatus === 'diterbitkan' && $existingPengajuan->industri_id === null);
 
             if (! $canResubmit) {
                 return redirect()->back()
@@ -106,7 +148,11 @@ class PenilaianController extends Controller
             }
         }
 
-        // Ambil atau buat PengajuanMagang aktif mahasiswa (status pending menunggu verifikasi Admin)
+        $newSuratStatus = ($existingPengajuan && $existingPengajuan->status_surat_pengantar === 'diterbitkan')
+            ? 'diterbitkan'
+            : 'pending';
+
+        // Ambil atau buat PengajuanMagang aktif mahasiswa
         PengajuanMagang::updateOrCreate(
             ['mahasiswa_id' => $student->id],
             [
@@ -114,7 +160,7 @@ class PenilaianController extends Controller
                 'posisi_magang' => $request->posisi_magang ?: ($existingPengajuan?->posisi_magang ?: 'Software Engineer Intern'),
                 'tanggal_mulai' => $request->tanggal_mulai ?: $existingPengajuan?->tanggal_mulai,
                 'tanggal_selesai' => $request->tanggal_selesai ?: $existingPengajuan?->tanggal_selesai,
-                'status_surat_pengantar' => 'pending',
+                'status_surat_pengantar' => $newSuratStatus,
                 'catatan_penolakan' => null,
                 'dosen_id' => $student->dosen_id ?: $existingPengajuan?->dosen_id,
             ]
@@ -126,8 +172,8 @@ class PenilaianController extends Controller
         }
 
         $statusMsg = $industri->status_verifikasi === 'acc'
-            ? "Formulir pengajuan penempatan pada mitra terdaftar \"{$industri->nama_perusahaan}\" berhasil dikirim dan menunggu persetujuan Admin Jurusan!"
-            : "Formulir usulan perusahaan \"{$industri->nama_perusahaan}\" berhasil dikirim (Status: Pending). Admin Jurusan akan memeriksa validitas perusahaan dan memasukkannya ke daftar mitra resmi.";
+            ? "Pengajuan penempatan pada mitra terdaftar \"{$industri->nama_perusahaan}\" berhasil disimpan!"
+            : "Formulir pengajuan perusahaan \"{$industri->nama_perusahaan}\" berhasil dikirim (Status: Pending). Admin Jurusan akan memeriksa dan memverifikasi perusahaan Anda.";
 
         return redirect()->back()->with('success', $statusMsg);
     }
