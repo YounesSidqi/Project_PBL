@@ -74,39 +74,6 @@
   </div>
 </div>
 
-<!-- Navigation Tabs -->
-<div class="flex items-center gap-1 sm:gap-2 border-b border-slate-200 mb-6 overflow-x-auto">
-  <a href="{{ route('dashboard.admin', ['tab' => 'surat']) }}"
-     class="inline-flex items-center gap-2 px-4 py-2.5 border-b-2 text-xs sm:text-sm font-bold whitespace-nowrap transition-all {{ $tab === 'surat' || $tab === 'overview' ? 'border-[#0056B3] text-[#0056B3]' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
-    <span class="material-symbols-outlined text-[18px]">mark_email_read</span>
-    <span>Surat Pengantar</span>
-    @if($stats['surat_pending'] > 0)
-      <span class="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-white">{{ $stats['surat_pending'] }}</span>
-    @endif
-  </a>
-
-  <a href="{{ route('dashboard.admin', ['tab' => 'industri']) }}"
-     class="inline-flex items-center gap-2 px-4 py-2.5 border-b-2 text-xs sm:text-sm font-bold whitespace-nowrap transition-all {{ $tab === 'industri' ? 'border-[#0056B3] text-[#0056B3]' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
-    <span class="material-symbols-outlined text-[18px]">domain_verification</span>
-    <span>Mitra Industri</span>
-    @if($stats['industri_pending'] > 0)
-      <span class="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-600 text-white">{{ $stats['industri_pending'] }}</span>
-    @endif
-  </a>
-
-  <a href="{{ route('dashboard.admin', ['tab' => 'mahasiswa']) }}"
-     class="inline-flex items-center gap-2 px-4 py-2.5 border-b-2 text-xs sm:text-sm font-bold whitespace-nowrap transition-all {{ $tab === 'mahasiswa' ? 'border-[#0056B3] text-[#0056B3]' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
-    <span class="material-symbols-outlined text-[18px]">tune</span>
-    <span>Data Mahasiswa</span>
-  </a>
-
-  <a href="{{ route('dashboard.admin', ['tab' => 'users']) }}"
-     class="inline-flex items-center gap-2 px-4 py-2.5 border-b-2 text-xs sm:text-sm font-bold whitespace-nowrap transition-all {{ $tab === 'users' ? 'border-[#0056B3] text-[#0056B3]' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
-    <span class="material-symbols-outlined text-[18px]">lock_reset</span>
-    <span>Kredensial Akun</span>
-  </a>
-</div>
-
 <!-- TAB 1: SURAT PENGANTAR & PENEMPATAN -->
 @if($tab === 'surat' || $tab === 'overview')
 @php

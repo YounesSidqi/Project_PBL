@@ -71,41 +71,6 @@
   </div>
 </div>
 
-<!-- Tab Navigasi -->
-<div class="flex items-center gap-1.5 border-b border-slate-200 overflow-x-auto pb-px">
-  <a href="{{ route('dashboard.industri', ['tab' => 'mahasiswa', 'student_id' => $activePengajuan?->mahasiswa_id]) }}"
-     class="inline-flex items-center gap-1.5 px-4 py-2.5 border-b-2 text-xs font-bold transition-all {{ $tab === 'mahasiswa' ? 'border-teal-600 text-teal-700' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
-    <span class="material-symbols-outlined text-[17px]">badge</span>
-    <span>Mahasiswa ({{ $pengajuans->count() }})</span>
-  </a>
-
-  <a href="{{ route('dashboard.industri', ['tab' => 'f2', 'student_id' => $activePengajuan?->mahasiswa_id]) }}"
-     class="inline-flex items-center gap-1.5 px-4 py-2.5 border-b-2 text-xs font-bold transition-all {{ $tab === 'f2' ? 'border-teal-600 text-teal-700' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
-    <span class="material-symbols-outlined text-[17px]">task_alt</span>
-    <span>Matriks Tugas (F2)</span>
-    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800">{{ $tugasList->count() }}</span>
-  </a>
-
-  <a href="{{ route('dashboard.industri', ['tab' => 'f3', 'student_id' => $activePengajuan?->mahasiswa_id]) }}"
-     class="inline-flex items-center gap-1.5 px-4 py-2.5 border-b-2 text-xs font-bold transition-all {{ $tab === 'f3' ? 'border-teal-600 text-teal-700' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
-    <span class="material-symbols-outlined text-[17px]">history_edu</span>
-    <span>Logbook Harian (F3)</span>
-    @php $pendingLogbooks = $logbooks->where('status_industri', 'pending')->count(); @endphp
-    @if($pendingLogbooks > 0)
-      <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white">{{ $pendingLogbooks }}</span>
-    @endif
-  </a>
-
-  <a href="{{ route('dashboard.industri', ['tab' => 'f5', 'student_id' => $activePengajuan?->mahasiswa_id]) }}"
-     class="inline-flex items-center gap-1.5 px-4 py-2.5 border-b-2 text-xs font-bold transition-all {{ $tab === 'f5' ? 'border-teal-600 text-teal-700' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
-    <span class="material-symbols-outlined text-[17px]">grade</span>
-    <span>Evaluasi Kinerja (F5 - 60%)</span>
-    @if($evaluasiF5)
-      <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Tersimpan</span>
-    @endif
-  </a>
-</div>
-
 <!-- TAB 1: DAFTAR MAHASISWA -->
 @if($tab === 'mahasiswa')
 <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm">
