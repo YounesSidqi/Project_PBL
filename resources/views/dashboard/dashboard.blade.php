@@ -8,13 +8,13 @@
 @section('content')
 @php
   $activeF1 = $f1Application ?? null;
-  $statusVerifikasiInd = $pengajuanAktif?->industri?->status_verifikasi;
+  $statusVerifikasiInd = $pengajuanAktif?->status_verifikasi_efektif;
   $statusSurat = $pengajuanAktif?->status_surat_pengantar;
   $hasIndustri = !empty($pengajuanAktif?->industri_id) && $pengajuanAktif?->industri !== null;
 
   $hasAssignedDosen = !empty(Auth::user()->dosen_id) && $dosen != null;
   $isF1Approved = ($activeF1 && $activeF1->status === 'approved') || $hasAssignedDosen;
-  $isF1Pending = ($activeF1 && $activeF1->status === 'pending') && !$hasAssignedDosen;
+  $isF1Pending = ($activeF1 && in_array($activeF1->status, ['pending_admin', 'pending_kps', 'revision_requested', 'pending'], true)) && !$hasAssignedDosen;
 
   // Tahap 1: Surat Pengantar diterbitkan Admin
   $step1Done = $pengajuanAktif && $statusSurat === 'diterbitkan';
@@ -259,6 +259,14 @@
             <span class="text-xs sm:text-sm font-bold text-slate-900 font-mono">
               {{ $pengajuanAktif->nomor_surat_pengantar ?? 'Telah Diterbitkan' }}
             </span>
+            @if($pengajuanAktif->nama_perusahaan_surat)
+              <p class="text-xs font-bold text-slate-800 mt-1">
+                Tujuan: {{ $pengajuanAktif->nama_perusahaan_surat }}
+                @if($pengajuanAktif->alamat_perusahaan_surat)
+                  <span class="font-normal text-slate-600">— {{ $pengajuanAktif->alamat_perusahaan_surat }}</span>
+                @endif
+              </p>
+            @endif
             <p class="text-[11px] text-emerald-700 mt-0.5">Surat pengantar telah diterbitkan oleh Admin. Silakan lanjut ke tahap Pengajuan Perusahaan.</p>
           </div>
 
@@ -278,10 +286,17 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-amber-200/70 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2 border-t border-amber-200/70 text-xs">
             <div class="bg-white/80 p-2.5 rounded-lg border border-amber-200/60">
               <span class="text-[10px] text-slate-400 font-bold uppercase block">Nama &amp; NIM</span>
               <span class="font-bold text-slate-800">{{ Auth::user()->name }} ({{ Auth::user()->identifier }})</span>
+            </div>
+            <div class="bg-white/80 p-2.5 rounded-lg border border-amber-200/60">
+              <span class="text-[10px] text-slate-400 font-bold uppercase block">Perusahaan Tujuan</span>
+              <span class="font-bold text-slate-800 block truncate">{{ $pengajuanAktif->nama_perusahaan_surat ?: '-' }}</span>
+              @if($pengajuanAktif->alamat_perusahaan_surat)
+                <span class="text-[10px] text-slate-500 block truncate">{{ $pengajuanAktif->alamat_perusahaan_surat }}</span>
+              @endif
             </div>
             <div class="bg-white/80 p-2.5 rounded-lg border border-amber-200/60">
               <span class="text-[10px] text-slate-400 font-bold uppercase block">Bidang / Posisi</span>
@@ -422,16 +437,24 @@
           </div>
         </div>
 
-        @if($step2Done)
+        @if($pengajuanAktif->file_surat_keterangan || $step2Done)
           <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
-            <a href="{{ route('dokumen.f2', $pengajuanAktif->id) }}" target="_blank" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors">
-              <span class="material-symbols-outlined text-[15px]">print</span>
-              <span>Cetak Form F2</span>
-            </a>
-            <a href="{{ route('dokumen.f3', $pengajuanAktif->id) }}" target="_blank" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors">
-              <span class="material-symbols-outlined text-[15px]">print</span>
-              <span>Cetak Form F3</span>
-            </a>
+            @if($pengajuanAktif->file_surat_keterangan)
+              <a href="{{ route('dokumen.surat-keterangan', $pengajuanAktif->id) }}" target="_blank" class="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#0056B3] border border-blue-200 font-bold text-xs flex items-center gap-1.5 transition-colors">
+                <span class="material-symbols-outlined text-[15px]">attach_file</span>
+                <span>Lihat Surat Keterangan Industri</span>
+              </a>
+            @endif
+            @if($step2Done)
+              <a href="{{ route('dokumen.f2', $pengajuanAktif->id) }}" target="_blank" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors">
+                <span class="material-symbols-outlined text-[15px]">print</span>
+                <span>Cetak Form F2</span>
+              </a>
+              <a href="{{ route('dokumen.f3', $pengajuanAktif->id) }}" target="_blank" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors">
+                <span class="material-symbols-outlined text-[15px]">print</span>
+                <span>Cetak Form F3</span>
+              </a>
+            @endif
           </div>
         @endif
       @else
@@ -490,7 +513,13 @@
             <span class="text-[10px] text-amber-800 font-bold uppercase">Pengajuan Form F1</span>
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
               <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-              <span>Menunggu Penetapan KPS</span>
+              @if($activeF1->status === 'pending_kps')
+                <span>Menunggu Approval KPS</span>
+              @elseif($activeF1->status === 'revision_requested')
+                <span>Dalam Revisi Plotting Admin</span>
+              @else
+                <span>Menunggu Plotting Admin</span>
+              @endif
             </span>
           </div>
 
@@ -507,16 +536,21 @@
           <div class="p-2.5 bg-white rounded-lg border border-amber-200/80 text-xs text-slate-600 space-y-0.5">
             <p><strong class="text-slate-800">Instansi:</strong> {{ $activeF1->company_name }}</p>
             <p><strong class="text-slate-800">Topik:</strong> {{ $activeF1->internship_title }}</p>
+            @if($activeF1->recommendedDosen && $activeF1->recommended_dosen_id !== $activeF1->dosen_id)
+              <p><strong class="text-slate-800">Rekomendasi Awal:</strong> {{ $activeF1->recommendedDosen->name }}</p>
+            @endif
           </div>
 
-          <form action="{{ route('f1.cancel', $activeF1->id) }}" method="POST" onsubmit="return confirm('Batalkan pengajuan dosen ini?')">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="w-full bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 font-bold text-xs py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-colors">
-              <span class="material-symbols-outlined text-[15px]">cancel</span>
-              <span>Batalkan / Ganti Dosen</span>
-            </button>
-          </form>
+          @if(in_array($activeF1->status, ['pending_admin', 'pending'], true))
+            <form action="{{ route('f1.cancel', $activeF1->id) }}" method="POST" onsubmit="return confirm('Batalkan pengajuan dosen ini?')">
+              @csrf
+              @method('DELETE')
+              <button type="submit" class="w-full bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 font-bold text-xs py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-colors">
+                <span class="material-symbols-outlined text-[15px]">cancel</span>
+                <span>Batalkan / Ganti Dosen</span>
+              </button>
+            </form>
+          @endif
         </div>
 
       @else
@@ -671,6 +705,16 @@
       </div>
 
       <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Nama Perusahaan Tujuan <span class="text-rose-500">*</span></label>
+        <input type="text" name="nama_perusahaan" required value="{{ $pengajuanAktif?->nama_perusahaan_surat ?? '' }}" placeholder="Contoh: PT Telekomunikasi Seluler (Telkomsel)" class="w-full text-xs rounded-xl border border-slate-200 p-2.5 bg-slate-50 focus:bg-white focus:outline-none focus:border-[#0056B3]">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Alamat Perusahaan Tujuan <span class="text-rose-500">*</span></label>
+        <textarea name="alamat_perusahaan" rows="2" required placeholder="Alamat lengkap perusahaan tujuan surat pengantar..." class="w-full text-xs rounded-xl border border-slate-200 p-2.5 bg-slate-50 focus:bg-white focus:outline-none focus:border-[#0056B3]">{{ $pengajuanAktif?->alamat_perusahaan_surat ?? '' }}</textarea>
+      </div>
+
+      <div>
         <label class="block text-xs font-bold text-slate-700 mb-1">Posisi / Bidang PKL yang Diminati <span class="text-rose-500">*</span></label>
         <input type="text" name="posisi_magang" required value="{{ $pengajuanAktif?->posisi_magang ?? '' }}" placeholder="Contoh: Software Engineer / Network Engineer Intern" class="w-full text-xs rounded-xl border border-slate-200 p-2.5 bg-slate-50 focus:bg-white focus:outline-none focus:border-[#0056B3]">
       </div>
@@ -716,7 +760,7 @@
       </button>
     </div>
 
-    <form method="POST" action="{{ route('mahasiswa.request-surat') }}" class="space-y-3.5">
+    <form method="POST" action="{{ route('mahasiswa.request-surat') }}" enctype="multipart/form-data" class="space-y-3.5">
       @csrf
       <input type="hidden" name="tahap" value="perusahaan">
 
@@ -730,6 +774,9 @@
             </option>
           @endforeach
         </select>
+        <p class="text-[11px] text-teal-800">
+          Penempatan pada perusahaan yang sudah terdaftar tetap berstatus <strong>Pending</strong> dan membutuhkan verifikasi Admin beserta bukti Surat Keterangan Industri.
+        </p>
       </div>
 
       <div id="section-industri-baru" class="space-y-3">
@@ -787,6 +834,14 @@
             <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Selesai</label>
             <input type="date" name="tanggal_selesai" value="{{ $pengajuanAktif?->tanggal_selesai?->format('Y-m-d') ?? '' }}" class="w-full text-xs rounded-xl border border-slate-200 p-2.5">
           </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            Bukti Diterima / Surat Keterangan Industri <span class="text-rose-500">*</span>
+          </label>
+          <input type="file" name="file_surat_keterangan" accept=".pdf,.jpg,.jpeg,.png" required class="block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3.5 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-[#0056B3] hover:file:bg-blue-100 border border-slate-200 rounded-xl p-1.5 bg-slate-50 focus:outline-none focus:border-[#0056B3]">
+          <span class="text-[11px] text-slate-400 mt-1 block">Format: PDF, JPG, atau PNG (Maks. 5MB). Unggah surat keterangan / bukti penerimaan PKL dari industri untuk diverifikasi Admin.</span>
         </div>
       </div>
 

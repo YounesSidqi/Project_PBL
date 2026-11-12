@@ -7,6 +7,7 @@ use App\Models\F1Application;
 use App\Models\Logbook;
 use App\Models\PengajuanMagang;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 
 class DokumenController extends Controller
 {
@@ -18,6 +19,20 @@ class DokumenController extends Controller
         $pengajuan->load(['mahasiswa', 'industri', 'dosen']);
 
         return view('dokumen.surat-pengantar', compact('pengajuan'));
+    }
+
+    /**
+     * Lihat / Unduh File Bukti Diterima (Surat Keterangan Industri).
+     */
+    public function suratKeteranganIndustri(PengajuanMagang $pengajuan)
+    {
+        if (! $pengajuan->file_surat_keterangan || ! Storage::disk('public')->exists($pengajuan->file_surat_keterangan)) {
+            abort(404, 'File Surat Keterangan Industri tidak ditemukan.');
+        }
+
+        $filePath = Storage::disk('public')->path($pengajuan->file_surat_keterangan);
+
+        return response()->file($filePath);
     }
 
     /**

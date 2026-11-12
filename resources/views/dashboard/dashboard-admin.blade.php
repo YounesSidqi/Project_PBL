@@ -10,16 +10,16 @@
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
   <div>
     <h1 class="text-xl sm:text-2xl font-extrabold font-heading text-slate-900 tracking-tight">
-      Dashboard Admin Jurusan
+      Dashboard Admin Jurusan {{ $admin?->effective_jurusan ?? 'TIK' }}
     </h1>
     <p class="text-xs text-slate-500 mt-0.5">
-      Verifikasi tempat PKL, surat pengantar, mitra industri, dan data mahasiswa.
+      Verifikasi tempat PKL, surat pengantar, plotting dosen pembimbing, dan data mahasiswa jurusan {{ $admin?->effective_jurusan ?? 'TIK' }}.
     </p>
   </div>
 
   <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-[#0056B3] border border-blue-200 text-xs font-bold self-start sm:self-auto">
     <span class="material-symbols-outlined text-[16px]">verified_user</span>
-    <span>Admin JTIK PNJ</span>
+    <span>Admin {{ $admin?->effective_jurusan ?? 'JTIK' }} PNJ</span>
   </span>
 </div>
 
@@ -74,6 +74,93 @@
   </div>
 </div>
 
+<!-- TAB PLOTTING DOSEN PEMBIMBING (FORM F1) -->
+@if($tab === 'plotting' || $tab === 'overview')
+<div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm mb-6 space-y-4">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+    <div>
+      <h2 class="text-base font-bold font-heading text-slate-800">Plotting Dosen Pembimbing (Form F1) — Jurusan {{ $admin?->effective_jurusan ?? 'TIK' }}</h2>
+      <p class="text-xs text-slate-500">Tentukan dan plot dosen pembimbing untuk mahasiswa jurusan {{ $admin?->effective_jurusan ?? 'TIK' }}, lalu teruskan ke KPS untuk di-approve.</p>
+    </div>
+    @if(($stats['f1_revision'] ?? 0) > 0)
+      <span class="px-3 py-1 rounded-full bg-rose-100 text-rose-800 text-xs font-bold">
+        {{ $stats['f1_revision'] }} Perlu Revisi Plotting
+      </span>
+    @endif
+  </div>
+
+  <div class="space-y-3">
+    @forelse($f1Applications ?? [] as $f1App)
+      @php
+        $recDosen = $f1App->recommendedDosen ?? $f1App->dosen;
+        $isRevision = $f1App->status === 'revision_requested';
+        $isPendingAdmin = in_array($f1App->status, ['pending_admin', 'pending'], true);
+        $isPendingKps = $f1App->status === 'pending_kps';
+        $isApproved = $f1App->status === 'approved';
+      @endphp
+      <div class="p-4 rounded-xl border {{ $isRevision ? 'bg-rose-50/40 border-rose-200' : ($isPendingAdmin ? 'bg-amber-50/30 border-amber-200' : 'bg-slate-50/60 border-slate-200') }} space-y-3">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-sm font-bold text-slate-900">{{ $f1App->student->name }}</span>
+              <span class="px-2 py-0.5 rounded bg-blue-50 text-[#0056B3] text-[11px] font-mono font-semibold">{{ $f1App->student->identifier }}</span>
+              <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-bold">{{ $f1App->student->effective_jurusan }}</span>
+              @if($isRevision)
+                <span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-bold">Diminta Revisi oleh KPS</span>
+              @elseif($isPendingAdmin)
+                <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">Menunggu Plotting Admin</span>
+              @elseif($isPendingKps)
+                <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold">Diteruskan ke KPS (Pending KPS)</span>
+              @elseif($isApproved)
+                <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">Approved KPS</span>
+              @endif
+            </div>
+            <p class="text-xs text-slate-600">
+              <strong>{{ $f1App->company_name ?? 'Instansi PKL' }}</strong> — {{ $f1App->internship_title ?? '-' }}
+            </p>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+              <span>Rekomendasi Mahasiswa: <strong class="text-slate-800">{{ $recDosen->name ?? '-' }}</strong></span>
+              @if($f1App->plotted_by || $isPendingKps || $isApproved)
+                <span>Hasil Plotting Admin: <strong class="text-[#0056B3]">{{ $f1App->dosen->name ?? '-' }}</strong></span>
+              @endif
+            </div>
+          </div>
+
+          @if(!$isApproved)
+            <form method="POST" action="{{ route('admin.f1.plot', $f1App->id) }}" class="flex flex-wrap items-center gap-2 shrink-0">
+              @csrf
+              <select name="dosen_id" required class="text-xs rounded-xl border-slate-200 bg-white px-3 py-2 min-w-[220px]">
+                @foreach($dosens ?? [] as $dsn)
+                  @php $usedQuota = $dsn->students_count ?? 0; @endphp
+                  <option value="{{ $dsn->id }}" {{ $f1App->dosen_id === $dsn->id ? 'selected' : '' }} {{ $usedQuota >= 7 && $f1App->dosen_id !== $dsn->id ? 'disabled' : '' }}>
+                    {{ $dsn->name }} ({{ $usedQuota }}/7)
+                  </option>
+                @endforeach
+              </select>
+              <button type="submit" class="px-3.5 py-2 rounded-xl bg-[#0056B3] hover:bg-[#00428A] text-white font-bold text-xs flex items-center gap-1.5 shadow-sm">
+                <span class="material-symbols-outlined text-[16px]">send</span>
+                <span>{{ $isRevision ? 'Plot Ulang & Teruskan ke KPS' : 'Plot & Teruskan ke KPS' }}</span>
+              </button>
+            </form>
+          @endif
+        </div>
+
+        @if($isRevision && $f1App->revision_notes)
+          <div class="p-3 rounded-xl bg-white border border-rose-200 text-xs text-rose-800">
+            <strong class="block text-rose-900 mb-0.5">Catatan Revisi dari KPS:</strong>
+            {{ $f1App->revision_notes }}
+          </div>
+        @endif
+      </div>
+    @empty
+      <div class="p-6 text-center bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500">
+        Belum ada pengajuan rekomendasi dosen pembimbing (Form F1) dari mahasiswa jurusan {{ $admin?->effective_jurusan ?? 'TIK' }}.
+      </div>
+    @endforelse
+  </div>
+</div>
+@endif
+
 <!-- TAB 1: SURAT PENGANTAR & PENEMPATAN -->
 @if($tab === 'surat' || $tab === 'overview')
 @php
@@ -109,16 +196,28 @@
           <td class="py-3 px-4">
             @if($sp->industri)
               <div class="font-bold text-slate-800">{{ $sp->industri->nama_perusahaan }}</div>
-              <div class="flex items-center gap-1.5 mt-1">
+              <div class="flex flex-wrap items-center gap-1.5 mt-1">
                 <span class="text-[11px] text-slate-500">{{ $sp->industri->kota ?: 'Jakarta' }}</span>
-                @if($sp->industri->status_verifikasi === 'acc')
+                @if($sp->status_verifikasi_efektif === 'acc')
                   <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-[#02796B] border border-teal-200">Terverifikasi</span>
-                @elseif($sp->industri->status_verifikasi === 'reject')
+                @elseif($sp->status_verifikasi_efektif === 'reject')
                   <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Ditolak</span>
                 @else
                   <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">Perlu ACC</span>
                 @endif
+                @if($sp->file_surat_keterangan)
+                  <a href="{{ route('dokumen.surat-keterangan', $sp->id) }}" target="_blank" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 hover:bg-blue-100 text-[#0056B3] border border-blue-200 transition-colors" title="Lihat Bukti Diterima / Surat Keterangan Industri">
+                    <span class="material-symbols-outlined text-[12px]">attach_file</span>
+                    <span>Bukti Diterima</span>
+                  </a>
+                @endif
               </div>
+            @elseif($sp->nama_perusahaan_surat)
+              <div class="font-bold text-slate-800">{{ $sp->nama_perusahaan_surat }}</div>
+              @if($sp->alamat_perusahaan_surat)
+                <div class="text-[11px] text-slate-500 max-w-xs truncate" title="{{ $sp->alamat_perusahaan_surat }}">{{ $sp->alamat_perusahaan_surat }}</div>
+              @endif
+              <span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-[#0056B3] border border-blue-200">Tujuan Surat Pengantar</span>
             @else
               <span class="text-slate-400 text-xs">Belum Mengajukan Perusahaan</span>
             @endif
@@ -143,9 +242,13 @@
             @endif
           </td>
           <td class="py-3 px-4 whitespace-nowrap">
-            @if($sp->status_surat_pengantar === 'diterbitkan' && $sp->industri?->status_verifikasi === 'pending')
+            @if($sp->status_surat_pengantar === 'diterbitkan' && $sp->status_verifikasi_efektif === 'pending')
               <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
                 <span class="material-symbols-outlined text-[13px]">schedule</span> Pending Perusahaan
+              </span>
+            @elseif($sp->status_surat_pengantar === 'diterbitkan' && $sp->status_verifikasi_efektif === 'reject')
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                <span class="material-symbols-outlined text-[13px]">cancel</span> Perusahaan Ditolak
               </span>
             @elseif($sp->status_surat_pengantar === 'diterbitkan')
               <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -165,7 +268,7 @@
           </td>
           <td class="py-3 px-4 text-right whitespace-nowrap">
             <div class="inline-flex items-center justify-end gap-1.5">
-              @if($sp->status_surat_pengantar === 'pending' || $sp->status_surat_pengantar === 'draft' || $sp->industri?->status_verifikasi === 'pending')
+              @if($sp->status_surat_pengantar === 'pending' || $sp->status_surat_pengantar === 'draft' || $sp->status_verifikasi_efektif === 'pending')
                 <form method="POST" action="{{ route('admin.surat.terbitkan', $sp->id) }}" onsubmit="return confirm('Setujui pengajuan untuk {{ $sp->mahasiswa->name }}?')">
                   @csrf
                   <button type="submit" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs inline-flex items-center gap-1 shadow-sm transition-colors">
@@ -318,10 +421,19 @@
             @if($ind->pengajuanMagangs->isNotEmpty())
               <div class="flex flex-wrap gap-1 mt-1">
                 @foreach($ind->pengajuanMagangs as $pm)
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 text-[#0056B3] border border-blue-200/70 text-[10px] font-bold">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded {{ $pm->status_verifikasi_efektif === 'pending' ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-blue-50 text-[#0056B3] border-blue-200/70' }} border text-[10px] font-bold">
                     <span class="material-symbols-outlined text-[11px]">person</span>
                     {{ $pm->mahasiswa->name ?? 'Mahasiswa' }}
+                    @if($pm->status_verifikasi_efektif === 'pending')
+                      <span class="text-[9px] uppercase font-extrabold">(Pending)</span>
+                    @endif
                   </span>
+                  @if($pm->file_surat_keterangan)
+                    <a href="{{ route('dokumen.surat-keterangan', $pm->id) }}" target="_blank" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-[10px] font-bold transition-colors" title="Lihat Bukti Diterima {{ $pm->mahasiswa->name ?? '' }}">
+                      <span class="material-symbols-outlined text-[11px]">attach_file</span>
+                      <span>Bukti</span>
+                    </a>
+                  @endif
                 @endforeach
               </div>
             @endif

@@ -11,7 +11,10 @@ use App\Models\PengajuanMagang;
 use App\Models\TugasF2;
 use App\Models\User;
 use Carbon\Carbon;
+use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class PrdCompleteFlowTest extends TestCase
@@ -430,7 +433,7 @@ class PrdCompleteFlowTest extends TestCase
             'role' => 'kps',
         ]);
 
-        // 1. Mahasiswa apply Form F1
+        // 1. Fase 1: Mahasiswa apply Form F1 (rekomendasi dosen)
         $this->actingAs($this->mahasiswa)->post(route('f1.select-dosen'), [
             'dosen_id' => $this->dosen->id,
             'company_name' => 'PT Telkom Indonesia',
@@ -444,8 +447,15 @@ class PrdCompleteFlowTest extends TestCase
         ]);
 
         $f1 = F1Application::where('student_id', $this->mahasiswa->id)->first();
+        $this->assertEquals(F1Application::STATUS_PENDING_ADMIN, $f1->status);
 
-        // 2. KPS menyetujui penetapan F1
+        // 2. Fase 2: Admin sesuai jurusan melakukan plotting dosen pembimbing
+        $this->actingAs($this->admin)->post(route('admin.f1.plot', $f1->id), [
+            'dosen_id' => $this->dosen->id,
+        ])->assertRedirect();
+        $this->assertEquals(F1Application::STATUS_PENDING_KPS, $f1->fresh()->status);
+
+        // 3. Fase 3: KPS menyetujui (Approve) hasil plotting Admin
         $this->actingAs($kpsUser)->post(route('kps.f1.approve', $f1->id));
 
         $this->assertDatabaseHas('pengajuan_magangs', [
@@ -739,5 +749,152 @@ class PrdCompleteFlowTest extends TestCase
         $mhsDoneView->assertViewHas('tasksTodo', fn ($c) => $c->count() === 0);
         $mhsDoneView->assertViewHas('tasksProgress', fn ($c) => $c->count() === 0);
         $mhsDoneView->assertViewHas('tasksDone', fn ($c) => $c->count() === 1);
+    }
+
+    public function test_surat_pengantar_stores_company_target_and_existing_company_selection_requires_admin_verification_with_proof_file(): void
+    {
+        Storage::fake('public');
+
+        // 1. Mahasiswa mengajukan Surat Pengantar (Tahap 1) dengan nama perusahaan dan alamat perusahaan tujuan
+        $this->actingAs($this->mahasiswa)->post(route('mahasiswa.request-surat'), [
+            'tahap' => 'surat_pengantar',
+            'name' => 'Ahmad Fauzi',
+            'identifier' => '2107411002',
+            'prodi' => 'Teknik Informatika (D4)',
+            'phone' => '081234567890',
+            'nama_perusahaan' => 'PT Bank Rakyat Indonesia (Persero) Tbk',
+            'alamat_perusahaan' => 'Gedung BRI 1, Jl. Jenderal Sudirman Kav.44-46, Jakarta Pusat',
+            'posisi_magang' => 'Backend Engineer Intern',
+            'tanggal_mulai' => '2026-03-01',
+            'tanggal_selesai' => '2026-08-31',
+        ])->assertRedirect();
+
+        $pengajuan = PengajuanMagang::where('mahasiswa_id', $this->mahasiswa->id)->first();
+        $this->assertNotNull($pengajuan);
+        $this->assertEquals('PT Bank Rakyat Indonesia (Persero) Tbk', $pengajuan->nama_perusahaan_surat);
+        $this->assertEquals('Gedung BRI 1, Jl. Jenderal Sudirman Kav.44-46, Jakarta Pusat', $pengajuan->alamat_perusahaan_surat);
+
+        // Admin menerbitkan Surat Pengantar
+        $this->actingAs($this->admin)->post(route('admin.surat.terbitkan', $pengajuan->id))->assertRedirect();
+
+        // Pastikan cetakan Surat Pengantar menampilkan nama & alamat perusahaan tujuan
+        $suratDoc = $this->actingAs($this->mahasiswa)->get(route('dokumen.surat-pengantar', $pengajuan->id));
+        $suratDoc->assertOk();
+        $suratDoc->assertSee('PT Bank Rakyat Indonesia (Persero) Tbk');
+        $suratDoc->assertSee('Gedung BRI 1, Jl. Jenderal Sudirman Kav.44-46, Jakarta Pusat');
+
+        // 2. Mahasiswa mengisi Tempat PKL (Tahap 2) dengan memilih dari perusahaan yang sudah ada (Mitra Terdaftar) + upload bukti diterima
+        $buktiFile = UploadedFile::fake()->create('surat_keterangan_industri.pdf', 256, 'application/pdf');
+
+        $this->actingAs($this->mahasiswa)->post(route('mahasiswa.request-surat'), [
+            'tahap' => 'perusahaan',
+            'industri_id' => $this->industri->id,
+            'posisi_magang' => 'Cloud Infrastructure Intern',
+            'tanggal_mulai' => '2026-03-01',
+            'tanggal_selesai' => '2026-08-31',
+            'file_surat_keterangan' => $buktiFile,
+        ])->assertRedirect();
+
+        $pengajuan->refresh();
+        $this->assertEquals($this->industri->id, $pengajuan->industri_id);
+        $this->assertEquals('pending', $pengajuan->status_penempatan);
+        $this->assertEquals('pending', $pengajuan->status_verifikasi_efektif);
+        $this->assertNotNull($pengajuan->file_surat_keterangan);
+        Storage::disk('public')->assertExists($pengajuan->file_surat_keterangan);
+
+        // File bukti diterima dapat diakses oleh Admin / Mahasiswa
+        $this->actingAs($this->admin)->get(route('dokumen.surat-keterangan', $pengajuan->id))->assertOk();
+
+        // Saat memilih dari perusahaan yang sudah ada, status mahasiswa tetap Pending dan menunggu verifikasi Admin
+        $pendingExistingView = $this->actingAs($this->mahasiswa)->get(route('dashboard.mahasiswa'));
+        $pendingExistingView->assertOk();
+        $pendingExistingView->assertSee('Menunggu Verifikasi Perusahaan oleh Admin');
+        $pendingExistingView->assertDontSee('Form F1: Dosen Pembimbing');
+
+        // 3. Admin memverifikasi (Accept) penempatan mahasiswa pada perusahaan terdaftar tersebut
+        $this->actingAs($this->admin)->post(route('admin.surat.terbitkan', $pengajuan->id))->assertRedirect();
+
+        $pengajuan->refresh();
+        $this->assertEquals('acc', $pengajuan->status_penempatan);
+        $this->assertEquals('acc', $pengajuan->status_verifikasi_efektif);
+
+        // Setelah diverifikasi Admin, tahap pemilihan Dosen Pembimbing (Form F1) terbuka
+        $approvedExistingView = $this->actingAs($this->mahasiswa)->get(route('dashboard.mahasiswa'));
+        $approvedExistingView->assertOk();
+        $approvedExistingView->assertSee('Form F1: Dosen Pembimbing');
+    }
+
+    public function test_seeder_creates_four_jurusan_admins_and_enforces_strict_jurusan_data_isolation(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        // 1. Pastikan terdapat 4 akun Admin untuk jurusan TI, TMJ, TMD, dan RKS
+        $admins = User::where('role', 'admin')->get();
+        $this->assertCount(4, $admins);
+        $this->assertEqualsCanonicalizing(
+            ['TI', 'TMJ', 'TMD', 'RKS'],
+            $admins->pluck('jurusan')->all()
+        );
+
+        $adminTi = User::where('role', 'admin')->where('jurusan', 'TI')->firstOrFail();
+        $adminTmj = User::where('role', 'admin')->where('jurusan', 'TMJ')->firstOrFail();
+
+        $studentTi = User::where('role', 'mahasiswa')->where('jurusan', 'TI')->firstOrFail();
+        $studentTmj = User::where('role', 'mahasiswa')->where('jurusan', 'TMJ')->firstOrFail();
+
+        $dosenTi = User::where('role', 'dosen')->where('jurusan', 'TI')->firstOrFail();
+        $dosenTmj = User::where('role', 'dosen')->where('jurusan', 'TMJ')->firstOrFail();
+
+        // 2. Isolasi tampilan Dashboard: Admin TI hanya melihat Mahasiswa & Dosen TI (tidak melihat TMJ)
+        $tiDashboard = $this->actingAs($adminTi)->get(route('dashboard.admin', ['tab' => 'mahasiswa']));
+        $tiDashboard->assertOk();
+        $tiDashboard->assertSee($studentTi->name);
+        $tiDashboard->assertDontSee($studentTmj->name);
+
+        // 3. Isolasi aksi langsung: Admin TI tidak boleh memproses Surat Pengantar atau Plotting mahasiswa TMJ (403 Forbidden)
+        $pengajuanTmj = PengajuanMagang::create([
+            'mahasiswa_id' => $studentTmj->id,
+            'nama_perusahaan_surat' => 'PT Lintas Jaringan Nusantara',
+            'alamat_perusahaan_surat' => 'Jakarta Pusat',
+            'posisi_magang' => 'Network Engineer Intern',
+            'status_surat_pengantar' => 'pending',
+        ]);
+
+        $this->actingAs($adminTi)
+            ->post(route('admin.surat.terbitkan', $pengajuanTmj->id))
+            ->assertForbidden();
+
+        // Admin TMJ dapat memproses Surat Pengantar mahasiswa TMJ
+        $this->actingAs($adminTmj)
+            ->post(route('admin.surat.terbitkan', $pengajuanTmj->id))
+            ->assertRedirect();
+        $this->assertEquals('diterbitkan', $pengajuanTmj->fresh()->status_surat_pengantar);
+
+        // 4. Mahasiswa TMJ mengajukan rekomendasi dosen TMJ (Fase 1 -> pending_admin)
+        $this->actingAs($studentTmj)->post(route('f1.select-dosen'), [
+            'dosen_id' => $dosenTmj->id,
+            'company_name' => 'PT Lintas Jaringan Nusantara',
+            'internship_title' => 'Optimasi SD-WAN Enterprise',
+        ])->assertRedirect();
+
+        $f1Tmj = F1Application::where('student_id', $studentTmj->id)->firstOrFail();
+        $this->assertEquals(F1Application::STATUS_PENDING_ADMIN, $f1Tmj->status);
+
+        // Admin TI mencoba melakukan plotting untuk mahasiswa TMJ -> Ditolak (403 Forbidden)
+        $this->actingAs($adminTi)->post(route('admin.f1.plot', $f1Tmj->id), [
+            'dosen_id' => $dosenTmj->id,
+        ])->assertForbidden();
+
+        // Admin TMJ mencoba mem-plot mahasiswa TMJ ke dosen TI -> Ditolak (403 Forbidden)
+        $this->actingAs($adminTmj)->post(route('admin.f1.plot', $f1Tmj->id), [
+            'dosen_id' => $dosenTi->id,
+        ])->assertForbidden();
+
+        // Admin TMJ mem-plot mahasiswa TMJ ke dosen TMJ -> Berhasil (Fase 2 -> pending_kps)
+        $this->actingAs($adminTmj)->post(route('admin.f1.plot', $f1Tmj->id), [
+            'dosen_id' => $dosenTmj->id,
+        ])->assertRedirect();
+
+        $this->assertEquals(F1Application::STATUS_PENDING_KPS, $f1Tmj->fresh()->status);
     }
 }

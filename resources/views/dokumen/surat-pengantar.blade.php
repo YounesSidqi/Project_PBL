@@ -96,8 +96,8 @@
     <div class="text-xs sm:text-sm mb-6">
       <p>Kepada Yth.</p>
       <p class="font-bold">{{ $pengajuan->industri->kontak_person ?? 'Pimpinan / HRD' }}</p>
-      <p class="font-bold">{{ $pengajuan->industri->nama_perusahaan ?? 'Mitra Industri PKL' }}</p>
-      <p class="text-slate-600">{{ $pengajuan->industri->alamat ?? 'Di Tempat' }}</p>
+      <p class="font-bold">{{ $pengajuan->nama_perusahaan_surat ?: ($pengajuan->industri->nama_perusahaan ?? 'Mitra Industri PKL') }}</p>
+      <p class="text-slate-600">{{ $pengajuan->alamat_perusahaan_surat ?: ($pengajuan->industri->alamat ?? 'Di Tempat') }}</p>
     </div>
 
     <!-- Letter Content Body -->

@@ -6,6 +6,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -20,23 +21,143 @@ use Illuminate\Support\Carbon;
  * @property string $role
  * @property string|null $identifier
  * @property string|null $prodi
+ * @property string|null $jurusan
  * @property string|null $phone
  * @property int|null $dosen_id
  * @property Carbon|null $email_verified_at
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read string|null $effective_jurusan
  * @property-read User|null $dosen
  * @property-read Collection<int, User> $students
  * @property-read Collection<int, Logbook> $logbooks
  * @property-read Collection<int, Logbook> $mentoredLogbooks
  */
-#[Fillable(['name', 'email', 'password', 'role', 'identifier', 'prodi', 'phone', 'dosen_id'])]
+#[Fillable(['name', 'email', 'password', 'role', 'identifier', 'prodi', 'jurusan', 'phone', 'dosen_id'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    /**
+     * Daftar kode jurusan yang didukung sistem.
+     *
+     * @var array<int, string>
+     */
+    public const JURUSAN_LIST = ['TI', 'TMJ', 'TMD', 'RKS'];
+
+    /**
+     * Sinkronisasi otomatis kode jurusan saat model disimpan.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $user): void {
+            $resolved = self::resolveJurusanCode($user->jurusan, $user->prodi);
+
+            if ($resolved !== null) {
+                $user->jurusan = $resolved;
+                if (empty($user->prodi)) {
+                    $user->prodi = $resolved;
+                }
+            } elseif (in_array($user->role, ['admin', 'mahasiswa', 'dosen', 'kps'], true) && empty($user->jurusan)) {
+                $user->jurusan = 'TI';
+                if (empty($user->prodi)) {
+                    $user->prodi = 'TI';
+                }
+            }
+        });
+    }
+
+    /**
+     * Normalisasi string jurusan / prodi menjadi kode jurusan standar (TI, TMJ, TMD, RKS).
+     */
+    public static function resolveJurusanCode(?string $jurusan, ?string $prodi = null): ?string
+    {
+        foreach ([$jurusan, $prodi] as $raw) {
+            if (! $raw) {
+                continue;
+            }
+
+            $upper = strtoupper(trim($raw));
+            if (in_array($upper, self::JURUSAN_LIST, true)) {
+                return $upper;
+            }
+
+            $lower = strtolower(trim($raw));
+
+            if (
+                str_contains($lower, 'tmj')
+                || str_contains($lower, 'multimedia dan jaringan')
+                || str_contains($lower, 'komputer & jaringan')
+                || str_contains($lower, 'komputer dan jaringan')
+                || str_contains($lower, 'jaringan')
+            ) {
+                return 'TMJ';
+            }
+
+            if (
+                str_contains($lower, 'tmd')
+                || str_contains($lower, 'multimedia digital')
+                || str_contains($lower, 'broadband multimedia')
+                || str_contains($lower, 'multimedia')
+            ) {
+                return 'TMD';
+            }
+
+            if (
+                str_contains($lower, 'rks')
+                || str_contains($lower, 'keamanan siber')
+                || str_contains($lower, 'cyber')
+            ) {
+                return 'RKS';
+            }
+
+            if (
+                str_contains($lower, 'informatika')
+                || preg_match('/\bti\b/i', $raw) === 1
+            ) {
+                return 'TI';
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get kode jurusan efektif user.
+     */
+    public function getEffectiveJurusanAttribute(): ?string
+    {
+        return self::resolveJurusanCode($this->jurusan, $this->prodi)
+            ?? (in_array($this->role, ['admin', 'mahasiswa', 'dosen', 'kps'], true) ? 'TI' : null);
+    }
+
+    /**
+     * Periksa apakah user ini berada di jurusan yang sama dengan user lain.
+     */
+    public function hasSameJurusanAs(?self $other): bool
+    {
+        if (! $other) {
+            return false;
+        }
+
+        return $this->effective_jurusan !== null
+            && $this->effective_jurusan === $other->effective_jurusan;
+    }
+
+    /**
+     * Scope query untuk memfilter data berdasarkan jurusan yang sama dengan Admin.
+     */
+    public function scopeSameJurusan(Builder $query, ?self $admin): Builder
+    {
+        if (! $admin || ! $admin->effective_jurusan) {
+            return $query;
+        }
+
+        return $query->where('jurusan', $admin->effective_jurusan);
+    }
 
     /**
      * Get the attributes that should be cast.

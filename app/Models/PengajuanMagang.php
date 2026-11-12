@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -15,13 +16,18 @@ class PengajuanMagang extends Model
         'mahasiswa_id',
         'industri_id',
         'dosen_id',
+        'nama_perusahaan_surat',
+        'alamat_perusahaan_surat',
         'judul_magang',
         'posisi_magang',
         'tanggal_mulai',
         'tanggal_selesai',
         'status_surat_pengantar',
+        'status_penempatan',
         'status_dosen',
         'nomor_surat_pengantar',
+        'file_surat_pengantar',
+        'file_surat_keterangan',
         'nilai_akhir_fuzzy',
         'fuzzy_score_num',
         'fuzzy_percentage',
@@ -80,12 +86,28 @@ class PengajuanMagang extends Model
 
     public function getNamaPerusahaanAttribute(): ?string
     {
-        return $this->industri?->nama_perusahaan;
+        return $this->industri?->nama_perusahaan ?? $this->nama_perusahaan_surat;
     }
 
     public function getAlamatPerusahaanAttribute(): ?string
     {
-        return $this->industri?->alamat;
+        return $this->industri?->alamat ?? $this->alamat_perusahaan_surat;
+    }
+
+    /**
+     * Status verifikasi tempat PKL efektif (menggabungkan status_verifikasi industri & status_penempatan mahasiswa).
+     */
+    public function getStatusVerifikasiEfektifAttribute(): ?string
+    {
+        if (! $this->industri) {
+            return null;
+        }
+
+        if ($this->industri->status_verifikasi !== 'acc') {
+            return $this->industri->status_verifikasi;
+        }
+
+        return $this->status_penempatan ?? 'acc';
     }
 
     public function getKotaPerusahaanAttribute(): ?string
@@ -96,5 +118,21 @@ class PengajuanMagang extends Model
     public function getMentorIndustriAttribute(): ?string
     {
         return $this->industri?->kontak_person;
+    }
+
+    /**
+     * Scope query untuk mengisolasi pengajuan magang berdasarkan jurusan Admin.
+     */
+    public function scopeForAdmin(Builder $query, ?User $admin): Builder
+    {
+        if (! $admin || ! $admin->effective_jurusan) {
+            return $query;
+        }
+
+        $jurusan = $admin->effective_jurusan;
+
+        return $query->whereHas('mahasiswa', function (Builder $studentQuery) use ($jurusan): void {
+            $studentQuery->where('jurusan', $jurusan);
+        });
     }
 }

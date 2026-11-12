@@ -10,6 +10,7 @@
   $tab = request()->query('tab');
   if ($role === 'admin') {
     $active = match ($tab) {
+      'plotting' => 'admin_plotting',
       'surat' => 'admin_surat',
       'industri' => 'admin_industri',
       'mahasiswa' => 'admin_mahasiswa',
@@ -74,7 +75,21 @@
     }
   }
 
-  $suratPendingCount = \App\Models\PengajuanMagang::where('status_surat_pengantar', 'pending')->count();
+  $suratPendingCount = \App\Models\PengajuanMagang::forAdmin($user)
+    ->where(function ($q) {
+      $q->where('status_surat_pengantar', 'pending')
+        ->orWhere(function ($sub) {
+          $sub->whereNotNull('industri_id')->where('status_penempatan', 'pending');
+        });
+    })
+    ->count();
+  $f1PendingAdminCount = \App\Models\F1Application::forAdmin($user)
+    ->whereIn('status', [
+      \App\Models\F1Application::STATUS_PENDING_ADMIN,
+      \App\Models\F1Application::STATUS_REVISION_REQUESTED,
+      'pending',
+    ])
+    ->count();
   $industriPendingCount = \App\Models\Industri::where('status_verifikasi', 'pending')->count();
   $totalPendingAdmin = $suratPendingCount + $industriPendingCount;
 
@@ -86,6 +101,14 @@
       'route' => route('dashboard.admin', ['tab' => 'surat']),
       'badge' => ($totalPendingAdmin > 0 ? $totalPendingAdmin : null),
       'badgeClass' => 'bg-amber-100 text-amber-800 font-bold',
+    ],
+    [
+      'id' => 'admin_plotting',
+      'label' => 'Plotting Dosen (F1)',
+      'icon' => 'assignment_ind',
+      'route' => route('dashboard.admin', ['tab' => 'plotting']),
+      'badge' => ($f1PendingAdminCount > 0 ? $f1PendingAdminCount : null),
+      'badgeClass' => 'bg-rose-100 text-rose-800 font-bold',
     ],
     [
       'id' => 'admin_mahasiswa',
@@ -113,7 +136,7 @@
     ],
   ];
 
-  $pendingKpsCount = \App\Models\F1Application::where('status', 'pending')->count();
+  $pendingKpsCount = \App\Models\F1Application::where('status', \App\Models\F1Application::STATUS_PENDING_KPS)->count();
   $totalDosenCount = \App\Models\User::where('role', 'dosen')->count();
 
   $kpsNav = [
@@ -192,10 +215,10 @@
   $mhsPengajuan = ($user && $role === 'mahasiswa')
     ? \App\Models\PengajuanMagang::with('industri')->where('mahasiswa_id', $user->id)->latest()->first()
     : null;
-  $mhsHasCompany = $mhsPengajuan && $mhsPengajuan->industri && $mhsPengajuan->industri->status_verifikasi === 'acc';
+  $mhsHasCompany = $mhsPengajuan && $mhsPengajuan->industri && $mhsPengajuan->status_verifikasi_efektif === 'acc';
   $mhsHasDosenStep = ($user && !empty($user->dosen_id))
     || ($mhsPengajuan && !empty($mhsPengajuan->dosen_id))
-    || ($user && \App\Models\F1Application::where('student_id', $user->id)->whereIn('status', ['pending', 'approved'])->exists());
+    || ($user && \App\Models\F1Application::where('student_id', $user->id)->whereIn('status', ['pending_admin', 'pending_kps', 'revision_requested', 'pending', 'approved'])->exists());
 
   $mahasiswaNav = [
     [

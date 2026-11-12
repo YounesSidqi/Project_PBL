@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\FuzzyScoringService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class PenilaianController extends Controller
 {
@@ -26,13 +27,15 @@ class PenilaianController extends Controller
             ->latest()
             ->first();
 
-        // TAHAP 1: Pengajuan Surat Pengantar PKL (Data Diri & Rencana Periode PKL)
+        // TAHAP 1: Pengajuan Surat Pengantar PKL (Data Diri, Tujuan Perusahaan & Rencana Periode PKL)
         if ($request->input('tahap') === 'surat_pengantar') {
             $request->validate([
                 'name' => 'required|string|max:255',
                 'identifier' => 'required|string|max:50|unique:users,identifier,'.$student->id,
                 'prodi' => 'required|string|max:100',
                 'phone' => 'nullable|string|max:25',
+                'nama_perusahaan' => 'nullable|string|max:255',
+                'alamat_perusahaan' => 'nullable|string|max:1000',
                 'posisi_magang' => 'nullable|string|max:150',
                 'tanggal_mulai' => 'nullable|date',
                 'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
@@ -50,9 +53,19 @@ class PenilaianController extends Controller
                 'phone' => $request->phone ?: $student->phone,
             ]);
 
+            $namaPerusahaanSurat = $request->filled('nama_perusahaan')
+                ? trim((string) $request->nama_perusahaan)
+                : ($existingPengajuan?->nama_perusahaan_surat);
+
+            $alamatPerusahaanSurat = $request->filled('alamat_perusahaan')
+                ? trim((string) $request->alamat_perusahaan)
+                : ($request->filled('alamat') ? trim((string) $request->alamat) : $existingPengajuan?->alamat_perusahaan_surat);
+
             PengajuanMagang::updateOrCreate(
                 ['mahasiswa_id' => $student->id],
                 [
+                    'nama_perusahaan_surat' => $namaPerusahaanSurat,
+                    'alamat_perusahaan_surat' => $alamatPerusahaanSurat,
                     'posisi_magang' => $request->posisi_magang ?: ($existingPengajuan?->posisi_magang ?: 'Software Engineer Intern'),
                     'tanggal_mulai' => $request->tanggal_mulai ?: $existingPengajuan?->tanggal_mulai,
                     'tanggal_selesai' => $request->tanggal_selesai ?: $existingPengajuan?->tanggal_selesai,
@@ -79,13 +92,16 @@ class PenilaianController extends Controller
             'posisi_magang' => 'nullable|string|max:150',
             'tanggal_mulai' => 'nullable|date',
             'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
+            'file_surat_keterangan' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ], [
             'nama_perusahaan.required_without' => 'Nama perusahaan wajib diisi jika tidak memilih mitra industri terdaftar.',
+            'file_surat_keterangan.mimes' => 'Bukti diterima (Surat Keterangan Industri) harus berformat PDF, JPG, JPEG, atau PNG.',
+            'file_surat_keterangan.max' => 'Ukuran file Bukti Diterima maksimal 5MB.',
         ]);
 
         // Proteksi Anti-Spam: Mahasiswa tidak dapat mengirim ulang form jika sedang pending verifikasi Admin atau sudah disahkan
         if ($existingPengajuan) {
-            $industriStatus = $existingPengajuan->industri?->status_verifikasi;
+            $industriStatus = $existingPengajuan->status_verifikasi_efektif;
             $suratStatus = $existingPengajuan->status_surat_pengantar;
 
             $canResubmit = in_array($suratStatus, ['draft', 'ditolak'], true)
@@ -148,11 +164,19 @@ class PenilaianController extends Controller
             }
         }
 
+        $fileSuratKeteranganPath = $existingPengajuan?->file_surat_keterangan;
+        if ($request->hasFile('file_surat_keterangan')) {
+            if ($fileSuratKeteranganPath && Storage::disk('public')->exists($fileSuratKeteranganPath)) {
+                Storage::disk('public')->delete($fileSuratKeteranganPath);
+            }
+            $fileSuratKeteranganPath = $request->file('file_surat_keterangan')->store('surat-keterangan-industri', 'public');
+        }
+
         $newSuratStatus = ($existingPengajuan && $existingPengajuan->status_surat_pengantar === 'diterbitkan')
             ? 'diterbitkan'
             : 'pending';
 
-        // Ambil atau buat PengajuanMagang aktif mahasiswa
+        // Baik memilih perusahaan yang sudah ada maupun menambah perusahaan baru, penempatan berstatus pending dan wajib diverifikasi Admin
         PengajuanMagang::updateOrCreate(
             ['mahasiswa_id' => $student->id],
             [
@@ -161,6 +185,8 @@ class PenilaianController extends Controller
                 'tanggal_mulai' => $request->tanggal_mulai ?: $existingPengajuan?->tanggal_mulai,
                 'tanggal_selesai' => $request->tanggal_selesai ?: $existingPengajuan?->tanggal_selesai,
                 'status_surat_pengantar' => $newSuratStatus,
+                'status_penempatan' => 'pending',
+                'file_surat_keterangan' => $fileSuratKeteranganPath,
                 'catatan_penolakan' => null,
                 'dosen_id' => $student->dosen_id ?: $existingPengajuan?->dosen_id,
             ]
@@ -171,9 +197,7 @@ class PenilaianController extends Controller
             $oldPendingIndustri->delete();
         }
 
-        $statusMsg = $industri->status_verifikasi === 'acc'
-            ? "Pengajuan penempatan pada mitra terdaftar \"{$industri->nama_perusahaan}\" berhasil disimpan!"
-            : "Formulir pengajuan perusahaan \"{$industri->nama_perusahaan}\" berhasil dikirim (Status: Pending). Admin Jurusan akan memeriksa dan memverifikasi perusahaan Anda.";
+        $statusMsg = "Formulir pengajuan perusahaan \"{$industri->nama_perusahaan}\" berhasil dikirim (Status: Pending). Admin Jurusan akan memeriksa bukti penerimaan dan memverifikasi tempat PKL Anda.";
 
         return redirect()->back()->with('success', $statusMsg);
     }

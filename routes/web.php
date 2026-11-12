@@ -72,6 +72,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/pengajuan/{pengajuan}/forward', [AdminController::class, 'forwardPengajuan'])->name('admin.pengajuan.forward');
     Route::post('/admin/pengajuan/{pengajuan}/reset-to-draft', [AdminController::class, 'resetPengajuanToDraft'])->name('admin.pengajuan.reset-draft');
     Route::post('/admin/users/{user}/reset-password', [AdminController::class, 'resetPassword'])->name('admin.users.reset-password');
+    Route::post('/admin/f1/{application}/plot', [AdminController::class, 'plotDosenF1'])->name('admin.f1.plot');
+    Route::post('/admin/students/plot', [AdminController::class, 'plotStudentDosen'])->name('admin.student.plot');
 });
 
 // 2. Dashboard Koordinator Program Studi (KPS)
@@ -119,15 +121,26 @@ Route::get('/dashboard/mahasiswa', function () {
     $user = Auth::user();
     $logbooks = $user ? $user->logbooks()->orderBy('tanggal', 'desc')->get() : collect();
     $dosen = $user?->dosen ?? ($user?->dosen_id ? User::find($user->dosen_id) : null);
-    $f1Application = $user ? F1Application::where('student_id', $user->id)->whereIn('status', ['pending', 'approved'])->with('dosen')->latest()->first() : null;
+    $f1Application = $user ? F1Application::where('student_id', $user->id)
+        ->whereIn('status', [
+            F1Application::STATUS_PENDING_ADMIN,
+            F1Application::STATUS_PENDING_KPS,
+            F1Application::STATUS_REVISION_REQUESTED,
+            F1Application::STATUS_APPROVED,
+            'pending',
+        ])
+        ->with(['dosen', 'recommendedDosen'])
+        ->latest()
+        ->first() : null;
 
     $pengajuanAktif = $user ? PengajuanMagang::where('mahasiswa_id', $user->id)
         ->with(['industri', 'dosen', 'tugasF2', 'bimbingans', 'evaluasiF5', 'evaluasiF6'])
         ->latest()
         ->first() : null;
 
-    // Hanya dosen yang kuotanya masih tersedia (< 7) yang muncul untuk dipilih mahasiswa
+    // Hanya dosen pada jurusan yang sama yang kuotanya masih tersedia (< 7) yang muncul untuk dipilih mahasiswa
     $allDosen = User::where('role', 'dosen')
+        ->sameJurusan($user)
         ->withCount('students')
         ->has('students', '<', 7)
         ->orderBy('name')
@@ -206,8 +219,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/f1/{application}/cancel', [F1Controller::class, 'cancel'])->name('f1.cancel');
     Route::get('/f1/{application}/surat', [F1Controller::class, 'downloadSurat'])->name('f1.surat.download');
 
-    // KPS Specific Routes (Penetapan & Plotting Mahasiswa - Dosen)
+    // KPS Specific Routes (Approval & Revisi Hasil Plotting Admin)
     Route::post('/kps/f1/{application}/approve', [KpsController::class, 'approveF1'])->name('kps.f1.approve');
+    Route::post('/kps/f1/{application}/revisi', [KpsController::class, 'revisiF1'])->name('kps.f1.revisi');
+    Route::post('/kps/f1/{application}/revision', [KpsController::class, 'revisiF1'])->name('kps.f1.revision');
     Route::post('/kps/f1/{application}/reject', [KpsController::class, 'rejectF1'])->name('kps.f1.reject');
     Route::post('/kps/students/plot', [KpsController::class, 'plotStudent'])->name('kps.student.plot');
     Route::post('/kps/students/{student}/reassign', [KpsController::class, 'reassignStudent'])->name('kps.student.reassign');
@@ -226,6 +241,7 @@ Route::middleware('auth')->group(function () {
 
     // Legalisasi Berkas Digital & Cetak PDF F1-F7 (PRD 8)
     Route::get('/dokumen/surat-pengantar/{pengajuan}', [DokumenController::class, 'suratPengantar'])->name('dokumen.surat-pengantar');
+    Route::get('/dokumen/surat-keterangan/{pengajuan}', [DokumenController::class, 'suratKeteranganIndustri'])->name('dokumen.surat-keterangan');
     Route::get('/dokumen/f1/{application}', [DokumenController::class, 'cetakF1'])->name('dokumen.f1');
     Route::get('/dokumen/f2/{pengajuan}', [DokumenController::class, 'cetakF2'])->name('dokumen.f2');
     Route::get('/dokumen/f3/{pengajuan}', [DokumenController::class, 'cetakF3'])->name('dokumen.f3');

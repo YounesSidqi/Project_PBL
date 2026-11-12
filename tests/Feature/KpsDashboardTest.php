@@ -11,6 +11,8 @@ class KpsDashboardTest extends TestCase
 {
     use RefreshDatabase;
 
+    private User $adminTi;
+
     private User $kpsUser;
 
     private User $dosen1;
@@ -25,12 +27,23 @@ class KpsDashboardTest extends TestCase
     {
         parent::setUp();
 
+        $this->adminTi = User::create([
+            'name' => 'Admin Jurusan TI',
+            'identifier' => '198001012005011001',
+            'email' => 'admin.ti@pnj.ac.id',
+            'password' => bcrypt('password123'),
+            'role' => 'admin',
+            'jurusan' => 'TI',
+            'prodi' => 'Teknik Informatika (TI)',
+        ]);
+
         $this->kpsUser = User::create([
             'name' => 'Dr. Eng. Nur Aisyah, S.Kom., M.T. (KPS)',
             'identifier' => '197508102000031001',
             'email' => 'kps.ti@pnj.ac.id',
             'password' => bcrypt('password123'),
             'role' => 'kps',
+            'jurusan' => 'TI',
             'prodi' => 'Teknik Informatika (D4)',
         ]);
 
@@ -102,7 +115,8 @@ class KpsDashboardTest extends TestCase
     }
 
     /**
-     * Test Mahasiswa dapat mengajukan preferensi dosen dan statusnya menunggu penetapan KPS.
+     * Test Fase 1 & Fase 2: Mahasiswa mengajukan rekomendasi dosen (pending_admin),
+     * lalu Admin melakukan plotting dosen dan meneruskannya ke KPS (pending_kps).
      */
     public function test_mahasiswa_can_apply_to_available_dosen_with_pending_kps_status(): void
     {
@@ -116,13 +130,29 @@ class KpsDashboardTest extends TestCase
         $this->assertDatabaseHas('form_f1_pengajuan', [
             'student_id' => $this->student1->id,
             'dosen_id' => $this->dosen1->id,
-            'status' => 'pending',
+            'recommended_dosen_id' => $this->dosen1->id,
+            'status' => F1Application::STATUS_PENDING_ADMIN,
         ]);
 
-        // Dashboard mahasiswa menampilkan status menunggu penetapan KPS
+        // Dashboard mahasiswa menampilkan status menunggu plotting Admin
         $dashboardResponse = $this->actingAs($this->student1)->get(route('dashboard.mahasiswa'));
-        $dashboardResponse->assertSee('Menunggu Penetapan KPS');
+        $dashboardResponse->assertSee('Menunggu Plotting Admin');
         $dashboardResponse->assertDontSee('Menunggu Persetujuan Dosen');
+
+        // Fase 2: Admin melakukan plotting dosen pembimbing -> status menjadi pending_kps
+        $application = F1Application::where('student_id', $this->student1->id)->firstOrFail();
+        $this->actingAs($this->adminTi)->post(route('admin.f1.plot', $application->id), [
+            'dosen_id' => $this->dosen1->id,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('form_f1_pengajuan', [
+            'id' => $application->id,
+            'dosen_id' => $this->dosen1->id,
+            'status' => F1Application::STATUS_PENDING_KPS,
+        ]);
+
+        $afterPlotDashboard = $this->actingAs($this->student1)->get(route('dashboard.mahasiswa'));
+        $afterPlotDashboard->assertSee('Menunggu Approval KPS');
     }
 
     /**
@@ -140,20 +170,22 @@ class KpsDashboardTest extends TestCase
     }
 
     /**
-     * Test KPS menyetujui pengajuan F1 dan menetapkan mahasiswa ke dosen pembimbing.
+     * Test Fase 3: KPS menyetujui (Approve) hasil plotting F1 dari Admin.
      */
     public function test_kps_can_approve_f1_application(): void
     {
         $application = F1Application::create([
             'student_id' => $this->student1->id,
             'dosen_id' => $this->dosen1->id,
+            'recommended_dosen_id' => $this->dosen1->id,
+            'plotted_by' => $this->adminTi->id,
+            'plotted_at' => now(),
             'company_name' => 'PT Telekomunikasi Seluler',
             'internship_title' => 'Cloud Platform Engineering',
-            'status' => 'pending',
+            'status' => F1Application::STATUS_PENDING_KPS,
         ]);
 
         $response = $this->actingAs($this->kpsUser)->post(route('kps.f1.approve', $application->id), [
-            'dosen_id' => $this->dosen1->id,
             'notes' => 'Disetujui dan disahkan oleh KPS.',
         ]);
 
@@ -161,7 +193,7 @@ class KpsDashboardTest extends TestCase
 
         $this->assertDatabaseHas('form_f1_pengajuan', [
             'id' => $application->id,
-            'status' => 'approved',
+            'status' => F1Application::STATUS_APPROVED,
         ]);
 
         $this->assertDatabaseHas('users', [
@@ -171,30 +203,61 @@ class KpsDashboardTest extends TestCase
     }
 
     /**
-     * Test KPS dapat mengalihkan pengajuan mahasiswa ke dosen lain yang tersedia.
+     * Test Fase 4 (Sistem Revisi): KPS meminta revisi plotting ke Admin (wajib mengisi catatan revisi),
+     * Admin melakukan plotting ulang ke dosen lain, lalu KPS meng-approve.
      */
     public function test_kps_can_approve_f1_and_redirect_to_different_dosen(): void
     {
         $application = F1Application::create([
             'student_id' => $this->student1->id,
             'dosen_id' => $this->dosen1->id,
+            'recommended_dosen_id' => $this->dosen1->id,
+            'plotted_by' => $this->adminTi->id,
+            'plotted_at' => now(),
             'company_name' => 'PT Tokopedia',
             'internship_title' => 'Backend Engineering',
-            'status' => 'pending',
+            'status' => F1Application::STATUS_PENDING_KPS,
         ]);
 
-        // KPS memutuskan mengalihkan ke dosen 2
-        $response = $this->actingAs($this->kpsUser)->post(route('kps.f1.approve', $application->id), [
-            'dosen_id' => $this->dosen2->id,
-            'notes' => 'Dialihkan ke Ade Hendrawan untuk pemerataan kuota.',
+        // 1. Validasi wajib isi catatan revisi saat KPS menekan Revisi tanpa teks
+        $emptyRevisi = $this->actingAs($this->kpsUser)->post(route('kps.f1.revisi', $application->id), [
+            'revision_notes' => '',
         ]);
+        $emptyRevisi->assertSessionHasErrors('revision_notes');
+        $this->assertEquals(F1Application::STATUS_PENDING_KPS, $application->fresh()->status);
+
+        // 2. KPS meminta revisi dengan mengisi catatan/alasan revisi
+        $revisiResponse = $this->actingAs($this->kpsUser)->post(route('kps.f1.revisi', $application->id), [
+            'revision_notes' => 'Mohon dialihkan ke Ade Hendrawan untuk pemerataan kuota topik Backend.',
+        ]);
+        $revisiResponse->assertRedirect(route('dashboard.kps', ['tab' => 'plotting']));
+
+        $this->assertDatabaseHas('form_f1_pengajuan', [
+            'id' => $application->id,
+            'status' => F1Application::STATUS_REVISION_REQUESTED,
+            'revision_notes' => 'Mohon dialihkan ke Ade Hendrawan untuk pemerataan kuota topik Backend.',
+        ]);
+
+        // 3. Admin melakukan plotting ulang ke dosen 2 dan meneruskan kembali ke KPS
+        $this->actingAs($this->adminTi)->post(route('admin.f1.plot', $application->id), [
+            'dosen_id' => $this->dosen2->id,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('form_f1_pengajuan', [
+            'id' => $application->id,
+            'dosen_id' => $this->dosen2->id,
+            'status' => F1Application::STATUS_PENDING_KPS,
+        ]);
+
+        // 4. KPS meng-approve hasil plotting ulang Admin
+        $response = $this->actingAs($this->kpsUser)->post(route('kps.f1.approve', $application->id));
 
         $response->assertRedirect(route('dashboard.kps', ['tab' => 'plotting']));
 
         $this->assertDatabaseHas('form_f1_pengajuan', [
             'id' => $application->id,
             'dosen_id' => $this->dosen2->id,
-            'status' => 'approved',
+            'status' => F1Application::STATUS_APPROVED,
         ]);
 
         $this->assertDatabaseHas('users', [

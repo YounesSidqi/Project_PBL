@@ -83,8 +83,8 @@
   <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-card space-y-5">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
       <div>
-        <h3 class="text-base sm:text-lg font-bold font-heading text-slate-800">Pengajuan Form F1 Mahasiswa</h3>
-        <p class="text-xs text-slate-500">Setujui dosen pilihan mahasiswa atau alihkan ke dosen lain (Maks. 7 mahasiswa/dosen).</p>
+        <h3 class="text-base sm:text-lg font-bold font-heading text-slate-800">Approval Hasil Plotting Dosen Pembimbing (Form F1)</h3>
+        <p class="text-xs text-slate-500">Periksa hasil plotting dosen pembimbing dari Admin Jurusan. Klik <strong>Approve</strong> untuk mengesahkan atau <strong>Revisi</strong> untuk mengembalikan ke Admin beserta catatan revisi.</p>
       </div>
     </div>
 
@@ -93,6 +93,7 @@
         @php
           $mInitials = collect(explode(' ', $app->student->name))->map(fn($w) => strtoupper(substr($w, 0, 1)))->take(2)->implode('');
           $targetDosen = $app->dosen;
+          $recommendedDosen = $app->recommendedDosen ?? $app->dosen;
           $targetCount = $targetDosen ? \App\Models\User::where('role', 'mahasiswa')->where('dosen_id', $targetDosen->id)->count() : 0;
           $isQuotaAvailable = $targetCount < 7;
         @endphp
@@ -105,29 +106,37 @@
               <div class="flex items-center gap-2 flex-wrap">
                 <h4 class="text-sm sm:text-base font-bold text-slate-800">{{ $app->student->name }}</h4>
                 <span class="px-2 py-0.5 rounded bg-blue-50 text-[#0056B3] text-[11px] font-mono font-semibold">{{ $app->student->identifier }}</span>
-                <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">Menunggu Penetapan KPS</span>
+                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-bold">{{ $app->student->effective_jurusan }}</span>
+                <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">Menunggu Approval KPS</span>
               </div>
               <p class="text-xs text-slate-600">
                 <strong>{{ $app->company_name ?? 'Instansi PKL' }}</strong> — {{ $app->internship_title ?? '-' }}
               </p>
-              <div class="flex items-center gap-2 text-xs pt-0.5">
-                <span class="text-slate-500">Preferensi:</span>
-                <span class="font-bold text-[#0056B3]">{{ $targetDosen->name ?? 'Belum memilih' }}</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold {{ $isQuotaAvailable ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">
-                  {{ $targetCount }}/7 {{ $isQuotaAvailable ? 'Tersedia' : 'Penuh' }}
-                </span>
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs pt-0.5">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-slate-500">Plotting Admin:</span>
+                  <span class="font-bold text-[#0056B3]">{{ $targetDosen->name ?? 'Belum di-plot' }}</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full font-bold {{ $isQuotaAvailable ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">
+                    {{ $targetCount }}/7 {{ $isQuotaAvailable ? 'Tersedia' : 'Penuh' }}
+                  </span>
+                </div>
+                @if($recommendedDosen)
+                  <div class="flex items-center gap-1 text-[11px] text-slate-500">
+                    <span>Rekomendasi Mhs:</span>
+                    <span class="font-semibold text-slate-700">{{ $recommendedDosen->name }}</span>
+                  </div>
+                @endif
               </div>
             </div>
           </div>
 
           <div class="flex flex-wrap items-center gap-2 shrink-0 justify-end">
             @if($isQuotaAvailable)
-              <form action="{{ route('kps.f1.approve', $app->id) }}" method="POST" onsubmit="return confirm('Tetapkan {{ addslashes($app->student->name) }} ke {{ addslashes($targetDosen->name) }}?')">
+              <form action="{{ route('kps.f1.approve', $app->id) }}" method="POST" onsubmit="return confirm('Approve hasil plotting Admin untuk {{ addslashes($app->student->name) }} bersama {{ addslashes($targetDosen->name ?? '') }}?')">
                 @csrf
-                <input type="hidden" name="dosen_id" value="{{ $targetDosen->id }}">
-                <button type="submit" class="bg-[#0056B3] hover:bg-[#00428A] text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5">
-                  <span class="material-symbols-outlined text-[16px]">gavel</span>
-                  <span>Tetapkan</span>
+                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                  <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                  <span>Approve</span>
                 </button>
               </form>
             @else
@@ -135,25 +144,39 @@
             @endif
 
             <button type="button" 
-                    onclick="openReassignModal('{{ $app->id }}', '{{ addslashes($app->student->name) }}', '{{ $app->student->identifier }}', '{{ $targetDosen->id ?? '' }}', '{{ addslashes($targetDosen->name ?? '') }}')"
-                    class="bg-[#02796B] hover:bg-[#006054] text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5">
-              <span class="material-symbols-outlined text-[16px]">swap_horiz</span>
-              <span>Alihkan</span>
-            </button>
-
-            <button type="button" 
-                    onclick="openRejectModal('{{ $app->id }}', '{{ addslashes($app->student->name) }}')"
-                    class="p-2 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 rounded-xl" title="Tolak">
-              <span class="material-symbols-outlined text-[16px]">close</span>
+                    onclick="openRevisiModal('{{ $app->id }}', '{{ addslashes($app->student->name) }}', '{{ addslashes($targetDosen->name ?? '-') }}')"
+                    class="bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm" title="Minta Revisi Plotting ke Admin">
+              <span class="material-symbols-outlined text-[16px]">edit_note</span>
+              <span>Revisi</span>
             </button>
           </div>
         </div>
       @empty
         <div class="p-6 text-center bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500">
-          Tidak ada pengajuan Form F1 yang menunggu penetapan.
+          Tidak ada hasil plotting Admin yang menunggu approval KPS saat ini.
         </div>
       @endforelse
     </div>
+
+    @if(count($revisionApplications ?? []) > 0)
+      <div class="pt-4 border-t border-slate-100 space-y-2.5">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-rose-600">Menunggu Plotting Ulang Admin — Revisi KPS ({{ count($revisionApplications) }})</h4>
+        <div class="space-y-2">
+          @foreach($revisionApplications as $revApp)
+            <div class="p-3.5 rounded-xl bg-rose-50/60 border border-rose-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-slate-800">{{ $revApp->student->name }} ({{ $revApp->student->identifier }})</span>
+                  <span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-bold">Revision Requested</span>
+                </div>
+                <p class="text-rose-700 mt-1"><strong>Catatan Revisi KPS:</strong> {{ $revApp->revision_notes }}</p>
+              </div>
+              <span class="text-[11px] text-slate-500 shrink-0">Dosen Sebelumnya: {{ $revApp->dosen->name ?? '-' }}</span>
+            </div>
+          @endforeach
+        </div>
+      </div>
+    @endif
 
     @if(count($approvedApplications ?? []) > 0)
       <div class="pt-4 border-t border-slate-100 space-y-2.5">
@@ -465,12 +488,12 @@
   </div>
 </div>
 
-<!-- MODAL: Tolak Pengajuan F1 -->
+<!-- MODAL: Minta Revisi Plotting ke Admin (Fase 4) -->
 <div id="modal-reject-f1" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center hidden p-4">
   <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-scale-up">
     <div class="flex items-start justify-between border-b border-slate-100 pb-3">
       <div>
-        <h3 class="text-base font-bold font-heading text-slate-800">Tolak Pengajuan Form F1</h3>
+        <h3 class="text-base font-bold font-heading text-slate-800">Minta Revisi Plotting ke Admin</h3>
         <p class="text-xs text-slate-500 mt-0.5" id="reject-modal-subtitle"></p>
       </div>
       <button onclick="closeModal('modal-reject-f1')" class="p-1 rounded-lg text-slate-400 hover:text-slate-700">
@@ -481,13 +504,13 @@
     <form id="form-reject-f1" method="POST" class="space-y-3.5">
       @csrf
       <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">Alasan Penolakan <span class="text-rose-500">*</span></label>
-        <textarea name="notes" rows="3" required placeholder="Alasan penolakan..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs"></textarea>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Catatan / Alasan Revisi <span class="text-rose-500">*</span></label>
+        <textarea name="revision_notes" rows="3" required placeholder="Tuliskan catatan atau alasan revisi plotting untuk ditindaklanjuti Admin Jurusan..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs"></textarea>
       </div>
 
       <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
         <button type="button" onclick="closeModal('modal-reject-f1')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Batal</button>
-        <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-xs font-bold">Tolak</button>
+        <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold">Kirim Permintaan Revisi</button>
       </div>
     </form>
   </div>
@@ -536,10 +559,14 @@
     openModal('modal-move-lecturer');
   }
 
-  function openRejectModal(appId, studentName) {
-    document.getElementById('form-reject-f1').action = `/kps/f1/${appId}/reject`;
-    document.getElementById('reject-modal-subtitle').innerText = `Mahasiswa: ${studentName}`;
+  function openRevisiModal(appId, studentName, plottedDosenName) {
+    document.getElementById('form-reject-f1').action = `/kps/f1/${appId}/revisi`;
+    document.getElementById('reject-modal-subtitle').innerText = `Mahasiswa: ${studentName} — Plotting Admin: ${plottedDosenName || '-'}`;
     openModal('modal-reject-f1');
+  }
+
+  function openRejectModal(appId, studentName) {
+    openRevisiModal(appId, studentName, '-');
   }
 
   function selectStudentForPlotting(studentId) {
