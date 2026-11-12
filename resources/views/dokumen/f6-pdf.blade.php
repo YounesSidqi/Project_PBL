@@ -79,7 +79,7 @@
         <td>:</td>
         <td>
           <span class="font-bold text-emerald-800">
-            ✓ {{ $pengajuan->bimbingans->count() }} Sesi Bimbingan Selesai (Memenuhi Batas Minimum 8 Sesi PRD 5.3.3)
+            ✓ {{ $pengajuan->bimbingans->count() }} Sesi Bimbingan Selesai (Memenuhi Batas Minimum 8 Sesi)
           </span>
         </td>
       </tr>

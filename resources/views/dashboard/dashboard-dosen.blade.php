@@ -1,1400 +1,463 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Dosen Pembimbing - SIM-PKL TIK Politeknik Negeri Jakarta</title>
-  <meta name="description" content="Portal Dosen Pembimbing Praktik Kerja Lapangan Jurusan TIK Politeknik Negeri Jakarta">
+@extends('layouts.app', [
+  'title' => 'Dashboard Dosen Pembimbing - SIM-PKL JTIK PNJ',
+  'pageTitle' => 'Mahasiswa Bimbingan',
+  'breadcrumbParent' => 'Portal Dosen',
+  'activePage' => 'dashboard'
+])
 
-  <!-- Google Fonts: Inter & Plus Jakarta Sans -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- Material Symbols Outlined -->
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+@section('content')
+@php
+  $isRealDosen = (Auth::user()->role ?? '') === 'dosen';
+  $lecturerName = $isRealDosen ? Auth::user()->name : ($dosen->name ?? 'Dosen Pembimbing');
+  $lecturerNip = $isRealDosen ? (Auth::user()->identifier ?? '-') : ($dosen->identifier ?? '-');
+  $studentCount = isset($students) ? $students->count() : 0;
+  $remainingCapacity = max(0, 7 - $studentCount);
+  $percentFilled = round(($studentCount / 7) * 100);
+  $pendingLogbooksCount = isset($logbooks) ? $logbooks->where('status', 'pending')->count() : 0;
+@endphp
 
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              blue: '#0056B3',
-              blueDark: '#00428A',
-              blueLight: '#EBF3FC',
-              tealDark: '#02796B',
-              teal: '#009688',
-              tealLight: '#E0F2F1',
-              white: '#FFFFFF',
-            }
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-            heading: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
-          },
-          boxShadow: {
-            'card': '0 4px 20px -2px rgba(0, 86, 179, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.04)',
-            'card-hover': '0 12px 30px -4px rgba(0, 86, 179, 0.12), 0 4px 10px -2px rgba(0, 0, 0, 0.04)',
-            'nav-active': '0 4px 14px 0 rgba(0, 86, 179, 0.25)',
-          }
-        }
-      }
-    }
-  </script>
+<!-- Banner Profil & Kuota Dosen -->
+<div class="rounded-2xl bg-gradient-to-r from-[#0056B3] to-[#02796B] text-white p-5 sm:p-6 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+  <div class="flex items-center gap-4">
+    <div class="w-14 h-14 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center text-white shrink-0">
+      <span class="material-symbols-outlined text-[32px]">school</span>
+    </div>
+    <div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <h1 class="text-lg sm:text-xl font-extrabold font-heading text-white">{{ $lecturerName }}</h1>
+        <span class="px-2 py-0.5 rounded bg-white/15 text-blue-50 text-xs font-mono">NIP: {{ $lecturerNip }}</span>
+      </div>
+      <p class="text-blue-100 text-xs mt-1">
+        Penetapan Mahasiswa Bimbingan Dikelola Terpusat oleh KPS
+      </p>
+    </div>
+  </div>
 
-  <style>
-    * {
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    .material-symbols-outlined {
-      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-      line-height: 1;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      vertical-align: middle;
-    }
-    .material-symbols-fill {
-      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 9999px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
-    }
-  </style>
-</head>
+  <!-- Kuota 7 Mahasiswa -->
+  <div class="bg-white/10 border border-white/20 rounded-xl p-4 w-full lg:w-80">
+    <div class="flex items-center justify-between text-xs mb-1.5">
+      <span class="font-bold text-blue-100">Kuota Bimbingan</span>
+      <span class="font-bold text-white">{{ $studentCount }} / 7 Mahasiswa ({{ $remainingCapacity }} Tersedia)</span>
+    </div>
+    <div class="grid grid-cols-7 gap-1.5">
+      @for($i = 1; $i <= 7; $i++)
+        <div class="h-2 rounded-full {{ $i <= $studentCount ? 'bg-emerald-400' : 'bg-white/25' }}"></div>
+      @endfor
+    </div>
+  </div>
+</div>
 
-<body class="bg-[#F8FAFC] font-sans text-gray-800 selection:bg-[#009688]/20 selection:text-[#0056B3] min-h-screen flex antialiased">
-  @php
-    $isRealDosen = (Auth::user()->role ?? '') === 'dosen';
-    $lecturerName = $isRealDosen ? Auth::user()->name : 'Dr. Bambang Sutrisno, M.T.';
-    $lecturerNip = $isRealDosen ? (Auth::user()->identifier ?? '198503152010121002') : '198503152010121002';
-    $lecturerInitials = strtoupper(substr($lecturerName, 0, 2));
-    if (str_starts_with($lecturerName, 'Dr.')) {
-      $lecturerInitials = 'BS';
-    }
-  @endphp
+<!-- Ringkasan Statistik -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-card flex items-center justify-between">
+    <div>
+      <span class="text-[11px] font-bold text-slate-400 uppercase">Mahasiswa Bimbingan</span>
+      <div class="text-2xl font-extrabold text-[#0056B3] font-heading mt-0.5">{{ $studentCount }} <span class="text-xs font-semibold text-slate-400">/ 7 Maks</span></div>
+    </div>
+    <div class="w-10 h-10 rounded-xl bg-blue-50 text-[#0056B3] flex items-center justify-center">
+      <span class="material-symbols-outlined text-[22px]">groups</span>
+    </div>
+  </div>
 
-  <!-- Mobile Sidebar Backdrop -->
-  <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden hidden transition-opacity"></div>
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-card flex items-center justify-between">
+    <div>
+      <span class="text-[11px] font-bold text-slate-400 uppercase">Logbook Menunggu Review</span>
+      <div class="text-2xl font-extrabold text-amber-600 font-heading mt-0.5">{{ $pendingLogbooksCount }} <span class="text-xs font-semibold text-slate-400">Jurnal</span></div>
+    </div>
+    <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+      <span class="material-symbols-outlined text-[22px]">rate_review</span>
+    </div>
+  </div>
 
-  <!-- Sidebar Navigation Component -->
-  @include('layouts.partials.sidebar', ['activePage' => 'dashboard', 'role' => 'dosen'])
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-card flex items-center justify-between">
+    <div>
+      <span class="text-[11px] font-bold text-slate-400 uppercase">Sisa Kuota</span>
+      <div class="text-2xl font-extrabold text-[#02796B] font-heading mt-0.5">{{ $remainingCapacity }} <span class="text-xs font-semibold text-slate-400">Slot</span></div>
+    </div>
+    <div class="w-10 h-10 rounded-xl bg-teal-50 text-[#02796B] flex items-center justify-center">
+      <span class="material-symbols-outlined text-[22px]">pie_chart</span>
+    </div>
+  </div>
+</div>
 
-  <!-- Main Wrapper -->
-  <div class="lg:pl-72 flex-1 flex flex-col min-h-screen">
-    
-    <!-- Top Header Bar -->
-    <header class="h-20 bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 flex items-center justify-between px-4 sm:px-8">
-      
-      <!-- Left: Mobile Menu Toggle & Breadcrumbs -->
-      <div class="flex items-center gap-3 sm:gap-4">
-        <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors" aria-label="Buka menu navigasi">
-          <span class="material-symbols-outlined text-[24px]">menu</span>
-        </button>
+<!-- Daftar Mahasiswa Bimbingan -->
+<div id="mahasiswa-section" class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-card space-y-4">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+    <div>
+      <h2 class="text-base sm:text-lg font-bold font-heading text-slate-800">Daftar Mahasiswa Bimbingan ({{ $studentCount }}/7)</h2>
+    </div>
 
-        <div class="flex items-center gap-2 text-xs sm:text-sm">
-          <span class="text-slate-500 hidden sm:inline">Portal Dosen TIK</span>
-          <span class="material-symbols-outlined text-slate-300 text-[16px] hidden sm:inline">chevron_right</span>
-          <span class="font-semibold text-slate-800 font-heading">Monitoring Mahasiswa Bimbingan</span>
-        </div>
-
-        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-teal-50 text-teal-800 border border-teal-200/70 rounded-full text-xs font-semibold">
-          <span class="w-1.5 h-1.5 rounded-full bg-[#009688] animate-pulse"></span>
-          <span>Semester Genap 2025/2026</span>
-        </span>
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <div class="relative flex-1 sm:w-56">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[17px]">search</span>
+        <input type="text" id="student-search" onkeyup="filterStudents()" placeholder="Cari nama atau NIM..." class="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#0056B3]">
       </div>
 
-      <!-- Right: Role Switcher, Notifications, & Profile -->
-      <div class="flex items-center gap-2 sm:gap-4">
+      <select id="status-filter" onchange="filterStudents()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none">
+        <option value="all">Semua ({{ $studentCount }})</option>
+        <option value="review">Perlu Review</option>
+        <option value="uptodate">Up to Date</option>
+      </select>
+    </div>
+  </div>
 
-        <!-- Notification Bell -->
-        <div class="relative">
-          <button type="button" aria-label="Notifikasi" class="relative p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors">
-            <span class="material-symbols-outlined text-[22px]">notifications</span>
-            <span class="absolute top-1.5 right-1.5 w-4 h-4 bg-amber-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center ring-2 ring-white">3</span>
-          </button>
-        </div>
-
-        <!-- Divider -->
-        <div class="h-6 w-px bg-slate-200"></div>
-
-        <!-- Lecturer Profile Pill -->
-        <div class="flex items-center gap-3">
-          <div class="hidden sm:flex flex-col text-right">
-            <span class="text-xs font-bold text-slate-800 leading-tight">{{ $lecturerName }}</span>
-            <span class="text-[11px] text-slate-500 font-mono leading-tight">NIP: {{ $lecturerNip }}</span>
-          </div>
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0056B3] to-[#02796B] text-white flex items-center justify-center font-bold text-xs shadow-sm">
-            {{ $lecturerInitials }}
-          </div>
-          <form method="POST" action="{{ route('logout') }}" class="hidden sm:block">
-            @csrf
-            <button type="submit" title="Keluar" class="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors">
-              <span class="material-symbols-outlined text-[20px]">logout</span>
-            </button>
-          </form>
-        </div>
-
-      </div>
-    </header>
-
-    <!-- Main Content Body -->
-    <main class="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1440px] w-full mx-auto">
-      
-      @if(session('success'))
-        <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-semibold flex items-center gap-3 shadow-sm animate-fade-in">
-          <span class="material-symbols-outlined text-emerald-600 text-[22px]">check_circle</span>
-          <span>{{ session('success') }}</span>
-        </div>
-      @endif
-
-      @if(session('info'))
-        <div class="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-[#0056B3] text-xs sm:text-sm font-semibold flex items-center gap-3 shadow-sm animate-fade-in">
-          <span class="material-symbols-outlined text-[#0056B3] text-[22px]">info</span>
-          <span>{{ session('info') }}</span>
-        </div>
-      @endif
-
-      @if(session('error') || $errors->any())
-        <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-semibold flex items-center gap-3 shadow-sm animate-fade-in">
-          <span class="material-symbols-outlined text-rose-600 text-[22px]">error</span>
-          <span>{{ session('error') ?? $errors->first() }}</span>
-        </div>
-        <script>
-          document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-              if (typeof showToast === 'function') {
-                showToast(@json(session('error') ?? $errors->first()), 'error');
-              }
-            }, 200);
-          });
-        </script>
-      @endif
-
-      @if(session('success'))
-        <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-semibold flex items-center gap-3 shadow-sm animate-fade-in">
-          <span class="material-symbols-outlined text-emerald-600 text-[22px]">check_circle</span>
-          <span>{{ session('success') }}</span>
-        </div>
-        <script>
-          document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-              if (typeof showToast === 'function') {
-                showToast(@json(session('success')), 'success');
-              }
-            }, 200);
-          });
-        </script>
-      @endif
-      <!-- Top Hero Lecturer Card & Mentorship Quota Capacity Banner -->
-      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0056B3] via-[#004799] to-[#02796B] text-white p-6 sm:p-8 shadow-card">
-        <!-- Ambient decorative shapes -->
-        <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-white/10 blur-3xl pointer-events-none"></div>
-        <div class="absolute right-48 -bottom-20 w-72 h-72 rounded-full bg-[#009688]/20 blur-2xl pointer-events-none"></div>
-        
-        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          
-          <!-- Lecturer Identity -->
-          <div class="flex items-start sm:items-center gap-4 sm:gap-5">
-            <div class="relative flex-shrink-0">
-              <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-inner">
-                <span class="material-symbols-outlined text-[38px] sm:text-[44px]">school</span>
-              </div>
-              <span class="absolute -bottom-1 -right-1 w-5 h-5 bg-[#009688] rounded-full ring-2 ring-white flex items-center justify-center" title="Dosen Aktif">
-                <span class="material-symbols-outlined text-white text-[12px] font-bold">check</span>
-              </span>
-            </div>
-
-            <div class="flex flex-col">
-              <div class="flex items-center gap-2 flex-wrap">
-                <h1 class="text-xl sm:text-2xl font-extrabold font-heading tracking-tight text-white">
-                  {{ $lecturerName }}
-                </h1>
-                <span class="px-2.5 py-0.5 rounded-md bg-white/15 backdrop-blur-sm text-blue-50 text-xs font-mono font-medium tracking-wide">
-                  NIP: {{ $lecturerNip }}
-                </span>
-                <span class="px-2.5 py-0.5 rounded-md bg-[#009688]/30 border border-[#009688]/40 text-teal-100 text-xs font-semibold">
-                  Dosen Pembimbing Utama
-                </span>
-              </div>
-
-              <div class="text-blue-100/90 text-xs sm:text-sm mt-2 flex items-center gap-2 sm:gap-3 flex-wrap">
-                <span class="font-medium">Program Studi: Teknik Informatika</span>
-                <span class="w-1.5 h-1.5 rounded-full bg-blue-200/40"></span>
-                <span>Jurusan Teknik Informatika &amp; Komputer PNJ</span>
-                <span class="w-1.5 h-1.5 rounded-full bg-blue-200/40"></span>
-                <span class="text-teal-200 font-semibold">Tahun Akademik 2025/2026 Genap</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Highlight: 7 Mahasiswa Capacity Quota Meter -->
-          @php
-            $studentCount = isset($students) ? $students->count() : 1;
-            $remainingCapacity = max(0, 7 - $studentCount);
-            $percentFilled = round(($studentCount / 7) * 100);
-            $pendingLogbooksCount = isset($logbooks) ? $logbooks->where('status', 'pending')->count() : 0;
-          @endphp
-          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 sm:p-6 flex flex-col justify-between w-full lg:w-96 shadow-inner">
-            <div class="flex items-center justify-between mb-2">
-              <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-[#009688] text-[20px]">pie_chart</span>
-                <span class="text-xs uppercase tracking-wider text-blue-100 font-bold">Kapasitas Kuota Bimbingan</span>
-              </div>
-              <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 text-[11px] font-bold">
-                {{ $remainingCapacity }} Kuota Tersedia
-              </span>
-            </div>
-
-            <div class="flex items-baseline gap-2 mt-1">
-              <span class="text-3xl font-extrabold font-heading text-white">{{ $studentCount }}</span>
-              <span class="text-lg text-blue-200 font-medium font-heading">/ 7 Mahasiswa</span>
-              <span class="ml-auto text-xs text-blue-100 font-mono">({{ $percentFilled }}% Terisi)</span>
-            </div>
-
-            <!-- Segmented 7-Slots Bar Visualizer -->
-            <div class="grid grid-cols-7 gap-1.5 mt-3 mb-2">
-              @for($i = 1; $i <= 7; $i++)
-                @if($i <= $studentCount)
-                  <div class="h-2.5 rounded-full bg-emerald-400 shadow-sm" title="Mahasiswa {{ $i }}: {{ isset($students[$i-1]) ? $students[$i-1]->name : 'Aktif' }}"></div>
-                @else
-                  <div class="h-2.5 rounded-full bg-white/30 border border-dashed border-white/50" title="Slot Kuota {{ $i }}: Tersedia"></div>
-                @endif
-              @endfor
-            </div>
-
-            <p class="text-[11px] text-blue-100/80 leading-snug">
-              Batas maksimal <strong class="text-white">7 mahasiswa</strong> bimbingan per dosen sesuai Standar PKL Jurusan TIK PNJ.
-            </p>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Quick Executive Metric Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        <!-- Metric 1: Total Bimbingan -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-card hover:border-blue-200 transition-all flex items-center justify-between">
-          <div>
-            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Bimbingan</span>
-            <div class="flex items-baseline gap-2 mt-1">
-              <span class="text-2xl font-extrabold text-[#0056B3] font-heading">{{ $studentCount }}</span>
-              <span class="text-xs font-bold text-slate-400">/ 7 Maksimal</span>
-            </div>
-            <span class="text-[11px] text-emerald-600 font-semibold mt-1 flex items-center gap-1">
-              <span class="material-symbols-outlined text-[14px]">check_circle</span>
-              <span>{{ $remainingCapacity }} Kuota Slot Kosong</span>
-            </span>
-          </div>
-          <div class="w-12 h-12 rounded-xl bg-blue-50 text-[#0056B3] flex items-center justify-center">
-            <span class="material-symbols-outlined text-[26px]">groups</span>
-          </div>
-        </div>
-
-        <!-- Metric 2: Logbook Perlu Review -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-card hover:border-amber-200 transition-all flex items-center justify-between">
-          <div>
-            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Logbook Menunggu</span>
-            <div class="flex items-baseline gap-2 mt-1">
-              <span class="text-2xl font-extrabold text-amber-600 font-heading">
-                {{ $pendingLogbooksCount }}
-              </span>
-              <span class="text-xs text-slate-400 font-medium">Laporan F3</span>
-            </div>
-            <span class="text-[11px] text-amber-600 font-semibold mt-1 flex items-center gap-1">
-              <span class="material-symbols-outlined text-[14px]">pending</span>
-              <span>{{ $pendingLogbooksCount > 0 ? 'Perlu Validasi Pekan Ini' : 'Semua Sudah Diverifikasi' }}</span>
-            </span>
-          </div>
-          <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-            <span class="material-symbols-outlined text-[26px]">rate_review</span>
-          </div>
-        </div>
-
-        <!-- Metric 3: Validasi Form F1 -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-card hover:border-teal-200 transition-all flex items-center justify-between">
-          <div>
-            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pengajuan Form F1</span>
-            <div class="flex items-baseline gap-2 mt-1">
-              <span class="text-2xl font-extrabold text-[#02796B] font-heading">0</span>
-              <span class="text-xs text-slate-400 font-medium">Kesediaan Baru</span>
-            </div>
-            <span class="text-[11px] text-[#02796B] font-semibold mt-1 flex items-center gap-1">
-              <span class="material-symbols-outlined text-[14px]">check_circle</span>
-              <span>Form F1 Terverifikasi</span>
-            </span>
-          </div>
-          <div class="w-12 h-12 rounded-xl bg-teal-50 text-[#02796B] flex items-center justify-center">
-            <span class="material-symbols-outlined text-[26px]">assignment_turned_in</span>
-          </div>
-        </div>
-
-        <!-- Metric 4: Rata-rata Kehadiran -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-card hover:border-emerald-200 transition-all flex items-center justify-between">
-          <div>
-            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Rata-rata Kehadiran</span>
-            <div class="flex items-baseline gap-2 mt-1">
-              <span class="text-2xl font-extrabold text-emerald-600 font-heading">96.8%</span>
-            </div>
-            <span class="text-[11px] text-emerald-600 font-semibold mt-1 flex items-center gap-1">
-              <span class="material-symbols-outlined text-[14px]">trending_up</span>
-              <span>Disiplin di Perusahaan DUDI</span>
-            </span>
-          </div>
-          <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <span class="material-symbols-outlined text-[26px]">verified</span>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Banner Informasi Otoritas Penetapan KPS -->
-      <div class="bg-gradient-to-r from-blue-50/80 via-teal-50/50 to-slate-50 border border-blue-100 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div class="flex items-start gap-3.5">
-          <div class="w-11 h-11 rounded-2xl bg-[#0056B3] text-white flex items-center justify-center flex-shrink-0 shadow-sm">
-            <span class="material-symbols-outlined text-[24px]">admin_panel_settings</span>
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-bold text-[#0056B3] uppercase tracking-wider font-heading">Kebijakan Penetapan PKL 2026</span>
-              <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">Dikelola KPS</span>
-            </div>
-            <h3 class="text-base font-bold text-slate-800 mt-0.5">Penetapan Mahasiswa Bimbingan Dikelola Terpusat oleh KPS</h3>
-            <p class="text-xs text-slate-600 mt-1 leading-relaxed max-w-3xl">
-              Sesuai pedoman baru SIM-PKL TIK PNJ, seluruh penetapan pasangan mahasiswa dan dosen pembimbing diproses dan disahkan oleh <strong>Koordinator Program Studi (KPS)</strong>. Dosen menerima daftar mahasiswa bimbingan yang telah terverifikasi secara resmi untuk dilakukan asistensi logbook dan pemenuhan capaian magang.
-            </p>
-          </div>
-        </div>
-        <div class="flex items-center gap-2 flex-shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200/60">
-          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 shadow-sm">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>{{ count($students ?? []) }} Mahasiswa Resmi Aktif</span>
-          </span>
-        </div>
-      </div>
-
-      <!-- Main Section: Mahasiswa Bimbingan Management -->
-      <div id="mahasiswa-section" class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-card space-y-6">
-        
-        <!-- Header with Filter & Actions -->
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-100">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-bold uppercase tracking-wider text-[#02796B]">Daftar Bimbingan PKL</span>
-              <span class="text-xs text-slate-400">•</span>
-              <span class="text-xs text-slate-500 font-medium">Beban Kuota Dosen: {{ $studentCount }} / 7 Terisi</span>
-            </div>
-            <h2 class="text-xl font-bold font-heading text-slate-800 mt-0.5">
-              Mahasiswa yang Anda Naungi &amp; Bimbing
-            </h2>
-          </div>
-
-          <!-- Search & Filter Options -->
-          <div class="flex items-center gap-3 flex-wrap">
-            <div class="relative flex-1 sm:w-64">
-              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
-              <input type="text" id="student-search" onkeyup="filterStudents()" placeholder="Cari nama atau NIM..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0056B3]/20 focus:border-[#0056B3]">
-            </div>
-
-            <select id="status-filter" onchange="filterStudents()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0056B3]/20">
-              <option value="all">Semua Mahasiswa ({{ $studentCount }})</option>
-              <option value="review">Perlu Review Logbook</option>
-              <option value="uptodate">Logbook Aman</option>
-            </select>
-
-            <button type="button" onclick="openNewStudentModal()" class="bg-[#0056B3] hover:bg-[#00428A] text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-heading flex items-center gap-1.5 transition-all shadow-sm">
-              <span class="material-symbols-outlined text-[18px]">person_add</span>
-              <span>Tambah Mahasiswa</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 7 Mentorship Slots Grid -->
-        <div class="grid grid-cols-1 gap-4" id="student-list-container">
-          
-          @forelse($students ?? [] as $index => $st)
-            @php
-              $slotNum = $index + 1;
-              $initials = collect(explode(' ', $st->name))->map(fn($w) => strtoupper(substr($w, 0, 1)))->take(2)->implode('');
-              $stLogbooksCount = $st->logbooks ? $st->logbooks->count() : 0;
-              $stPendingCount = $st->logbooks ? $st->logbooks->where('status', 'pending')->count() : 0;
-            @endphp
-            <!-- STUDENT {{ $slotNum }}: {{ $st->name }} -->
-            <div class="student-card p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 hover:border-[#0056B3]/40 hover:shadow-card-hover transition-all" data-status="{{ $stPendingCount > 0 ? 'review' : 'uptodate' }}" data-name="{{ strtolower($st->name . ' ' . $st->identifier) }}">
-              <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-                
-                <!-- Student Profile & Placement Details -->
-                <div class="flex items-start gap-4 min-w-0">
-                  <div class="relative flex-shrink-0">
-                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-[#0056B3] to-[#02796B] text-white flex items-center justify-center font-bold text-sm sm:text-base shadow-sm">
-                      {{ $initials }}
-                    </div>
-                    <span class="absolute -top-1 -left-1 w-5 h-5 bg-[#0056B3] text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-white" title="Slot Bimbingan {{ $slotNum }}">
-                      {{ $slotNum }}
-                    </span>
-                  </div>
-
-                  <div class="flex flex-col min-w-0">
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <h3 class="text-base sm:text-lg font-bold font-heading text-slate-800">{{ $st->name }}</h3>
-                      <span class="px-2 py-0.5 rounded bg-blue-50 text-[#0056B3] text-xs font-mono font-semibold">NIM: {{ $st->identifier }}</span>
-                      <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-medium">{{ $st->prodi ?? 'TI-6A (D4 TI)' }}</span>
-                      @if($stPendingCount > 0)
-                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/80 text-xs font-bold">
-                          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                          <span>{{ $stPendingCount }} Logbook Perlu Review</span>
-                        </span>
-                      @else
-                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-xs font-bold">
-                          <span class="material-symbols-outlined text-[13px]">check_circle</span>
-                          <span>Logbook Aman</span>
-                        </span>
-                      @endif
-                    </div>
-
-                    <!-- Mitra & Topic -->
-                    <div class="mt-2 space-y-1">
-                      <div class="flex items-center gap-2 text-xs sm:text-sm text-slate-700">
-                        <span class="material-symbols-outlined text-[16px] text-rose-500">domain</span>
-                        <strong class="font-semibold">{{ $st->company ?? 'PT Telekomunikasi Seluler (Telkomsel)' }}</strong>
-                        <span class="text-slate-400">•</span>
-                        <span class="text-slate-500">{{ $st->email }}</span>
-                      </div>
-                      <p class="text-xs text-slate-500 line-clamp-1">
-                        <strong class="text-slate-600">No. WhatsApp / HP:</strong> {{ $st->phone ?? '081234567890' }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Metrics & Action Center -->
-                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 lg:gap-6 flex-shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-                  
-                  <!-- Quick Progress Summary -->
-                  <div class="grid grid-cols-3 gap-3 text-center w-full sm:w-auto">
-                    <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200/60 min-w-[70px]">
-                      <span class="text-[10px] text-slate-400 font-semibold block uppercase">Logbook</span>
-                      <span class="text-sm font-bold text-[#0056B3] font-mono">{{ $stLogbooksCount }} Jurnal</span>
-                    </div>
-                    <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200/60 min-w-[70px]">
-                      <span class="text-[10px] text-slate-400 font-semibold block uppercase">Status</span>
-                      <span class="text-sm font-bold {{ $stPendingCount > 0 ? 'text-amber-600' : 'text-emerald-600' }} font-mono">
-                        {{ $stPendingCount > 0 ? $stPendingCount . ' Review' : 'Up to Date' }}
-                      </span>
-                    </div>
-                    <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200/60 min-w-[70px]">
-                      <span class="text-[10px] text-slate-400 font-semibold block uppercase">Bimbingan</span>
-                      <span class="text-sm font-bold text-[#02796B] font-heading">F2-F4</span>
-                    </div>
-                  </div>
-
-                  <!-- Action Buttons -->
-                  <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
-                    <a href="{{ route('logbook.dosen', ['student_id' => $st->id]) }}" class="bg-[#0056B3] hover:bg-[#00428A] text-white px-3.5 py-2 rounded-xl text-xs font-bold font-heading flex items-center gap-1.5 transition-all shadow-sm">
-                      <span class="material-symbols-outlined text-[16px]">rate_review</span>
-                      <span>Review Logbook</span>
-                    </a>
-                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $st->phone ?? '6281234567890') }}" target="_blank" title="Hubungi via WhatsApp" class="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition-colors">
-                      <span class="material-symbols-outlined text-[18px]">chat</span>
-                    </a>
-                    <a href="{{ route('logbook.dosen', ['student_id' => $st->id]) }}" title="Lihat Aktivitas Mahasiswa" class="p-2 bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors">
-                      <span class="material-symbols-outlined text-[18px]">visibility</span>
-                    </a>
-                  </div>
-
-                </div>
-
-              </div>
-            </div>
-          @empty
-            <div class="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
-              <span class="material-symbols-outlined text-4xl text-slate-400">group_off</span>
-              <p class="text-slate-600 font-medium mt-2">Belum ada mahasiswa bimbingan yang terdaftar.</p>
-            </div>
-          @endforelse
-
-          <!-- Available Mentorship Slots up to 7 -->
-          @for($slot = ($studentCount ?? count($students ?? [])) + 1; $slot <= 7; $slot++)
-            <div class="p-5 sm:p-6 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:bg-blue-50/30 hover:border-blue-300 transition-all flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-2xl bg-white border border-slate-200 text-slate-400 flex items-center justify-center font-bold text-sm shadow-sm">
-                  {{ $slot }}
-                </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                      Slot Kuota Tersedia ({{ $slot }} dari 7)
-                    </span>
-                    <span class="text-xs text-slate-400">•</span>
-                    <span class="text-xs text-slate-500 font-medium">{{ $slot === 7 ? 'Batas Maksimal Kapasitas' : 'Beban Bimbingan Terbuka' }}</span>
-                  </div>
-                  <h4 class="text-sm sm:text-base font-bold font-heading text-slate-700 mt-0.5">
-                    {{ $slot === 7 ? 'Slot Kuota Terakhir Pembimbingan PKL' : 'Siap Menerima 1 Mahasiswa Bimbingan Tambahan' }}
-                  </h4>
-                  <p class="text-xs text-slate-400 mt-0.5">Penetapan mahasiswa pada slot ini akan ditentukan langsung oleh KPS Jurusan TIK.</p>
-                </div>
-              </div>
-              <div class="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-500 flex items-center justify-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span>Slot Terbuka (Dikelola KPS)</span>
-              </div>
-            </div>
-          @endfor
-
-        </div>
-
-      </div>
-
-      <!-- Logbook Masuk dari Mahasiswa Bimbingan Section -->
-      <div id="logbook-review-section" class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-card space-y-6">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-bold uppercase tracking-wider text-[#02796B]">Verifikasi &amp; Review (Form F3)</span>
-              <span class="text-xs text-slate-400">•</span>
-              <span class="text-xs text-slate-500 font-medium">Logbook Ditulis oleh Mahasiswa Bimbingan</span>
-            </div>
-            <h2 class="text-xl font-bold font-heading text-slate-800 mt-0.5">
-              Jurnal Aktivitas Harian Mahasiswa yang Perlu Ditinjau
-            </h2>
-          </div>
-          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-[#0056B3] rounded-xl text-xs font-bold self-start sm:self-auto border border-blue-100">
-            <span class="material-symbols-outlined text-[16px]">pending_actions</span>
-            <span>{{ isset($logbooks) ? $logbooks->where('status', 'pending')->count() : 0 }} Menunggu Persetujuan</span>
-          </span>
-        </div>
-
-        <!-- Logbooks Feed -->
-        <div class="space-y-4">
-          @forelse($logbooks ?? [] as $lb)
-            <div class="p-5 rounded-2xl bg-slate-50/70 border border-slate-200 hover:border-blue-300 transition-all space-y-3">
-              <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                <div class="flex items-start gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0056B3] to-[#02796B] text-white flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0 mt-0.5">
-                    {{ strtoupper(substr($lb->student->name ?? 'M', 0, 2)) }}
-                  </div>
-                  <div>
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <strong class="text-sm font-bold text-slate-800 font-heading">{{ $lb->student->name ?? 'Mahasiswa' }}</strong>
-                      <span class="text-xs font-mono px-2 py-0.5 rounded bg-blue-50 text-[#0056B3] font-semibold">NIM: {{ $lb->student->identifier ?? '-' }}</span>
-                      <span class="text-xs text-slate-500">{{ $lb->student->prodi ?? 'Teknik Informatika' }}</span>
-                    </div>
-                    <h3 class="text-base font-bold text-slate-900 font-heading mt-1">
-                      {{ $lb->subject }}
-                    </h3>
-                    <div class="flex items-center gap-2 text-xs text-slate-500 font-mono mt-0.5">
-                      <span class="material-symbols-outlined text-[14px]">calendar_today</span>
-                      <span>{{ $lb->tanggal->translatedFormat('d F Y') }}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="flex items-center gap-2 self-start sm:self-auto">
-                  @if($lb->status === 'approved')
-                    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
-                      <span class="material-symbols-outlined text-[14px]">check_circle</span>
-                      <span>Telah Disetujui</span>
-                    </span>
-                  @else
-                    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold">
-                      <span class="material-symbols-outlined text-[14px] animate-spin">refresh</span>
-                      <span>Menunggu Validasi</span>
-                    </span>
-                  @endif
-
-                  <button type="button" 
-                          onclick="openReviewModal({{ $lb->id }}, '{{ addslashes($lb->student->name ?? 'Mahasiswa') }}', '{{ addslashes($lb->student->identifier ?? '') }}', '{{ addslashes($lb->subject) }}', '{{ $lb->tanggal->translatedFormat('d F Y') }}', {{ json_encode($lb->content) }}, '{{ $lb->status }}', '{{ addslashes($lb->feedback ?? '') }}')"
-                          class="bg-[#0056B3] hover:bg-[#00428A] text-white px-3.5 py-1.5 rounded-xl text-xs font-bold font-heading flex items-center gap-1.5 transition-all shadow-sm">
-                    <span class="material-symbols-outlined text-[15px]">rate_review</span>
-                    <span>Review Logbook</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Long Text Content Written by Student -->
-              <div class="p-4 bg-white rounded-xl border border-slate-200/80 text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line font-normal">
-                {{ $lb->content }}
-              </div>
-
-              @if($lb->feedback)
-                <div class="p-3 bg-blue-50/80 border border-blue-200/80 rounded-xl text-xs text-[#0056B3] flex items-start gap-2">
-                  <span class="material-symbols-outlined text-[18px] mt-0.5 flex-shrink-0">comment</span>
-                  <div>
-                    <strong class="font-bold">Catatan Arahan Dosen:</strong>
-                    <p class="mt-0.5 text-slate-700">{{ $lb->feedback }}</p>
-                  </div>
-                </div>
-              @endif
-            </div>
-          @empty
-            <div class="p-8 text-center bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
-              <span class="material-symbols-outlined text-slate-400 text-[32px]">folder_open</span>
-              <p class="text-xs text-slate-500 mt-2 font-medium">Belum ada logbook baru yang dikirim oleh mahasiswa bimbingan.</p>
-            </div>
-          @endforelse
-        </div>
-      </div>
-
-      <!-- Secondary Layout: Guidance Agenda (Jadwal Bimbingan) & Standards Guidance -->
-      <div class="grid grid-cols-1 xl:grid-cols-12 gap-6" id="agenda-section">
-        
-        <!-- Agenda Bimbingan Mendatang (7 Cols on xl) -->
-        <div class="xl:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-card space-y-5">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-blue-50 text-[#0056B3] flex items-center justify-center">
-                <span class="material-symbols-outlined text-[22px]">calendar_month</span>
-              </div>
-              <div>
-                <h3 class="text-base sm:text-lg font-bold font-heading text-slate-800">Agenda Bimbingan Dosen Mendatang</h3>
-                <p class="text-xs text-slate-500">Jadwal konsultasi laporan &amp; monitoring mahasiswa bimbingan</p>
-              </div>
-            </div>
-            <button type="button" onclick="showToast('Fitur penjadwalan bimbingan kalender aktif.')" class="bg-blue-50 hover:bg-blue-100 text-[#0056B3] px-3 py-1.5 rounded-xl text-xs font-bold font-heading flex items-center gap-1 transition-colors">
-              <span class="material-symbols-outlined text-[16px]">add</span>
-              <span>Jadwalkan</span>
-            </button>
-          </div>
-
-          <!-- Agenda List -->
-          <div class="space-y-3">
-            
-            <!-- Agenda 1 -->
-            <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200/60 flex items-center justify-between gap-4 hover:border-blue-200 transition-colors">
-              <div class="flex items-center gap-3.5">
-                <div class="w-12 h-12 rounded-xl bg-[#0056B3] text-white flex flex-col items-center justify-center font-mono font-bold leading-none shadow-sm flex-shrink-0">
-                  <span class="text-[9px]">FEB</span>
-                  <span class="text-sm">24</span>
-                </div>
-                <div>
-                  <h4 class="text-xs sm:text-sm font-bold text-slate-800 font-heading">
-                    Review Bab II &amp; Arsitektur Cloud (Ahmad Fauzi)
-                  </h4>
-                  <p class="text-xs text-slate-500 mt-0.5">Daring via Zoom PKL TIK • 15:30 WIB</p>
-                  <span class="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold text-emerald-600">
-                    <span class="material-symbols-outlined text-[14px]">videocam</span>
-                    <span>Tautan Zoom Terlampir</span>
-                  </span>
-                </div>
-              </div>
-              <button type="button" onclick="showToast('Membuka sesi Zoom bimbingan...')" class="px-3 py-1.5 bg-[#0056B3] text-white rounded-lg text-xs font-bold hover:bg-[#00428A] transition-colors flex-shrink-0">
-                Mulai Sesi
-              </button>
-            </div>
-
-
-
-          </div>
-        </div>
-
-        <!-- Panduan & Standar Pembimbingan Dosen TIK (5 Cols on xl) -->
-        <div class="xl:col-span-5 bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-card space-y-4">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-teal-50 text-[#02796B] flex items-center justify-center">
-              <span class="material-symbols-outlined text-[22px]">policy</span>
-            </div>
-            <div>
-              <h3 class="text-base sm:text-lg font-bold font-heading text-slate-800">Panduan Akademik Pembimbing</h3>
-              <p class="text-xs text-slate-500">Standar Beban &amp; Mutu PKL Jurusan TIK PNJ 2026</p>
-            </div>
-          </div>
-
-          <div class="space-y-3 pt-1">
-            <div class="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/60 flex items-start gap-3">
-              <span class="w-6 h-6 rounded-full bg-[#0056B3] text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
-              <div>
-                <strong class="text-xs font-bold text-slate-800 block">Kapasitas Maksimal 7 Mahasiswa</strong>
-                <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                  Setiap dosen pembimbing memiliki batasan kuota maksimal 7 mahasiswa untuk menjamin intensitas dan kualitas asistensi bimbingan.
-                </p>
-              </div>
-            </div>
-
-            <div class="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/60 flex items-start gap-3">
-              <span class="w-6 h-6 rounded-full bg-[#02796B] text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
-              <div>
-                <strong class="text-xs font-bold text-slate-800 block">Minimal 8 Kali Pertemuan Bimbingan</strong>
-                <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                  Mahasiswa wajib memenuhi sedikitnya 8 log bimbingan (Form F3) sebelum diizinkan mendaftar Ujian Sidang PKL.
-                </p>
-              </div>
-            </div>
-
-            <div class="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/60 flex items-start gap-3">
-              <span class="w-6 h-6 rounded-full bg-[#009688] text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</span>
-              <div>
-                <strong class="text-xs font-bold text-slate-800 block">Penilaian Sidang &amp; Dosen (Form F6/F7)</strong>
-                <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                  Nilai dari Dosen Pembimbing menyumbang bobot 40% dari total kelulusan mata kuliah Praktik Kerja Lapangan.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div class="p-3.5 bg-blue-50/70 border border-blue-200/60 rounded-xl flex items-start gap-2.5">
-            <span class="material-symbols-outlined text-[#0056B3] text-[20px] mt-0.5 flex-shrink-0">info</span>
-            <p class="text-xs text-[#0056B3] leading-relaxed">
-              Jika mahasiswa bimbingan telah mencapai batas maksimal 7 orang, sistem akan otomatis mengunci pendaftaran baru ke profil Anda.
-            </p>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- SEKSI EVALUASI F6, BIMBINGAN F4, & KALKULASI PYTHON FUZZY LOGIC (PRD 5.3.3, 5.4, 7.5, 9.1) -->
+  <div class="grid grid-cols-1 gap-3" id="student-list-container">
+    @forelse($students ?? [] as $index => $st)
       @php
-        $activeSt = $selectedStudent ?? ($students ? $students->first() : null);
-        $activePengajuan = $activeSt?->pengajuanMagangAktif;
-        $bimbingansCount = $activePengajuan?->bimbingans?->count() ?? 0;
-        $evalF5 = $activePengajuan?->evaluasiF5;
-        $evalF6 = $activePengajuan?->evaluasiF6;
+        $slotNum = $index + 1;
+        $initials = collect(explode(' ', $st->name))->map(fn($w) => strtoupper(substr($w, 0, 1)))->take(2)->implode('');
+        $stLogbooksCount = $st->logbooks ? $st->logbooks->count() : 0;
+        $stPendingCount = $st->logbooks ? $st->logbooks->where('status', 'pending')->count() : 0;
+        $companyName = $st->pengajuanMagangAktif?->industri?->nama_perusahaan ?? $st->company ?? 'Belum Ada Tempat PKL';
       @endphp
+      <div class="student-card p-4 rounded-xl bg-white border border-slate-200 hover:border-[#0056B3]/40 transition-all" data-status="{{ $stPendingCount > 0 ? 'review' : 'uptodate' }}" data-name="{{ strtolower($st->name . ' ' . $st->identifier) }}">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <div class="w-11 h-11 rounded-xl bg-[#0056B3] text-white flex items-center justify-center font-bold text-xs shrink-0">
+              {{ $initials }}
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-sm sm:text-base font-bold font-heading text-slate-800">{{ $st->name }}</h3>
+                <span class="px-2 py-0.5 rounded bg-blue-50 text-[#0056B3] text-[11px] font-mono font-semibold">{{ $st->identifier }}</span>
+                @if($stPendingCount > 0)
+                  <span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold">{{ $stPendingCount }} Perlu Review</span>
+                @else
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">Logbook Aman</span>
+                @endif
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5 truncate">
+                {{ $companyName }} • {{ $st->email }}
+              </p>
+            </div>
+          </div>
 
-      @if($activeSt && $activePengajuan)
-      <div id="penilaian-fuzzy-section" class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-card space-y-6">
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-100">
+          <div class="flex items-center gap-2.5 shrink-0 justify-end">
+            <span class="text-xs font-mono text-slate-500 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-200">
+              {{ $stLogbooksCount }} Jurnal
+            </span>
+            <a href="{{ route('logbook.dosen', ['student_id' => $st->id]) }}" class="bg-[#0056B3] hover:bg-[#00428A] text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all">
+              <span class="material-symbols-outlined text-[15px]">rate_review</span>
+              <span>Logbook</span>
+            </a>
+            <a href="{{ route('form.f4.dosen') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold transition-colors">
+              F4 / F6
+            </a>
+          </div>
+        </div>
+      </div>
+    @empty
+      <div class="p-6 text-center bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500">
+        Belum ada mahasiswa bimbingan yang ditetapkan oleh KPS.
+      </div>
+    @endforelse
+  </div>
+</div>
+
+<!-- Evaluasi F6, Bimbingan F4, & Kalkulasi Fuzzy Logic -->
+@php
+  $activeSt = $selectedStudent ?? ($students ? $students->first() : null);
+  $activePengajuan = $activeSt?->pengajuanMagangAktif;
+  $bimbingansCount = $activePengajuan?->bimbingans?->count() ?? 0;
+  $evalF5 = $activePengajuan?->evaluasiF5;
+  $evalF6 = $activePengajuan?->evaluasiF6;
+@endphp
+
+@if($activeSt && $activePengajuan)
+<div id="penilaian-fuzzy-section" class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-card space-y-5">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+    <div>
+      <span class="text-[10px] font-bold uppercase tracking-wider text-[#0056B3]">Bimbingan &amp; Evaluasi Akhir</span>
+      <h2 class="text-base sm:text-lg font-bold font-heading text-slate-800">
+        {{ $activeSt->name }} ({{ $activeSt->identifier }})
+      </h2>
+    </div>
+
+    @if(count($students ?? []) > 1)
+    <form method="GET" action="{{ route('dashboard.dosen') }}#penilaian-fuzzy-section" class="flex items-center gap-2">
+      <select name="student_id" onchange="this.form.submit()" class="text-xs font-bold rounded-xl border border-slate-200 py-1.5 px-3 text-slate-700 bg-slate-50">
+        @foreach($students as $st)
+          <option value="{{ $st->id }}" {{ $activeSt->id === $st->id ? 'selected' : '' }}>
+            {{ $st->name }} ({{ $st->identifier }})
+          </option>
+        @endforeach
+      </select>
+    </form>
+    @endif
+  </div>
+
+  <!-- 3 Status Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div class="p-3.5 rounded-xl border {{ $bimbingansCount >= 8 ? 'bg-emerald-50/50 border-emerald-200' : 'bg-amber-50/50 border-amber-200' }}">
+      <span class="text-[10px] font-bold uppercase {{ $bimbingansCount >= 8 ? 'text-emerald-800' : 'text-amber-800' }}">Bimbingan F4</span>
+      <div class="text-xl font-black font-heading mt-1 {{ $bimbingansCount >= 8 ? 'text-emerald-900' : 'text-amber-900' }}">
+        {{ $bimbingansCount }} / 8 Sesi
+      </div>
+    </div>
+
+    <div class="p-3.5 rounded-xl border {{ $evalF5 ? 'bg-teal-50/50 border-teal-200' : 'bg-slate-50 border-slate-200' }}">
+      <span class="text-[10px] font-bold uppercase text-slate-600">Nilai Industri F5 (60%)</span>
+      <div class="text-xl font-black font-heading mt-1 {{ $evalF5 ? 'text-[#02796B]' : 'text-slate-400' }}">
+        {{ $evalF5 ? $evalF5->rata_rata_f5 . '/100' : 'Belum Diisi' }}
+      </div>
+    </div>
+
+    <div class="p-3.5 rounded-xl border {{ $activePengajuan->nilai_akhir_fuzzy ? 'bg-blue-50/60 border-blue-200' : 'bg-slate-50 border-slate-200' }}">
+      <span class="text-[10px] font-bold uppercase text-[#0056B3]">Nilai Akhir Fuzzy</span>
+      <div class="text-xl font-black font-heading mt-1 font-mono text-[#0056B3]">
+        {{ $activePengajuan->nilai_akhir_fuzzy ?? 'Belum Dikalkulasi' }}
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <!-- Catat Sesi Bimbingan F4 -->
+    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs sm:text-sm font-bold font-heading text-slate-800">Catat Sesi Bimbingan (Form F4)</h3>
+        <a href="{{ route('dokumen.f4', $activePengajuan->id) }}" target="_blank" class="text-xs text-[#0056B3] font-bold hover:underline">Cetak F4</a>
+      </div>
+
+      <form method="POST" action="{{ route('bimbingan_f4.store', $activePengajuan->id) }}" class="space-y-2.5">
+        @csrf
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Tanggal</label>
+            <input type="date" name="tanggal_bimbingan" required value="{{ date('Y-m-d') }}" class="w-full text-xs rounded-lg border border-slate-200 p-2 bg-white">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Progres Laporan</label>
+            <input type="text" name="progres_laporan" placeholder="Bab III Metodologi" class="w-full text-xs rounded-lg border border-slate-200 p-2 bg-white">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Materi Bimbingan</label>
+          <textarea name="materi_bimbingan" rows="2" required placeholder="Pokok bahasan bimbingan..." class="w-full text-xs rounded-lg border border-slate-200 p-2 bg-white"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Catatan Dosen</label>
+          <input type="text" name="catatan_dosen" placeholder="Arahan lanjutan..." class="w-full text-xs rounded-lg border border-slate-200 p-2 bg-white">
+        </div>
+
+        <div class="flex justify-end pt-1">
+          <button type="submit" class="px-4 py-2 rounded-xl bg-[#0056B3] hover:bg-blue-700 text-white font-bold text-xs">
+            Simpan Sesi Ke-{{ $bimbingansCount + 1 }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Evaluasi F6 & Trigger Fuzzy -->
+    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs sm:text-sm font-bold font-heading text-slate-800">Evaluasi Akademik (Form F6 - 40%)</h3>
+        @if($evalF6)
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Rata-rata: {{ $evalF6->rata_rata_f6 }}</span>
+        @endif
+      </div>
+
+      <form method="POST" action="{{ route('dosen.evaluasi_f6.store', $activePengajuan->id) }}" class="space-y-2.5">
+        @csrf
+        <div class="grid grid-cols-3 gap-2">
+          <div class="bg-white p-2 rounded-lg border border-slate-200">
+            <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Judul &amp; Isi</label>
+            <input type="number" step="0.5" min="0" max="100" name="skor_kesesuaian_judul" required value="{{ old('skor_kesesuaian_judul', $evalF6?->skor_kesesuaian_judul ?? 90) }}" class="w-full text-xs rounded border border-slate-200 font-bold p-1">
+          </div>
+          <div class="bg-white p-2 rounded-lg border border-slate-200">
+            <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Tata Bahasa</label>
+            <input type="number" step="0.5" min="0" max="100" name="skor_tata_bahasa" required value="{{ old('skor_tata_bahasa', $evalF6?->skor_tata_bahasa ?? 85) }}" class="w-full text-xs rounded border border-slate-200 font-bold p-1">
+          </div>
+          <div class="bg-white p-2 rounded-lg border border-slate-200">
+            <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Format</label>
+            <input type="number" step="0.5" min="0" max="100" name="skor_format_laporan" required value="{{ old('skor_format_laporan', $evalF6?->skor_format_laporan ?? 88) }}" class="w-full text-xs rounded border border-slate-200 font-bold p-1">
+          </div>
+          <div class="bg-white p-2 rounded-lg border border-slate-200">
+            <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Penguasaan</label>
+            <input type="number" step="0.5" min="0" max="100" name="skor_pengetahuan" required value="{{ old('skor_pengetahuan', $evalF6?->skor_pengetahuan ?? 90) }}" class="w-full text-xs rounded border border-slate-200 font-bold p-1">
+          </div>
+          <div class="bg-white p-2 rounded-lg border border-slate-200">
+            <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Tanya Jawab</label>
+            <input type="number" step="0.5" min="0" max="100" name="skor_tanya_jawab" required value="{{ old('skor_tanya_jawab', $evalF6?->skor_tanya_jawab ?? 88) }}" class="w-full text-xs rounded border border-slate-200 font-bold p-1">
+          </div>
+          <div class="bg-white p-2 rounded-lg border border-slate-200">
+            <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Etika</label>
+            <input type="number" step="0.5" min="0" max="100" name="skor_etika" required value="{{ old('skor_etika', $evalF6?->skor_etika ?? 95) }}" class="w-full text-xs rounded border border-slate-200 font-bold p-1">
+          </div>
+          <div class="bg-white p-2 rounded-lg border border-slate-200">
+            <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Justifikasi</label>
+            <input type="number" step="0.5" min="0" max="100" name="skor_justifikasi" required value="{{ old('skor_justifikasi', $evalF6?->skor_justifikasi ?? 86) }}" class="w-full text-xs rounded border border-slate-200 font-bold p-1">
+          </div>
+          <div class="bg-white p-2 rounded-lg border border-slate-200">
+            <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Rutinitas</label>
+            <input type="number" step="0.5" min="0" max="100" name="skor_rutinitas_bimbingan" required value="{{ old('skor_rutinitas_bimbingan', $evalF6?->skor_rutinitas_bimbingan ?? 95) }}" class="w-full text-xs rounded border border-slate-200 font-bold p-1">
+          </div>
+          <div class="bg-white p-2 rounded-lg border border-slate-200">
+            <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Progres</label>
+            <input type="number" step="0.5" min="0" max="100" name="skor_progres" required value="{{ old('skor_progres', $evalF6?->skor_progres ?? 88) }}" class="w-full text-xs rounded border border-slate-200 font-bold p-1">
+          </div>
+        </div>
+
+        <div>
+          <input type="text" name="catatan_dosen" value="{{ old('catatan_dosen', $evalF6?->catatan_dosen) }}" placeholder="Catatan evaluasi..." class="w-full text-xs rounded-lg border border-slate-200 p-2 bg-white">
+        </div>
+
+        <div class="flex justify-end">
+          <button type="submit" class="px-4 py-2 rounded-xl bg-[#02796B] hover:bg-teal-800 text-white font-bold text-xs">
+            Simpan Nilai F6
+          </button>
+        </div>
+      </form>
+
+      <!-- Kalkulasi Fuzzy -->
+      <div class="p-3.5 rounded-xl bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <span class="text-xs font-bold text-teal-300 block">Kalkulasi Nilai Akhir (Fuzzy Logic)</span>
+          <span class="text-[11px] text-slate-300">Gabungan F5 (60%) &amp; F6 (40%)</span>
+        </div>
+
+        <form method="POST" action="{{ route('dosen.kalkulasi-fuzzy', $activePengajuan->id) }}">
+          @csrf
+          <button type="submit" class="px-3.5 py-2 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 font-black text-xs flex items-center gap-1">
+            <span class="material-symbols-outlined text-[15px]">play_arrow</span>
+            <span>Hitung Nilai</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+@endif
+
+<!-- Logbook Terbaru -->
+<div id="logbook-review-section" class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-card space-y-4">
+  <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+    <div>
+      <span class="text-[10px] font-bold uppercase tracking-wider text-[#02796B]">Form F3</span>
+      <h2 class="text-base sm:text-lg font-bold font-heading text-slate-800">Logbook Mahasiswa Bimbingan</h2>
+    </div>
+    <span class="px-2.5 py-1 bg-blue-50 text-[#0056B3] rounded-lg text-xs font-bold">
+      {{ $pendingLogbooksCount }} Menunggu
+    </span>
+  </div>
+
+  <div class="space-y-3">
+    @forelse($logbooks ?? [] as $lb)
+      <div class="p-4 rounded-xl bg-slate-50/70 border border-slate-200 space-y-2.5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <div class="flex items-center gap-2">
-              <span class="text-xs font-bold uppercase tracking-wider text-[#0056B3]">Tahap 4 Panduan PKL</span>
-              <span class="text-xs text-slate-400">•</span>
-              <span class="text-xs text-slate-500 font-medium">Bimbingan F4 (Min 8 Sesi) &amp; Evaluasi F6 (40%)</span>
+              <strong class="text-xs sm:text-sm font-bold text-slate-800">{{ $lb->student->name ?? 'Mahasiswa' }}</strong>
+              <span class="text-[11px] font-mono text-[#0056B3]">{{ $lb->student->identifier ?? '-' }}</span>
+              <span class="text-[11px] text-slate-400">• {{ $lb->tanggal->translatedFormat('d M Y') }}</span>
             </div>
-            <h2 class="text-xl font-bold font-heading text-slate-800 mt-0.5">
-              Evaluasi Akademik &amp; Engine Penilaian Berbasis Fuzzy Logic
-            </h2>
-            <p class="text-xs text-slate-500 mt-1">
-              Mahasiswa: <strong class="text-slate-800">{{ $activeSt->name }}</strong> (NIM: {{ $activeSt->identifier }}) • Penempatan: {{ $activePengajuan->industri->nama_perusahaan ?? 'Mitra Industri' }}
-            </p>
+            <h3 class="text-sm font-bold text-slate-900 mt-0.5">{{ $lb->subject }}</h3>
           </div>
 
-          <!-- Selector Ganti Mahasiswa jika ada lebih dari 1 -->
-          @if(count($students ?? []) > 1)
-          <form method="GET" action="{{ route('dashboard.dosen') }}#penilaian-fuzzy-section" class="flex items-center gap-2">
-            <span class="text-xs font-bold text-slate-500">Pilih Mahasiswa:</span>
-            <select name="student_id" onchange="this.form.submit()" class="text-xs font-bold rounded-xl border-slate-200 py-2 px-3 text-slate-700 focus:border-[#0056B3] focus:ring-[#0056B3]">
-              @foreach($students as $st)
-                <option value="{{ $st->id }}" {{ $activeSt->id === $st->id ? 'selected' : '' }}>
-                  {{ $st->name }} ({{ $st->identifier }})
-                </option>
-              @endforeach
-            </select>
-          </form>
-          @endif
-        </div>
+          <div class="flex items-center gap-2 self-start sm:self-auto">
+            @if($lb->status === 'approved')
+              <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">Disetujui</span>
+            @else
+              <span class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold">Menunggu</span>
+            @endif
 
-        <!-- 3 Columns Metric Summary -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <!-- Status F4 Bimbingan -->
-          <div class="p-4 rounded-xl border {{ $bimbingansCount >= 8 ? 'bg-emerald-50/50 border-emerald-200' : 'bg-amber-50/50 border-amber-200' }}">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider {{ $bimbingansCount >= 8 ? 'text-emerald-800' : 'text-amber-800' }}">Logbook Bimbingan F4</span>
-              <span class="material-symbols-outlined text-[20px] {{ $bimbingansCount >= 8 ? 'text-emerald-600' : 'text-amber-600' }}">
-                {{ $bimbingansCount >= 8 ? 'verified' : 'pending' }}
-              </span>
-            </div>
-            <div class="text-2xl font-black font-heading mt-2 {{ $bimbingansCount >= 8 ? 'text-emerald-900' : 'text-amber-900' }}">
-              {{ $bimbingansCount }} <span class="text-sm font-normal text-slate-500">/ 8 Sesi Wajib</span>
-            </div>
-            <div class="text-[11px] font-semibold mt-1 {{ $bimbingansCount >= 8 ? 'text-emerald-700' : 'text-amber-700' }}">
-              {{ $bimbingansCount >= 8 ? 'Telah Memenuhi Syarat Sidang' : 'Kurang ' . (8 - $bimbingansCount) . ' sesi bimbingan lagi' }}
-            </div>
-          </div>
-
-          <!-- Status F5 Nilai Industri (60%) -->
-          <div class="p-4 rounded-xl border {{ $evalF5 ? 'bg-teal-50/50 border-teal-200' : 'bg-slate-50 border-slate-200' }}">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Form F5 Industri (Bobot 60%)</span>
-              <span class="material-symbols-outlined text-[20px] {{ $evalF5 ? 'text-[#02796B]' : 'text-slate-400' }}">domain</span>
-            </div>
-            <div class="text-2xl font-black font-heading mt-2 {{ $evalF5 ? 'text-[#02796B]' : 'text-slate-400' }}">
-              {{ $evalF5 ? $evalF5->rata_rata_f5 . '/100' : 'Belum Diisi' }}
-            </div>
-            <div class="text-[11px] text-slate-500 font-semibold mt-1">
-              {{ $evalF5 ? 'Telah dikirim secara rahasia oleh DUDI' : 'Menunggu input dari pembimbing lapangan' }}
-            </div>
-          </div>
-
-          <!-- Status Nilai Akhir Fuzzy Logic -->
-          <div class="p-4 rounded-xl border {{ $activePengajuan->nilai_akhir_fuzzy ? 'bg-blue-50/60 border-blue-200' : 'bg-slate-50 border-slate-200' }}">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-[#0056B3]">Nilai Akhir Fuzzy Logic</span>
-              <span class="material-symbols-outlined text-[20px] text-[#0056B3]">psychology</span>
-            </div>
-            <div class="text-2xl font-black font-heading mt-2 font-mono text-[#0056B3]">
-              {{ $activePengajuan->nilai_akhir_fuzzy ?? 'Belum Dikalkulasi' }}
-            </div>
-            <div class="text-[11px] text-slate-500 font-semibold mt-1">
-              {{ $activePengajuan->nilai_akhir_fuzzy ? 'Skor numerik rasio resmi (skala 50)' : 'Dihitung via script Python Mamdani' }}
-            </div>
+            <button type="button" 
+                    onclick="openReviewModal({{ $lb->id }}, '{{ addslashes($lb->student->name ?? 'Mahasiswa') }}', '{{ addslashes($lb->student->identifier ?? '') }}', '{{ addslashes($lb->subject) }}', '{{ $lb->tanggal->translatedFormat('d F Y') }}', {{ json_encode($lb->content) }}, '{{ $lb->status }}', '{{ addslashes($lb->feedback ?? '') }}')"
+                    class="bg-[#0056B3] hover:bg-[#00428A] text-white px-3 py-1.5 rounded-lg text-xs font-bold">
+              Review
+            </button>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-          <!-- SUB-FORM 1: INPUT CATATAN SESI BIMBINGAN F4 -->
-          <div class="p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-4">
-            <div class="flex items-center justify-between">
-              <h3 class="text-sm font-bold font-heading text-slate-800 flex items-center gap-2">
-                <span class="material-symbols-outlined text-[#0056B3]">co_present</span>
-                <span>Catat Sesi Bimbingan Akademik (Form F4)</span>
-              </h3>
-              <a href="{{ route('dokumen.f4', $activePengajuan->id) }}" target="_blank" class="text-xs text-[#0056B3] font-bold hover:underline flex items-center gap-1">
-                <span class="material-symbols-outlined text-[15px]">print</span>
-                <span>Cetak Rekap F4</span>
-              </a>
-            </div>
-
-            <form method="POST" action="{{ route('bimbingan_f4.store', $activePengajuan->id) }}" class="space-y-3">
-              @csrf
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Tanggal Bimbingan</label>
-                  <input type="date" name="tanggal_bimbingan" required value="{{ date('Y-m-d') }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-[#0056B3]">
-                </div>
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Progres Bab / Laporan</label>
-                  <input type="text" name="progres_laporan" placeholder="Contoh: Bab III Metodologi" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-[#0056B3]">
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Materi / Bahasan Bimbingan</label>
-                <textarea name="materi_bimbingan" rows="2" required placeholder="Uraian konsultasi, arahan perbaikan, atau telaah arsitektur..." class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-[#0056B3]"></textarea>
-              </div>
-
-              <div>
-                <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Catatan Arahan Dosen</label>
-                <input type="text" name="catatan_dosen" placeholder="Contoh: Lanjutkan dokumentasi Bab IV implementasi" class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:border-[#0056B3]">
-              </div>
-
-              <div class="flex items-center justify-end">
-                <button type="submit" class="px-4 py-2 rounded-xl bg-[#0056B3] hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors">
-                  <span class="material-symbols-outlined text-[15px]">add_circle</span>
-                  <span>Catat Sesi Bimbingan (Sesi Ke-{{ $bimbingansCount + 1 }})</span>
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <!-- SUB-FORM 2: EVALUASI AKADEMIK F6 (BOBOT 40%) & TRIGGER FUZZY PYTHON -->
-          <div class="p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-4">
-            <div class="flex items-center justify-between">
-              <h3 class="text-sm font-bold font-heading text-slate-800 flex items-center gap-2">
-                <span class="material-symbols-outlined text-[#02796B]">grade</span>
-                <span>Evaluasi Nilai Akademik Dosen (Form F6 - 40%)</span>
-              </h3>
-              @if($evalF6)
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Skor F6: {{ $evalF6->rata_rata_f6 }}</span>
-              @endif
-            </div>
-
-            <form method="POST" action="{{ route('dosen.evaluasi_f6.store', $activePengajuan->id) }}" class="space-y-3">
-              @csrf
-              <div class="grid grid-cols-3 gap-2">
-                <div class="bg-white p-2 rounded-lg border border-slate-200">
-                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Kesesuaian Judul</label>
-                  <input type="number" step="0.5" min="0" max="100" name="skor_kesesuaian_judul" required value="{{ old('skor_kesesuaian_judul', $evalF6?->skor_kesesuaian_judul ?? 90) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
-                </div>
-                <div class="bg-white p-2 rounded-lg border border-slate-200">
-                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Tata Bahasa</label>
-                  <input type="number" step="0.5" min="0" max="100" name="skor_tata_bahasa" required value="{{ old('skor_tata_bahasa', $evalF6?->skor_tata_bahasa ?? 85) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
-                </div>
-                <div class="bg-white p-2 rounded-lg border border-slate-200">
-                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Format Laporan</label>
-                  <input type="number" step="0.5" min="0" max="100" name="skor_format_laporan" required value="{{ old('skor_format_laporan', $evalF6?->skor_format_laporan ?? 88) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
-                </div>
-                <div class="bg-white p-2 rounded-lg border border-slate-200">
-                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Pengetahuan Subjek</label>
-                  <input type="number" step="0.5" min="0" max="100" name="skor_pengetahuan" required value="{{ old('skor_pengetahuan', $evalF6?->skor_pengetahuan ?? 90) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
-                </div>
-                <div class="bg-white p-2 rounded-lg border border-slate-200">
-                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Tanya Jawab</label>
-                  <input type="number" step="0.5" min="0" max="100" name="skor_tanya_jawab" required value="{{ old('skor_tanya_jawab', $evalF6?->skor_tanya_jawab ?? 88) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
-                </div>
-                <div class="bg-white p-2 rounded-lg border border-slate-200">
-                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Etika &amp; Sikap</label>
-                  <input type="number" step="0.5" min="0" max="100" name="skor_etika" required value="{{ old('skor_etika', $evalF6?->skor_etika ?? 95) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
-                </div>
-                <div class="bg-white p-2 rounded-lg border border-slate-200">
-                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Justifikasi Solusi</label>
-                  <input type="number" step="0.5" min="0" max="100" name="skor_justifikasi" required value="{{ old('skor_justifikasi', $evalF6?->skor_justifikasi ?? 86) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
-                </div>
-                <div class="bg-white p-2 rounded-lg border border-slate-200">
-                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Rutinitas Bimbingan</label>
-                  <input type="number" step="0.5" min="0" max="100" name="skor_rutinitas_bimbingan" required value="{{ old('skor_rutinitas_bimbingan', $evalF6?->skor_rutinitas_bimbingan ?? 95) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
-                </div>
-                <div class="bg-white p-2 rounded-lg border border-slate-200">
-                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Progres PKL</label>
-                  <input type="number" step="0.5" min="0" max="100" name="skor_progres" required value="{{ old('skor_progres', $evalF6?->skor_progres ?? 88) }}" class="w-full text-xs rounded border-slate-200 font-bold p-1">
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-[11px] font-bold text-slate-700 uppercase mb-0.5">Catatan Evaluasi Akademik Dosen</label>
-                <input type="text" name="catatan_dosen" value="{{ old('catatan_dosen', $evalF6?->catatan_dosen) }}" placeholder="Catatan apresiasi atau rekomendasi penyempurnaan..." class="w-full text-xs rounded-xl border-slate-200 p-2 focus:border-[#02796B]">
-              </div>
-
-              <div class="flex items-center justify-end">
-                <button type="submit" class="px-4 py-2 rounded-xl bg-[#02796B] hover:bg-teal-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors">
-                  <span class="material-symbols-outlined text-[15px]">save</span>
-                  <span>Simpan Nilai F6 (Bobot 40%)</span>
-                </button>
-              </div>
-            </form>
-
-            <!-- TRIGGER ACTION BUTTON: KALKULASI & TRANSMISI FUZZY LOGIC PYTHON -->
-            <div class="p-4 rounded-xl bg-gradient-to-r from-slate-900 to-teal-950 text-white mt-4 border border-teal-500/40">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <div class="flex items-center gap-1.5 text-teal-300 text-xs font-bold font-mono">
-                    <span class="material-symbols-outlined text-[16px]">terminal</span>
-                    <span>PYTHON FUZZY LOGIC SCORING ENGINE</span>
-                  </div>
-                  <p class="text-[11px] text-slate-300 mt-0.5">
-                    Mengeksekusi inferensi Tsukamoto/Mamdani: F5 (60%) + F6 (40%) &rarr; Output rasio skala 50.
-                  </p>
-                </div>
-
-                <form method="POST" action="{{ route('dosen.kalkulasi-fuzzy', $activePengajuan->id) }}">
-                  @csrf
-                  <button type="submit" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-400 to-emerald-400 hover:from-teal-300 hover:to-emerald-300 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md transition-all">
-                    <span class="material-symbols-outlined text-[16px]">play_arrow</span>
-                    <span>Kalkulasi &amp; Transmit Nilai</span>
-                  </button>
-                </form>
-              </div>
-
-              @if($activePengajuan->nilai_akhir_fuzzy)
-                <div class="mt-3 pt-3 border-t border-teal-500/30 flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <span class="text-xs text-teal-200">Skor Terkini:</span>
-                    <span class="text-base font-black font-mono text-emerald-400">{{ $activePengajuan->nilai_akhir_fuzzy }}</span>
-                    <span class="text-xs text-slate-300">({{ $activePengajuan->fuzzy_percentage }}%)</span>
-                  </div>
-                  <a href="{{ route('dokumen.f7', $activePengajuan->id) }}" target="_blank" class="text-xs font-bold text-teal-300 hover:underline flex items-center gap-1">
-                    <span class="material-symbols-outlined text-[14px]">file_open</span>
-                    <span>Form F7 Resmi</span>
-                  </a>
-                </div>
-              @endif
-            </div>
-          </div>
-        </div>
+        <p class="p-3 bg-white rounded-lg border border-slate-200/80 text-xs text-slate-700 whitespace-pre-line">{{ $lb->content }}</p>
       </div>
-      @endif
-
-    </main>
-
-    <!-- Footer -->
-    <footer class="mt-auto py-6 px-8 border-t border-slate-200/80 bg-white text-center text-xs text-slate-500">
-      <div class="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-        <p>© 2026 Jurusan Teknik Informatika dan Komputer - Politeknik Negeri Jakarta</p>
-        <p class="text-slate-400">Sistem Informasi Manajemen Praktik Kerja Lapangan (SIM-PKL)</p>
+    @empty
+      <div class="p-6 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 text-xs text-slate-400">
+        Belum ada logbook masuk.
       </div>
-    </footer>
-
+    @endforelse
   </div>
+</div>
 
-  <!-- MODAL: Review Logbook F3 -->
-  <div id="modal-logbook" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center hidden p-4">
-    <div class="bg-white rounded-2xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-scale-up">
-      <div class="flex items-start justify-between border-b border-slate-100 pb-4">
-        <div>
-          <span class="text-xs font-bold uppercase tracking-wider text-[#02796B]">Verifikasi Logbook (Form F3)</span>
-          <h3 id="modal-student-name" class="text-lg font-bold font-heading text-slate-800 mt-0.5">Review Logbook Mahasiswa</h3>
-          <p id="modal-student-sub" class="text-xs text-slate-500 mt-0.5">Detail aktivitas harian lapangan</p>
-        </div>
-        <button onclick="closeModal('modal-logbook')" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
-          <span class="material-symbols-outlined text-[20px]">close</span>
-        </button>
-      </div>
-
-      <!-- Subject & Date Display -->
-      <div class="p-3.5 bg-blue-50/70 border border-blue-100 rounded-xl space-y-1">
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-[10px] font-bold text-[#0056B3] uppercase tracking-wider">Subject Logbook:</span>
-          <span id="modal-logbook-tanggal" class="text-xs font-mono text-slate-500"></span>
-        </div>
-        <h4 id="modal-logbook-subject" class="text-sm sm:text-base font-bold font-heading text-slate-800"></h4>
-      </div>
-
-      <!-- Activity Content (Long Text) Written by Student -->
+<!-- MODAL: Review Logbook -->
+<div id="modal-logbook" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center hidden p-4">
+  <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-scale-up">
+    <div class="flex items-start justify-between border-b border-slate-100 pb-3">
       <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">Uraian Aktivitas Mahasiswa (Long Text):</label>
-        <div id="modal-logbook-content" class="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line max-h-56 overflow-y-auto"></div>
+        <h3 id="modal-student-name" class="text-base font-bold font-heading text-slate-800">Review Logbook</h3>
+        <p id="modal-student-sub" class="text-xs text-slate-500"></p>
       </div>
-
-      <!-- Form to Approve with Feedback -->
-      <form id="form-approve-logbook" method="POST" action="" class="space-y-4 pt-2">
-        @csrf
-        <input type="hidden" name="status" value="approved">
-
-        <div>
-          <label for="review-feedback" class="block text-xs font-bold text-slate-700 mb-1">
-            Catatan / Arahan Bimbingan Dosen:
-          </label>
-          <textarea id="review-feedback" name="feedback" rows="3" placeholder="Tuliskan catatan arahan bimbingan untuk mahasiswa..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0056B3]/20 focus:border-[#0056B3]">Logbook terperinci dan progres implementasi sesuai dengan timeline. Lanjutkan ke tahap berikutnya.</textarea>
-        </div>
-
-        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-          <button type="button" onclick="closeModal('modal-logbook')" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
-            Tutup
-          </button>
-          <button type="submit" class="bg-[#0056B3] hover:bg-[#00428A] text-white px-5 py-2.5 rounded-xl text-xs font-bold font-heading flex items-center gap-1.5 transition-all shadow-sm">
-            <span class="material-symbols-outlined text-[16px]">check_circle</span>
-            <span>Setujui &amp; Validasi Logbook</span>
-          </button>
-        </div>
-      </form>
+      <button onclick="closeModal('modal-logbook')" class="p-1 rounded-lg text-slate-400 hover:text-slate-700">
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
     </div>
-  </div>
 
-  <!-- MODAL: Setujui Form F1 dengan Unggah Dokumen PDF Surat Pernyataan -->
-  <div id="modal-f1" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center hidden p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-scale-up">
-      <div class="flex items-start justify-between border-b border-slate-100 pb-4">
-        <div>
-          <span class="text-xs font-bold uppercase tracking-wider text-[#02796B]">Persetujuan Form F1</span>
-          <h3 class="text-lg font-bold font-heading text-slate-800 mt-0.5">Kesediaan Pembimbing PKL</h3>
-          <p id="f1-student-info" class="text-xs text-slate-500 mt-0.5">Pengesahan Dosen Pembimbing</p>
-        </div>
-        <button type="button" onclick="closeModal('modal-f1')" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
-          <span class="material-symbols-outlined text-[20px]">close</span>
-        </button>
+    <div class="p-3 bg-blue-50/70 border border-blue-100 rounded-xl">
+      <div class="flex items-center justify-between text-xs text-slate-500 mb-0.5">
+        <span class="font-bold text-[#0056B3]">Topik</span>
+        <span id="modal-logbook-tanggal" class="font-mono"></span>
       </div>
-
-      <form id="form-approve-f1" method="POST" action="{{ route('f1.approve.general') }}" enctype="multipart/form-data" class="space-y-4" onsubmit="return ensureF1FormAction(this)">
-        @csrf
-        <input type="hidden" id="f1-hidden-app-id" name="application_id" value="">
-
-        <div>
-          <label for="f1-pdf-file" class="block text-xs font-bold text-slate-700 mb-1">
-            Unggah Berkas Surat Pernyataan Kesediaan (Wajib PDF) <span class="text-rose-500">*</span>
-          </label>
-          <input type="file" id="f1-pdf-file" name="surat_pernyataan" required accept="application/pdf" class="w-full text-xs text-slate-600 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#02796B] file:text-white hover:file:bg-[#006054] cursor-pointer bg-slate-50 border border-slate-200 rounded-xl p-1.5 focus:outline-none">
-          <div class="flex items-center justify-between mt-1">
-            <span class="text-[10px] text-slate-400">Format: .pdf (Maksimal 50 MB)</span>
-            <span id="f1-file-size-badge" class="text-[10px] font-semibold text-slate-500 hidden"></span>
-          </div>
-          <div id="f1-file-feedback" class="text-xs mt-1.5 hidden"></div>
-        </div>
-
-        <div>
-          <label for="f1-notes" class="block text-xs font-bold text-slate-700 mb-1">
-            Catatan / Arahan Bimbingan Awal (Opsional):
-          </label>
-          <textarea id="f1-notes" name="notes" rows="2" placeholder="Catatan arahan awal bimbingan untuk mahasiswa..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#02796B]/20">Topik PKL dan tempat magang telah disetujui sesuai kurikulum D4 Teknik Informatika.</textarea>
-        </div>
-
-        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-          <button type="button" onclick="closeModal('modal-f1')" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
-            Batal
-          </button>
-          <button type="submit" id="btn-submit-f1" class="bg-[#02796B] hover:bg-[#006054] text-white px-5 py-2.5 rounded-xl text-xs font-bold font-heading flex items-center gap-1.5 transition-all shadow-sm">
-            <span class="material-symbols-outlined text-[16px]" id="icon-submit-f1">upload_file</span>
-            <span id="text-submit-f1">Unggah Surat &amp; Sahkan Form F1</span>
-          </button>
-        </div>
-      </form>
+      <h4 id="modal-logbook-subject" class="text-sm font-bold text-slate-800"></h4>
     </div>
-  </div>
 
-  <!-- MODAL: Tambah Mahasiswa Bimbingan Baru (Slot Kuota) -->
-  <div id="modal-new-student" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center hidden p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-scale-up">
-      <div class="flex items-start justify-between border-b border-slate-100 pb-4">
-        <div>
-          <span class="text-xs font-bold uppercase tracking-wider text-[#02796B]">Beban Bimbingan (Slot Kuota)</span>
-          <h3 class="text-lg font-bold font-heading text-slate-800 mt-0.5">Terima Mahasiswa Bimbingan Baru</h3>
-          <p class="text-xs text-slate-500 mt-0.5">Sisa kuota bimbingan Anda: <strong>{{ 7 - ($studentCount ?? 1) }} Mahasiswa</strong></p>
-        </div>
-        <button onclick="closeModal('modal-new-student')" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
-          <span class="material-symbols-outlined text-[20px]">close</span>
-        </button>
-      </div>
-
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Cari Mahasiswa Terdaftar:</label>
-          <input type="text" placeholder="Ketik NIM atau Nama Mahasiswa TIK..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0056B3]/20">
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Pengajuan Menunggu Persetujuan:</label>
-          <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
-            <span class="material-symbols-outlined text-slate-400 text-[28px]">inbox</span>
-            <p class="text-xs text-slate-500 font-medium mt-1">Saat ini belum ada pengajuan mahasiswa baru yang menunggu persetujuan.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-        <button onclick="closeModal('modal-new-student')" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
-          Tutup
-        </button>
-      </div>
+    <div>
+      <label class="block text-xs font-bold text-slate-700 mb-1">Uraian Aktivitas:</label>
+      <div id="modal-logbook-content" class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 whitespace-pre-line max-h-52 overflow-y-auto"></div>
     </div>
+
+    <form id="form-approve-logbook" method="POST" action="" class="space-y-3">
+      @csrf
+      <input type="hidden" name="status" value="approved">
+      <div>
+        <label for="review-feedback" class="block text-xs font-bold text-slate-700 mb-1">Catatan Dosen:</label>
+        <textarea id="review-feedback" name="feedback" rows="3" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">Logbook sesuai progres. Lanjutkan ke tahap berikutnya.</textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+        <button type="button" onclick="closeModal('modal-logbook')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Tutup</button>
+        <button type="submit" class="bg-[#0056B3] hover:bg-[#00428A] text-white px-4 py-2 rounded-xl text-xs font-bold">Setujui Logbook</button>
+      </div>
+    </form>
   </div>
+</div>
+@endsection
 
-  <!-- Interactive JavaScript -->
-  <script>
-    // Toggle Mobile Sidebar
-    function toggleSidebar() {
-      const sidebar = document.getElementById('main-sidebar');
-      const backdrop = document.getElementById('sidebar-backdrop');
-      
-      if (sidebar.classList.contains('-translate-x-full')) {
-        sidebar.classList.remove('-translate-x-full');
-        backdrop.classList.remove('hidden');
-      } else {
-        sidebar.classList.add('-translate-x-full');
-        backdrop.classList.add('hidden');
-      }
-    }
-
-    // Filter Students by Name or Status
-    function filterStudents() {
-      const searchEl = document.getElementById('student-search');
-      const filterEl = document.getElementById('status-filter');
-      const query = (searchEl ? searchEl.value : '').toLowerCase();
-      const statusFilter = (filterEl ? filterEl.value : 'all');
-      const cards = document.querySelectorAll('.student-card');
-
-      cards.forEach(card => {
-        const nameAttr = (card.getAttribute('data-name') || '').toLowerCase();
-        const statusAttr = card.getAttribute('data-status') || '';
-
-        const matchesQuery = nameAttr.includes(query);
-        const matchesStatus = (statusFilter === 'all') || (statusAttr === statusFilter) || (statusFilter !== 'review' && statusFilter !== 'uptodate');
-
-        if (matchesQuery && matchesStatus) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
-      });
-    }
-
-    // Auto-scroll when visiting with tab=f1 or #f1-section
-    function checkF1HashOrTab() {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (window.location.hash === '#f1-section' || urlParams.get('tab') === 'f1') {
-        const section = document.getElementById('f1-section');
-        if (section) {
-          setTimeout(() => {
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 100);
-        }
-      } else if (window.location.hash === '#mahasiswa-section') {
-        const section = document.getElementById('mahasiswa-section');
-        if (section) {
-          setTimeout(() => {
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 100);
-        }
-      }
-    }
-    document.addEventListener('DOMContentLoaded', checkF1HashOrTab);
-    window.addEventListener('hashchange', checkF1HashOrTab);
-
-    // Open Review Modal with full logbook details
-    function openReviewModal(id, studentName, studentNim, subject, tanggal, content, status, feedback) {
-      document.getElementById('modal-student-name').innerText = `Review Logbook: ${studentName}`;
-      document.getElementById('modal-student-sub').innerText = `NIM: ${studentNim}`;
-      document.getElementById('modal-logbook-subject').innerText = subject;
-      document.getElementById('modal-logbook-tanggal').innerText = tanggal;
-      document.getElementById('modal-logbook-content').innerText = content;
-      
-      const form = document.getElementById('form-approve-logbook');
-      form.action = `/logbooks/${id}/status`;
-
-      if (feedback && feedback.trim() !== '') {
-        document.getElementById('review-feedback').value = feedback;
-      }
-
-      openModal('modal-logbook');
-    }
-
-    function openModal(id) {
-      const modal = document.getElementById(id);
-      if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-      }
-    }
-
-    function closeModal(id) {
-      const modal = document.getElementById(id);
-      if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-      }
-    }
-
-    function openNewStudentModal() {
-      openModal('modal-new-student');
-    }
-
-    function openF1ModalFromBtn(btn) {
-      openF1Modal(
-        btn.dataset.appId,
-        btn.dataset.studentName,
-        btn.dataset.studentNim,
-        btn.dataset.company,
-        btn.dataset.title
-      );
-    }
-
-    function openF1Modal(applicationId, name, nim, company, topic) {
-      const studentInfoEl = document.getElementById('f1-student-info');
-      if (studentInfoEl) {
-        studentInfoEl.innerText = `${name} (${nim}) • ${company}`;
-      }
-      
-      const form = document.getElementById('form-approve-f1');
-      if (form) {
-        form.action = `/f1/${applicationId}/approve`;
-      }
-
-      const hiddenAppId = document.getElementById('f1-hidden-app-id');
-      if (hiddenAppId) {
-        hiddenAppId.value = applicationId;
-      }
-
-      // Reset modal state
-      const pdfInput = document.getElementById('f1-pdf-file');
-      if (pdfInput) pdfInput.value = '';
-      const feedback = document.getElementById('f1-file-feedback');
-      if (feedback) { feedback.className = 'text-xs mt-1.5 hidden'; feedback.innerHTML = ''; }
-      const sizeBadge = document.getElementById('f1-file-size-badge');
-      if (sizeBadge) { sizeBadge.className = 'text-[10px] font-semibold text-slate-500 hidden'; sizeBadge.innerText = ''; }
-      const submitBtn = document.getElementById('btn-submit-f1');
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
-      }
-      const submitText = document.getElementById('text-submit-f1');
-      if (submitText) submitText.innerText = 'Unggah Surat & Sahkan Form F1';
-      const submitIcon = document.getElementById('icon-submit-f1');
-      if (submitIcon) submitIcon.classList.remove('animate-spin');
-
-      openModal('modal-f1');
-    }
-
-    // Client-side file size & extension inspection
-    document.addEventListener('DOMContentLoaded', function() {
-      const fileInput = document.getElementById('f1-pdf-file');
-      if (fileInput) {
-        fileInput.addEventListener('change', function() {
-          const file = this.files[0];
-          const feedback = document.getElementById('f1-file-feedback');
-          const sizeBadge = document.getElementById('f1-file-size-badge');
-          if (!file) {
-            if (feedback) feedback.className = 'text-xs mt-1.5 hidden';
-            if (sizeBadge) sizeBadge.className = 'text-[10px] font-semibold text-slate-500 hidden';
-            return;
-          }
-
-          const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-          if (sizeBadge) {
-            sizeBadge.innerText = `${sizeMB} MB`;
-            sizeBadge.classList.remove('hidden');
-          }
-
-          if (!file.name.toLowerCase().endsWith('.pdf')) {
-            if (feedback) {
-              feedback.className = 'text-xs mt-1.5 text-rose-600 font-semibold flex items-center gap-1';
-              feedback.innerHTML = '<span class="material-symbols-outlined text-[15px]">error</span> Wajib file berekstensi .pdf!';
-            }
-            this.value = '';
-            if (sizeBadge) sizeBadge.classList.add('hidden');
-            return;
-          }
-
-          if (file.size > 52428800) { // 50MB
-            if (feedback) {
-              feedback.className = 'text-xs mt-1.5 text-rose-600 font-semibold flex items-center gap-1';
-              feedback.innerHTML = `<span class="material-symbols-outlined text-[15px]">error</span> Ukuran file (${sizeMB} MB) melebihi batas maksimal 50 MB!`;
-            }
-            this.value = '';
-            return;
-          }
-
-          if (feedback) {
-            feedback.className = 'text-xs mt-1.5 text-emerald-600 font-semibold flex items-center gap-1';
-            feedback.innerHTML = `<span class="material-symbols-outlined text-[15px]">check_circle</span> File siap: <strong>${file.name}</strong> (${sizeMB} MB)`;
-          }
-        });
-      }
+@push('scripts')
+<script>
+  function filterStudents() {
+    const query = (document.getElementById('student-search')?.value || '').toLowerCase();
+    const statusFilter = document.getElementById('status-filter')?.value || 'all';
+    document.querySelectorAll('.student-card').forEach(card => {
+      const nameAttr = (card.getAttribute('data-name') || '').toLowerCase();
+      const statusAttr = card.getAttribute('data-status') || '';
+      const matchesQuery = nameAttr.includes(query);
+      const matchesStatus = (statusFilter === 'all') || (statusAttr === statusFilter);
+      card.style.display = (matchesQuery && matchesStatus) ? 'block' : 'none';
     });
+  }
 
-    function ensureF1FormAction(form) {
-      const hiddenAppId = document.getElementById('f1-hidden-app-id');
-      const appId = hiddenAppId ? hiddenAppId.value : null;
-      if (appId) {
-        form.action = `/f1/${appId}/approve`;
-      }
-      const submitBtn = document.getElementById('btn-submit-f1');
-      const submitText = document.getElementById('text-submit-f1');
-      const submitIcon = document.getElementById('icon-submit-f1');
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
-        if (submitText) submitText.innerText = 'Mengunggah & Memproses...';
-        if (submitIcon) submitIcon.classList.add('animate-spin');
-      }
-      return true;
+  function openReviewModal(id, studentName, studentNim, subject, tanggal, content, status, feedback) {
+    document.getElementById('modal-student-name').innerText = `Review Logbook: ${studentName}`;
+    document.getElementById('modal-student-sub').innerText = `NIM: ${studentNim}`;
+    document.getElementById('modal-logbook-subject').innerText = subject;
+    document.getElementById('modal-logbook-tanggal').innerText = tanggal;
+    document.getElementById('modal-logbook-content').innerText = content;
+    document.getElementById('form-approve-logbook').action = `/logbooks/${id}/status`;
+    if (feedback && feedback.trim() !== '') {
+      document.getElementById('review-feedback').value = feedback;
     }
+    openModal('modal-logbook');
+  }
 
-    function showF1Tab() {
-      const section = document.getElementById('f1-section');
-      if (section) {
-        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
+  function openModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+  }
 
-    function acceptStudent(name) {
-      closeModal('modal-new-student');
-      showToast(`${name} berhasil ditambahkan ke dalam daftar bimbingan (Kuota terpakai: 6/7).`);
-    }
-
-    // Toast Notification Feedback (Supports 'success' and 'error')
-    function showToast(message, type = 'success') {
-      const existingToast = document.getElementById('sim-toast');
-      if (existingToast) existingToast.remove();
-
-      const isError = type === 'error';
-      const toast = document.createElement('div');
-      toast.id = 'sim-toast';
-      toast.className = `fixed bottom-6 right-6 ${isError ? 'bg-rose-900 border border-rose-700 text-white' : 'bg-slate-900 text-white'} px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 z-50 text-xs sm:text-sm transition-all`;
-      toast.innerHTML = `
-        <span class="material-symbols-outlined ${isError ? 'text-rose-300' : 'text-emerald-400'} text-[20px]">${isError ? 'error' : 'check_circle'}</span>
-        <span>${message}</span>
-      `;
-      document.body.appendChild(toast);
-
-      setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(10px)';
-        setTimeout(() => toast.remove(), 300);
-      }, 5000);
-    }
-  </script>
-
-</body>
-</html>
+  function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+  }
+</script>
+@endpush
