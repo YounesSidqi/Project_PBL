@@ -115,17 +115,17 @@
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">1. Kesesuaian Judul &amp; Isi</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_kesesuaian_judul" required value="{{ old('skor_kesesuaian_judul', $evalF6?->skor_kesesuaian_judul ?? 90) }}" class="f6-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-[#0056B3] p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_kesesuaian_judul" required value="{{ old('skor_kesesuaian_judul', $evalF6?->skor_kesesuaian_judul ?? 90) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#0056B3] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">2. Tata Bahasa &amp; EYD</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_tata_bahasa" required value="{{ old('skor_tata_bahasa', $evalF6?->skor_tata_bahasa ?? 85) }}" class="f6-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-[#0056B3] p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_tata_bahasa" required value="{{ old('skor_tata_bahasa', $evalF6?->skor_tata_bahasa ?? 85) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#0056B3] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">3. Kepatuhan Format</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_format_laporan" required value="{{ old('skor_format_laporan', $evalF6?->skor_format_laporan ?? 88) }}" class="f6-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-[#0056B3] p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_format_laporan" required value="{{ old('skor_format_laporan', $evalF6?->skor_format_laporan ?? 88) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#0056B3] p-2 text-center">
         </div>
       </div>
     </div>
@@ -136,22 +136,22 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">4. Penguasaan Materi</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_pengetahuan" required value="{{ old('skor_pengetahuan', $evalF6?->skor_pengetahuan ?? 90) }}" class="f6-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-[#02796B] p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_pengetahuan" required value="{{ old('skor_pengetahuan', $evalF6?->skor_pengetahuan ?? 90) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#02796B] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">5. Tanya Jawab</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_tanya_jawab" required value="{{ old('skor_tanya_jawab', $evalF6?->skor_tanya_jawab ?? 88) }}" class="f6-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-[#02796B] p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_tanya_jawab" required value="{{ old('skor_tanya_jawab', $evalF6?->skor_tanya_jawab ?? 88) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#02796B] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">6. Etika &amp; Sikap</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_etika" required value="{{ old('skor_etika', $evalF6?->skor_etika ?? 95) }}" class="f6-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-[#02796B] p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_etika" required value="{{ old('skor_etika', $evalF6?->skor_etika ?? 95) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#02796B] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">7. Justifikasi Solusi</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_justifikasi" required value="{{ old('skor_justifikasi', $evalF6?->skor_justifikasi ?? 86) }}" class="f6-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-[#02796B] p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_justifikasi" required value="{{ old('skor_justifikasi', $evalF6?->skor_justifikasi ?? 86) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#02796B] p-2 text-center">
         </div>
       </div>
     </div>
@@ -162,12 +162,12 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">8. Rutinitas Bimbingan (Min. 8 Sesi)</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_rutinitas_bimbingan" required value="{{ old('skor_rutinitas_bimbingan', $evalF6?->skor_rutinitas_bimbingan ?? 95) }}" class="f6-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-purple-800 p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_rutinitas_bimbingan" required value="{{ old('skor_rutinitas_bimbingan', $evalF6?->skor_rutinitas_bimbingan ?? 95) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-purple-800 p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">9. Progres Capaian Magang</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_progres" required value="{{ old('skor_progres', $evalF6?->skor_progres ?? 88) }}" class="f6-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-purple-800 p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_progres" required value="{{ old('skor_progres', $evalF6?->skor_progres ?? 88) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-purple-800 p-2 text-center">
         </div>
       </div>
     </div>
@@ -177,7 +177,7 @@
       <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
         D. Catatan Evaluasi Dosen
       </label>
-      <textarea name="catatan_dosen" rows="3" placeholder="Tuliskan catatan evaluasi atau revisi akhir laporan..." class="w-full text-xs rounded-xl border-slate-200 p-3 focus:ring-2 focus:ring-[#0056B3]/20 focus:border-[#0056B3]">{{ old('catatan_dosen', $evalF6?->catatan_dosen) }}</textarea>
+      <textarea name="catatan_dosen" rows="3" placeholder="Tuliskan catatan evaluasi atau revisi akhir laporan..." class="w-full text-xs rounded-xl border border-slate-300 p-3 focus:ring-2 focus:ring-[#0056B3]/20 focus:border-[#0056B3]">{{ old('catatan_dosen', $evalF6?->catatan_dosen) }}</textarea>
     </div>
 
     <div class="flex items-center justify-end pt-3 border-t border-slate-100">
@@ -193,9 +193,9 @@
 <div class="bg-slate-900 rounded-2xl p-5 sm:p-6 text-white shadow-md space-y-4">
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
     <div>
-      <h3 class="text-base font-bold font-heading text-white">Kalkulasi Nilai Akhir (Fuzzy Logic)</h3>
+      <h3 class="text-base font-bold font-heading text-white">Kalkulasi Nilai Akhir (Metode Fuzzy Sugeno)</h3>
       <p class="text-xs text-slate-300 mt-0.5">
-        Penggabungan nilai F5 Industri (60%) dan F6 Dosen (40%) untuk menerbitkan nilai akhir Form F7.
+        Penggabungan nilai F5 Industri (60%) dan F6 Dosen (40%) dengan metode Fuzzy Sugeno untuk menerbitkan nilai akhir Form F7.
       </p>
     </div>
 

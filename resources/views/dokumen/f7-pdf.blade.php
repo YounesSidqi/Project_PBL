@@ -81,7 +81,7 @@
     <!-- BOX HASIL PENILAIAN FUZZY LOGIC (PRD 9.2) -->
     <div class="border-2 border-slate-900 rounded-xl p-5 my-6 bg-slate-50 font-sans">
       <div class="text-center mb-3">
-        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Hasil Evaluasi Akhir Berbasis Kecerdasan Buatan (Python Fuzzy Engine)</span>
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Hasil Evaluasi Akhir Berbasis Kecerdasan Buatan (Python Fuzzy Sugeno Engine)</span>
         <h4 class="text-sm font-bold text-slate-900 mt-0.5">Kombinasi Evaluasi Industri (Form F5 - 60%) &amp; Evaluasi Dosen (Form F6 - 40%)</h4>
       </div>
 

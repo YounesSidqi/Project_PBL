@@ -136,22 +136,22 @@
         @csrf
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Bimbingan</label>
-          <input type="date" name="tanggal_bimbingan" value="{{ date('Y-m-d') }}" required class="w-full text-xs rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+          <input type="date" name="tanggal_bimbingan" value="{{ date('Y-m-d') }}" required class="w-full text-xs rounded-xl border border-slate-300 p-2.5 shadow-sm focus:border-blue-500 focus:ring-blue-500">
         </div>
 
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Materi Bimbingan</label>
-          <input type="text" name="materi_bimbingan" placeholder="Contoh: Asistensi Bab III Metodologi" required class="w-full text-xs rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+          <input type="text" name="materi_bimbingan" placeholder="Contoh: Asistensi Bab III Metodologi" required class="w-full text-xs rounded-xl border border-slate-300 p-2.5 shadow-sm focus:border-blue-500 focus:ring-blue-500">
         </div>
 
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Progres Laporan</label>
-          <input type="text" name="progres_laporan" placeholder="Contoh: Bab III selesai 70%" class="w-full text-xs rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+          <input type="text" name="progres_laporan" placeholder="Contoh: Bab III selesai 70%" class="w-full text-xs rounded-xl border border-slate-300 p-2.5 shadow-sm focus:border-blue-500 focus:ring-blue-500">
         </div>
 
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Catatan &amp; Arahan Dosen</label>
-          <textarea name="catatan_dosen" rows="3" placeholder="Arahan revisi atau target berikutnya..." class="w-full text-xs rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+          <textarea name="catatan_dosen" rows="3" placeholder="Arahan revisi atau target berikutnya..." class="w-full text-xs rounded-xl border border-slate-300 p-2.5 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">

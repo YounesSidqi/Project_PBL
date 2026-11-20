@@ -45,7 +45,7 @@ Sistem menerapkan arsitektur *Role-Based Access Control* (RBAC) dengan prinsip *
 
 - **Frontend:** Laravel Blade + Tailwind CSS (Melanjutkan serta mempertahankan *layout UI/UX existing*).
 - **Backend:** Framework Laravel (PHP MVC) untuk logika bisnis, manajemen database, REST API, dan manajemen dokumen PDF.
-- **Engine Perhitungan Penilaian:** Script Python eksternal (Fuzzy Logic Mamdani/Tsukamoto) yang dieksekusi dari *backend* Laravel via Command Process/API Bridge.
+- **Engine Perhitungan Penilaian:** Script Python eksternal (Metode Fuzzy Logic Sugeno) yang dieksekusi dari *backend* Laravel via Command Process/API Bridge.
 - **Database:** MySQL.
 - **Notifikasi System:** Trigger Email Alert menggunakan alamat `noreply@pnj.ac.id` / SMTP Gateway.
 - **Document Generation:** HTML to PDF Renderer (Dompdf / Snappy) dengan template KOP Surat Resmi JTIK PNJ.
@@ -147,12 +147,12 @@ Sistem menerapkan arsitektur *Role-Based Access Control* (RBAC) dengan prinsip *
        │
        ├─► (Mengeksekusi Process Command: `python compute_fuzzy.py --f5=X --f6=Y`)
        │
-[ Python Script (Fuzzy Engine) ]
+[ Python Script (Fuzzy Sugeno Engine) ]
        │
-       ├─► (Fuzzifikasi: Mamdani / Tsukamoto)
-       ├─► (Evaluasi Rule Base & Defuzzifikasi)
+       ├─► (Fuzzifikasi: Kurang, Cukup, Baik, Sangat Baik)
+       ├─► (Evaluasi Rule Base 16 Aturan Sugeno & Defuzzifikasi Rata-rata Terbobot / Weighted Average)
        │
-       └─► (Output JSON: {"score_num": 40, "max_score": 50, "display": "40/50"})
+       └─► (Output JSON: {"method": "Fuzzy Sugeno", "score_num": 40, "max_score": 50, "display": "40/50"})
        │
 [ Dashboard Mahasiswa ] ◄── (Menampilkan format "40/50")
 ```
@@ -359,7 +359,7 @@ erDiagram
 1. **Autentikasi Terpusat (`users`):** Mengikat seluruh kredensial aktor dalam satu tabel dengan atribut `role`. Profil spesifik tersimpan pada tabel `mahasiswas`, `dosens`, dan `industris`.
 2. **Sentral Transaksi (`pengajuan_magangs`):** Berfungsi sebagai entitas utama yang mengikat Mahasiswa, Industri, dan Dosen Pembimbing. Menyimpan status alur persetujuan serta hasil keluaran `nilai_akhir_fuzzy`.
 3. **Pencatatan Keterlambatan Logbook (`logbook_f3`):** Menggunakan kolom `hari_terlambat` untuk mencatat selisih hari pengisian secara terotomasi (`0` untuk tepat waktu).
-4. **Penilaian Granular (`evaluasi_f5` & `evaluasi_f6`):** Menampung setiap parameter indikator F5 (Softskill & Hardskill) dan F6 (Laporan, Presentasi, Rutinitas Bimbingan) secara terpisah untuk memfasilitasi proses *parsing* data ke modul *Fuzzy Logic*.
+4. **Penilaian Granular (`evaluasi_f5` & `ewvaluasi_f6`):** Menampung setiap parameter indikator F5 (Softskill & Hardskill) dan F6 (Laporan, Presentasi, Rutinitas Bimbingan) secara terpisah untuk memfasilitasi proses *parsing* data ke modul *Fuzzy Logic*.
 
 ---
 

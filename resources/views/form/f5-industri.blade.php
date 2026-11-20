@@ -102,27 +102,27 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">1. Komunikasi</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_komunikasi" required value="{{ old('skor_komunikasi', $evaluasiF5?->skor_komunikasi ?? 85) }}" class="f5-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-teal-800 p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_komunikasi" required value="{{ old('skor_komunikasi', $evaluasiF5?->skor_komunikasi ?? 85) }}" class="f5-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-teal-800 p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">2. Berpikir Kritis</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_berpikir_kritis" required value="{{ old('skor_berpikir_kritis', $evaluasiF5?->skor_berpikir_kritis ?? 85) }}" class="f5-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-teal-800 p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_berpikir_kritis" required value="{{ old('skor_berpikir_kritis', $evaluasiF5?->skor_berpikir_kritis ?? 85) }}" class="f5-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-teal-800 p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">3. Kerjasama Tim</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_kerjasama" required value="{{ old('skor_kerjasama', $evaluasiF5?->skor_kerjasama ?? 90) }}" class="f5-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-teal-800 p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_kerjasama" required value="{{ old('skor_kerjasama', $evaluasiF5?->skor_kerjasama ?? 90) }}" class="f5-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-teal-800 p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">4. Inisiatif</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_inisiatif" required value="{{ old('skor_inisiatif', $evaluasiF5?->skor_inisiatif ?? 85) }}" class="f5-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-teal-800 p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_inisiatif" required value="{{ old('skor_inisiatif', $evaluasiF5?->skor_inisiatif ?? 85) }}" class="f5-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-teal-800 p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">5. Literasi &amp; Etika</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_literasi" required value="{{ old('skor_literasi', $evaluasiF5?->skor_literasi ?? 88) }}" class="f5-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-teal-800 p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_literasi" required value="{{ old('skor_literasi', $evaluasiF5?->skor_literasi ?? 88) }}" class="f5-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-teal-800 p-2 text-center">
         </div>
       </div>
     </div>
@@ -133,27 +133,27 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">6. Deskripsi Produk</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_deskripsi_produk" required value="{{ old('skor_deskripsi_produk', $evaluasiF5?->skor_deskripsi_produk ?? 90) }}" class="f5-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-[#0056B3] p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_deskripsi_produk" required value="{{ old('skor_deskripsi_produk', $evaluasiF5?->skor_deskripsi_produk ?? 90) }}" class="f5-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#0056B3] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">7. Spesifikasi Kebutuhan</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_spesifikasi" required value="{{ old('skor_spesifikasi', $evaluasiF5?->skor_spesifikasi ?? 88) }}" class="f5-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-[#0056B3] p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_spesifikasi" required value="{{ old('skor_spesifikasi', $evaluasiF5?->skor_spesifikasi ?? 88) }}" class="f5-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#0056B3] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">8. Desain Arsitektur</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_desain" required value="{{ old('skor_desain', $evaluasiF5?->skor_desain ?? 86) }}" class="f5-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-[#0056B3] p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_desain" required value="{{ old('skor_desain', $evaluasiF5?->skor_desain ?? 86) }}" class="f5-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#0056B3] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">9. Implementasi Teknis</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_implementasi" required value="{{ old('skor_implementasi', $evaluasiF5?->skor_implementasi ?? 90) }}" class="f5-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-[#0056B3] p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_implementasi" required value="{{ old('skor_implementasi', $evaluasiF5?->skor_implementasi ?? 90) }}" class="f5-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#0056B3] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1.5">10. Pengujian / QA</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_pengujian" required value="{{ old('skor_pengujian', $evaluasiF5?->skor_pengujian ?? 88) }}" class="f5-score-input w-full text-sm rounded-lg border-slate-300 font-bold text-[#0056B3] p-2 text-center">
+          <input type="number" step="0.5" min="0" max="100" name="skor_pengujian" required value="{{ old('skor_pengujian', $evaluasiF5?->skor_pengujian ?? 88) }}" class="f5-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#0056B3] p-2 text-center">
         </div>
       </div>
     </div>
@@ -163,7 +163,7 @@
       <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
         C. Catatan &amp; Rekomendasi Industri
       </label>
-      <textarea name="saran_industri" rows="3" placeholder="Tuliskan evaluasi atau rekomendasi untuk mahasiswa..." class="w-full text-xs rounded-xl border-slate-200 p-3 focus:ring-2 focus:ring-[#02796B]/20 focus:border-[#02796B]">{{ old('saran_industri', $evaluasiF5?->saran_industri) }}</textarea>
+      <textarea name="saran_industri" rows="3" placeholder="Tuliskan evaluasi atau rekomendasi untuk mahasiswa..." class="w-full text-xs rounded-xl border border-slate-300 p-3 focus:ring-2 focus:ring-[#02796B]/20 focus:border-[#02796B]">{{ old('saran_industri', $evaluasiF5?->saran_industri) }}</textarea>
     </div>
 
     <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">

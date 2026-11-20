@@ -129,7 +129,7 @@
           @if(!$isApproved)
             <form method="POST" action="{{ route('admin.f1.plot', $f1App->id) }}" class="flex flex-wrap items-center gap-2 shrink-0">
               @csrf
-              <select name="dosen_id" required class="text-xs rounded-xl border-slate-200 bg-white px-3 py-2 min-w-[220px]">
+              <select name="dosen_id" required class="text-xs rounded-xl border border-slate-300 bg-white px-3 py-2 min-w-[220px] focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none">
                 @foreach($dosens ?? [] as $dsn)
                   @php $usedQuota = $dsn->students_count ?? 0; @endphp
                   <option value="{{ $dsn->id }}" {{ $f1App->dosen_id === $dsn->id ? 'selected' : '' }} {{ $usedQuota >= 7 && $f1App->dosen_id !== $dsn->id ? 'disabled' : '' }}>
@@ -330,7 +330,7 @@
         <input type="hidden" name="redirect_tab" value="surat">
         <div class="mb-4">
           <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Mitra Industri</label>
-          <select name="industri_id" required class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+          <select name="industri_id" required class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none">
             @foreach($verifiedIndustris as $vInd)
               <option value="{{ $vInd->id }}" {{ $sp->industri_id === $vInd->id ? 'selected' : '' }}>
                 {{ $vInd->nama_perusahaan }} ({{ $vInd->user->email ?? 'Aktif' }})
@@ -354,7 +354,7 @@
       <form method="POST" action="{{ route('admin.surat.tolak', $sp->id) }}">
         @csrf
         <div class="mb-4">
-          <textarea name="catatan_penolakan" rows="3" required placeholder="Alasan penolakan..." class="w-full text-xs rounded-xl border-slate-200 p-2.5"></textarea>
+          <textarea name="catatan_penolakan" rows="3" required placeholder="Alasan penolakan..." class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none"></textarea>
         </div>
         <div class="flex items-center justify-end gap-2">
           <button type="button" onclick="document.getElementById('modal-tolak-{{ $sp->id }}').classList.add('hidden')" class="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Batal</button>
@@ -372,7 +372,7 @@
       <form method="POST" action="{{ route('admin.pengajuan.reset-draft', $sp->id) }}">
         @csrf
         <div class="mb-4">
-          <textarea name="catatan_penolakan" rows="3" placeholder="Keterangan (opsional)..." class="w-full text-xs rounded-xl border-slate-200 p-2.5"></textarea>
+          <textarea name="catatan_penolakan" rows="3" placeholder="Keterangan (opsional)..." class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none"></textarea>
         </div>
         <div class="flex items-center justify-end gap-2">
           <button type="button" onclick="document.getElementById('modal-reset-draft-{{ $sp->id }}').classList.add('hidden')" class="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Batal</button>
@@ -521,34 +521,34 @@
       @csrf
       <div>
         <label class="block text-xs font-bold text-slate-700 mb-1">Nama Perusahaan <span class="text-rose-500">*</span></label>
-        <input type="text" name="nama_perusahaan" required placeholder="PT ..." class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+        <input type="text" name="nama_perusahaan" required placeholder="PT ..." class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Bidang Usaha</label>
-          <input type="text" name="bidang_usaha" placeholder="Teknologi Informasi" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+          <input type="text" name="bidang_usaha" placeholder="Teknologi Informasi" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Kota</label>
-          <input type="text" name="kota" placeholder="Jakarta" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+          <input type="text" name="kota" placeholder="Jakarta" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
         </div>
       </div>
       <div>
         <label class="block text-xs font-bold text-slate-700 mb-1">Alamat</label>
-        <textarea name="alamat" rows="2" class="w-full text-xs rounded-xl border-slate-200 p-2.5"></textarea>
+        <textarea name="alamat" rows="2" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all"></textarea>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Nama PIC</label>
-          <input type="text" name="kontak_person" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+          <input type="text" name="kontak_person" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Email PIC</label>
-          <input type="email" name="email_pj" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+          <input type="email" name="email_pj" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Telepon</label>
-          <input type="text" name="telepon" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+          <input type="text" name="telepon" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
         </div>
       </div>
       <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
@@ -570,34 +570,34 @@
           @csrf
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Nama Perusahaan <span class="text-rose-500">*</span></label>
-            <input type="text" name="nama_perusahaan" required value="{{ $ind->nama_perusahaan }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            <input type="text" name="nama_perusahaan" required value="{{ $ind->nama_perusahaan }}" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Bidang Usaha</label>
-              <input type="text" name="bidang_usaha" value="{{ $ind->bidang_usaha }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+              <input type="text" name="bidang_usaha" value="{{ $ind->bidang_usaha }}" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Kota</label>
-              <input type="text" name="kota" value="{{ $ind->kota }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+              <input type="text" name="kota" value="{{ $ind->kota }}" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
             </div>
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Alamat</label>
-            <textarea name="alamat" rows="2" class="w-full text-xs rounded-xl border-slate-200 p-2.5">{{ $ind->alamat }}</textarea>
+            <textarea name="alamat" rows="2" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">{{ $ind->alamat }}</textarea>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Nama PIC</label>
-              <input type="text" name="kontak_person" value="{{ $ind->kontak_person }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+              <input type="text" name="kontak_person" value="{{ $ind->kontak_person }}" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Email PIC</label>
-              <input type="email" name="email_pj" value="{{ $ind->email_pj }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+              <input type="email" name="email_pj" value="{{ $ind->email_pj }}" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Telepon</label>
-              <input type="text" name="telepon" value="{{ $ind->telepon }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+              <input type="text" name="telepon" value="{{ $ind->telepon }}" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
             </div>
           </div>
           <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
@@ -618,7 +618,7 @@
             @csrf
             <input type="hidden" name="redirect_tab" value="industri">
             <div class="mb-4">
-              <select name="industri_id" required class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+              <select name="industri_id" required class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
                 @foreach($verifiedIndustris as $vInd)
                   <option value="{{ $vInd->id }}">{{ $vInd->nama_perusahaan }}</option>
                 @endforeach
@@ -640,7 +640,7 @@
         <form method="POST" action="{{ route('admin.industri.reject', $ind->id) }}">
           @csrf
           <div class="mb-4">
-            <textarea name="catatan_admin" rows="3" required placeholder="Alasan penolakan..." class="w-full text-xs rounded-xl border-slate-200 p-2.5"></textarea>
+            <textarea name="catatan_admin" rows="3" required placeholder="Alasan penolakan..." class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all"></textarea>
           </div>
           <div class="flex items-center justify-end gap-2">
             <button type="button" onclick="document.getElementById('modal-reject-ind-{{ $ind->id }}').classList.add('hidden')" class="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Batal</button>
@@ -663,7 +663,7 @@
       <p class="text-xs text-slate-500 mb-3">Format: <code>NIM, Nama, Email, Prodi, No HP</code></p>
       <form method="POST" action="{{ route('admin.mahasiswa.import') }}" enctype="multipart/form-data" class="space-y-3">
         @csrf
-        <input type="file" name="file_mahasiswa" accept=".csv,.txt" required class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-[#0056B3] border border-slate-200 rounded-xl p-1">
+        <input type="file" name="file_mahasiswa" accept=".csv,.txt" required class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-[#0056B3] border border-slate-300 bg-slate-50/60 rounded-xl p-1">
         <button type="submit" class="w-full py-2 rounded-xl bg-[#0056B3] hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5">
           <span class="material-symbols-outlined text-[15px]">cloud_upload</span>
           <span>Import Data</span>
@@ -676,11 +676,11 @@
       <h3 class="text-sm font-bold font-heading text-slate-800 mb-3">Tambah Mahasiswa Baru</h3>
       <form method="POST" action="{{ route('admin.mahasiswa.store') }}" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         @csrf
-        <input type="text" name="identifier" required placeholder="NIM (cth: 2107411099)" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
-        <input type="text" name="name" required placeholder="Nama Lengkap" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
-        <input type="email" name="email" required placeholder="Email (@stu.pnj.ac.id)" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+        <input type="text" name="identifier" required placeholder="NIM (cth: 2107411099)" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
+        <input type="text" name="name" required placeholder="Nama Lengkap" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
+        <input type="email" name="email" required placeholder="Email (@stu.pnj.ac.id)" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
         <div class="flex gap-2">
-          <select name="prodi" class="flex-1 text-xs rounded-xl border-slate-200 p-2.5">
+          <select name="prodi" class="flex-1 text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
             <option value="Teknik Informatika (D4)">Teknik Informatika (D4)</option>
             <option value="Teknik Komputer & Jaringan (D1/D3)">Teknik Komputer &amp; Jaringan</option>
             <option value="Broadband Multimedia (D4)">Broadband Multimedia (D4)</option>
@@ -805,23 +805,23 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">NIM</label>
-            <input type="text" name="identifier" required value="{{ $m->identifier }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            <input type="text" name="identifier" required value="{{ $m->identifier }}" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap</label>
-            <input type="text" name="name" required value="{{ $m->name }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            <input type="text" name="name" required value="{{ $m->name }}" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Email</label>
-            <input type="email" name="email" required value="{{ $m->email }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            <input type="email" name="email" required value="{{ $m->email }}" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">No. HP</label>
-            <input type="text" name="phone" value="{{ $m->phone }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            <input type="text" name="phone" value="{{ $m->phone }}" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
           </div>
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-slate-700 mb-1">Program Studi</label>
-            <select name="prodi" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            <select name="prodi" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
               <option value="Teknik Informatika (D4)" {{ $m->prodi === 'Teknik Informatika (D4)' ? 'selected' : '' }}>Teknik Informatika (D4)</option>
               <option value="Teknik Komputer & Jaringan (D1/D3)" {{ str_contains($m->prodi ?? '', 'Jaringan') ? 'selected' : '' }}>Teknik Komputer &amp; Jaringan</option>
               <option value="Broadband Multimedia (D4)" {{ str_contains($m->prodi ?? '', 'Multimedia') ? 'selected' : '' }}>Broadband Multimedia (D4)</option>
@@ -832,7 +832,7 @@
         <div class="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-slate-700 mb-1">Perusahaan Tempat PKL</label>
-            <select name="industri_id" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            <select name="industri_id" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
               <option value="">-- Belum Ditempatkan --</option>
               @foreach($industris as $indOpt)
                 <option value="{{ $indOpt->id }}" {{ $pmAktif?->industri_id === $indOpt->id ? 'selected' : '' }}>
@@ -843,11 +843,11 @@
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Posisi PKL</label>
-            <input type="text" name="posisi_magang" value="{{ $pmAktif?->posisi_magang }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            <input type="text" name="posisi_magang" value="{{ $pmAktif?->posisi_magang }}" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Status Surat Pengantar</label>
-            <select name="status_surat_pengantar" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            <select name="status_surat_pengantar" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
               <option value="pending" {{ $pmAktif?->status_surat_pengantar === 'pending' ? 'selected' : '' }}>Pending</option>
               <option value="diterbitkan" {{ $pmAktif?->status_surat_pengantar === 'diterbitkan' ? 'selected' : '' }}>Diterbitkan (Accept)</option>
               <option value="draft" {{ $pmAktif?->status_surat_pengantar === 'draft' ? 'selected' : '' }}>Draft (Buka Kunci Form)</option>
@@ -856,15 +856,15 @@
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Mulai</label>
-            <input type="date" name="tanggal_mulai" value="{{ $pmAktif?->tanggal_mulai?->format('Y-m-d') }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            <input type="date" name="tanggal_mulai" value="{{ $pmAktif?->tanggal_mulai?->format('Y-m-d') }}" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Selesai</label>
-            <input type="date" name="tanggal_selesai" value="{{ $pmAktif?->tanggal_selesai?->format('Y-m-d') }}" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            <input type="date" name="tanggal_selesai" value="{{ $pmAktif?->tanggal_selesai?->format('Y-m-d') }}" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Dosen Pembimbing</label>
-            <select name="dosen_id" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            <select name="dosen_id" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
               <option value="">-- Belum Ditetapkan --</option>
               @foreach($dosens ?? [] as $dsn)
                 <option value="{{ $dsn->id }}" {{ $m->dosen_id === $dsn->id ? 'selected' : '' }}>{{ $dsn->name }}</option>
@@ -873,7 +873,7 @@
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Status Dosen</label>
-            <select name="status_dosen" class="w-full text-xs rounded-xl border-slate-200 p-2.5">
+            <select name="status_dosen" class="w-full text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2.5 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
               <option value="pending" {{ $pmAktif?->status_dosen === 'pending' ? 'selected' : '' }}>Pending</option>
               <option value="usulan" {{ $pmAktif?->status_dosen === 'usulan' ? 'selected' : '' }}>Usulan</option>
               <option value="acc_kps" {{ $pmAktif?->status_dosen === 'acc_kps' || $m->dosen_id ? 'selected' : '' }}>ACC KPS</option>
@@ -902,7 +902,7 @@
 
     <form method="GET" action="{{ route('dashboard.admin') }}" class="flex items-center gap-2">
       <input type="hidden" name="tab" value="users">
-      <input type="text" name="search_user" value="{{ request('search_user') }}" placeholder="Cari nama, NIM/ID, email..." class="text-xs rounded-xl border-slate-200 p-2 w-56">
+      <input type="text" name="search_user" value="{{ request('search_user') }}" placeholder="Cari nama, NIM/ID, email..." class="text-xs rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white p-2 w-56 focus:border-[#0056B3] focus:ring-2 focus:ring-[#0056B3]/15 focus:outline-none transition-all">
       <button type="submit" class="px-3.5 py-2 rounded-xl bg-slate-800 text-white font-bold text-xs hover:bg-slate-900">Cari</button>
     </form>
   </div>

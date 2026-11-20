@@ -276,7 +276,7 @@ class PenilaianController extends Controller
         $f5Score = $pengajuan->evaluasiF5->rata_rata_f5;
         $f6Score = $pengajuan->evaluasiF6->rata_rata_f6;
 
-        // Eksekusi engine Python Fuzzy Logic (Mamdani/Tsukamoto)
+        // Eksekusi engine Python Fuzzy Logic (Metode Fuzzy Sugeno)
         $result = $fuzzyService->calculate($f5Score, $f6Score);
 
         $pengajuan->update([
@@ -287,6 +287,6 @@ class PenilaianController extends Controller
         ]);
 
         return redirect()->back()
-            ->with('success', "Kalkulasi Nilai Berbasis Python Fuzzy Logic berhasil dieksekusi! Output Skor Akhir: {$result['display']} (Persentase: {$result['percentage']}%). Nilai telah ditransmisikan ke portal mahasiswa.");
+            ->with('success', "Kalkulasi Nilai Berbasis Python Fuzzy Sugeno berhasil dieksekusi! Output Skor Akhir: {$result['display']} (Persentase: {$result['percentage']}%). Nilai telah ditransmisikan ke portal mahasiswa.");
     }
 }
