@@ -181,27 +181,27 @@ class IndustriController extends Controller
     }
 
     /**
-     * Simpan Evaluasi Nilai Form F5 (Bobot 60% - Rahasia Industri).
+     * Simpan Evaluasi Nilai Form F5 (Bobot 40% - Rahasia Industri, Berbasis KUK 5-10).
      */
     public function storeEvaluasiF5(Request $request, PengajuanMagang $pengajuan)
     {
         $rules = [
-            'skor_komunikasi' => 'required|numeric|min:0|max:100',
-            'skor_berpikir_kritis' => 'required|numeric|min:0|max:100',
-            'skor_kerjasama' => 'required|numeric|min:0|max:100',
-            'skor_inisiatif' => 'required|numeric|min:0|max:100',
-            'skor_literasi' => 'required|numeric|min:0|max:100',
-            'skor_deskripsi_produk' => 'required|numeric|min:0|max:100',
-            'skor_spesifikasi' => 'required|numeric|min:0|max:100',
-            'skor_desain' => 'required|numeric|min:0|max:100',
-            'skor_implementasi' => 'required|numeric|min:0|max:100',
-            'skor_pengujian' => 'required|numeric|min:0|max:100',
+            'skor_komunikasi' => 'required|numeric|min:5|max:10',
+            'skor_berpikir_kritis' => 'required|numeric|min:5|max:10',
+            'skor_kerjasama' => 'required|numeric|min:5|max:10',
+            'skor_inisiatif' => 'required|numeric|min:5|max:10',
+            'skor_literasi' => 'required|numeric|min:5|max:10',
+            'skor_deskripsi_produk' => 'required|numeric|min:5|max:10',
+            'skor_spesifikasi' => 'required|numeric|min:5|max:10',
+            'skor_desain' => 'required|numeric|min:5|max:10',
+            'skor_implementasi' => 'required|numeric|min:5|max:10',
+            'skor_pengujian' => 'required|numeric|min:5|max:10',
             'saran_industri' => 'nullable|string|max:2000',
         ];
 
         $validated = $request->validate($rules);
 
-        // Hitung rata-rata F5
+        // Hitung total akumulasi skor KUK F5 (Softskill maks 50 + Hardskill maks 50 = 100)
         $sum = $validated['skor_komunikasi'] +
             $validated['skor_berpikir_kritis'] +
             $validated['skor_kerjasama'] +
@@ -213,12 +213,12 @@ class IndustriController extends Controller
             $validated['skor_implementasi'] +
             $validated['skor_pengujian'];
 
-        $rataRata = round($sum / 10.0, 1);
+        $totalSkorF5 = round($sum, 1);
 
         EvaluasiF5::updateOrCreate(
             ['pengajuan_magang_id' => $pengajuan->id],
             array_merge($validated, [
-                'rata_rata_f5' => $rataRata,
+                'rata_rata_f5' => $totalSkorF5,
                 'submitted_at' => now(),
             ])
         );
@@ -226,6 +226,6 @@ class IndustriController extends Controller
         return redirect()->route('form.f5.industri', [
             'pengajuan_id' => $pengajuan->id,
             'student_id' => $pengajuan->mahasiswa_id,
-        ])->with('success', "Form Evaluasi Industri (F5) untuk mahasiswa {$pengajuan->mahasiswa->name} berhasil disimpan secara rahasia! Rata-rata Skor: {$rataRata}/100 (Bobot 60%).");
+        ])->with('success', "Form Evaluasi Industri (F5) untuk mahasiswa {$pengajuan->mahasiswa->name} berhasil disimpan secara rahasia! Total Skor: {$totalSkorF5}/100 (Bobot 40%).");
     }
 }

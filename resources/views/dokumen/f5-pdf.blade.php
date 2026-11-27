@@ -39,7 +39,7 @@
 
     <div class="text-center mb-6">
       <h2 class="text-base sm:text-lg font-bold uppercase underline">LEMBAR EVALUASI KINERJA PRAKTIK KERJA LAPANGAN DI INDUSTRI (FORM F5)</h2>
-      <p class="text-xs font-mono text-slate-500 mt-0.5">Kode Dokumen: PNJ-TIK-PKL-F5-2026 • Kerahasiaan Nilai Industri (Bobot 60%)</p>
+      <p class="text-xs font-mono text-slate-500 mt-0.5">Kode Dokumen: PNJ-TIK-PKL-F5-2026 • Kerahasiaan Nilai Industri (Bobot 40%)</p>
     </div>
 
     <!-- Identitas Mahasiswa & Industri -->
@@ -84,97 +84,97 @@
     <table class="w-full text-xs sm:text-sm border-collapse border border-slate-900 mb-6 font-sans">
       <thead>
         <tr class="bg-slate-100 text-slate-900 uppercase font-bold text-[11px]">
-          <th class="border border-slate-900 py-2.5 px-3 w-12 text-center">No</th>
-          <th class="border border-slate-900 py-2.5 px-4 text-left">Aspek Penilaian Mutu (Softskill &amp; Hardskill)</th>
-          <th class="border border-slate-900 py-2.5 px-3 w-28 text-center">Skor (0 - 100)</th>
-          <th class="border border-slate-900 py-2.5 px-3 w-32 text-center">Kategori</th>
+          <th class="border border-slate-900 py-2.5 px-3 w-14 text-center">KUK</th>
+          <th class="border border-slate-900 py-2.5 px-4 text-left">Kriteria Unjuk Kerja (Softskill &amp; Hardskill)</th>
+          <th class="border border-slate-900 py-2.5 px-3 w-28 text-center">Skor (5 - 10)</th>
+          <th class="border border-slate-900 py-2.5 px-3 w-32 text-center">Maks Kategori</th>
         </tr>
       </thead>
       <tbody>
         <!-- Kelompok A: Softskills -->
         <tr class="bg-slate-50 font-bold text-[11px] text-slate-800">
           <td colspan="4" class="border border-slate-900 py-1.5 px-3 uppercase tracking-wider bg-teal-50/80 text-teal-900 font-formal">
-            A. Indikator Softskills &amp; Etika Kerja
+            A. Softskill (KUK 1.1 – 1.5 | Rentang Poin: 5 – 10 | Skor Maksimal Kategori: 50)
           </td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">1</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">1.1</td>
           <td class="border border-slate-900 py-2 px-4">Komunikasi dan Presentasi Gagasan Teknis</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_komunikasi ?? 85 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_komunikasi ?? 9 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">10</td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">2</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">1.2</td>
           <td class="border border-slate-900 py-2 px-4">Berpikir Kritis, Analitis &amp; Problem Solving</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_berpikir_kritis ?? 85 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_berpikir_kritis ?? 8.5 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">10</td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">3</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">1.3</td>
           <td class="border border-slate-900 py-2 px-4">Kerjasama Tim (Teamwork) &amp; Adaptabilitas Kerja</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_kerjasama ?? 90 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_kerjasama ?? 9 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">10</td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">4</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">1.4</td>
           <td class="border border-slate-900 py-2 px-4">Inisiatif Mandiri &amp; Antusiasme Belajar</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_inisiatif ?? 85 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_inisiatif ?? 9 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">10</td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">5</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">1.5</td>
           <td class="border border-slate-900 py-2 px-4">Literasi Digital, Kedisiplinan &amp; Kepatuhan SOP</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_literasi ?? 88 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_literasi ?? 8.5 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">10</td>
         </tr>
 
         <!-- Kelompok B: Hardskills -->
         <tr class="bg-slate-50 font-bold text-[11px] text-slate-800">
           <td colspan="4" class="border border-slate-900 py-1.5 px-3 uppercase tracking-wider bg-blue-50/80 text-blue-900 font-formal">
-            B. Indikator Hardskills &amp; Capaian Backlog Tugas (Form F2)
+            B. Hardskill (KUK 2.1 – 2.5 | Rentang Poin: 5 – 10 | Skor Maksimal Kategori: 50)
           </td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">6</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">2.1</td>
           <td class="border border-slate-900 py-2 px-4">Penguasaan Deskripsi Produk / Solusi Digital</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_deskripsi_produk ?? 90 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_deskripsi_produk ?? 9 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">10</td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">7</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">2.2</td>
           <td class="border border-slate-900 py-2 px-4">Kesesuaian Implementasi Spesifikasi Kebutuhan</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_spesifikasi ?? 88 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_spesifikasi ?? 9 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">10</td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">8</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">2.3</td>
           <td class="border border-slate-900 py-2 px-4">Kualitas Desain Arsitektur, Logika &amp; Skema Data</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_desain ?? 86 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_desain ?? 8.5 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">10</td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">9</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">2.4</td>
           <td class="border border-slate-900 py-2 px-4">Kualitas Baris Kode, Konfigurasi &amp; Reliability</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_implementasi ?? 90 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_implementasi ?? 9 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">10</td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">10</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">2.5</td>
           <td class="border border-slate-900 py-2 px-4">Pengujian, Ketelitian QA &amp; Penanganan Bug</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_pengujian ?? 88 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f5?->skor_pengujian ?? 8.5 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">10</td>
         </tr>
 
-        <!-- Total Rata-rata F5 -->
+        <!-- Total Skor F5 -->
         <tr class="bg-slate-100 font-bold text-sm">
           <td colspan="2" class="border border-slate-900 py-2.5 px-4 text-right uppercase tracking-wider">
-            Nilai Rata-Rata Form F5 (Bobot 60%):
+            Total Skor Form F5 (Maks 100 | Bobot Akhir 40%):
           </td>
           <td class="border border-slate-900 py-2.5 px-3 text-center font-black text-base text-teal-800 font-mono">
-            {{ $f5?->rata_rata_f5 ? number_format($f5->rata_rata_f5, 1) : '87.5' }}
+            {{ $f5?->rata_rata_f5 ? number_format($f5->rata_rata_f5, 1) : '88.0' }}
           </td>
           <td class="border border-slate-900 py-2.5 px-3 text-center text-xs font-bold text-teal-700">
-            Sangat Memuaskan
+            100
           </td>
         </tr>
       </tbody>

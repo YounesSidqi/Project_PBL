@@ -205,7 +205,7 @@
       <span class="material-symbols-outlined text-[26px]">workspace_premium</span>
     </div>
     <div>
-      <span class="text-[10px] font-bold uppercase tracking-wider text-teal-300">Nilai Akhir PKL (F5 60% + F6 40%)</span>
+      <span class="text-[10px] font-bold uppercase tracking-wider text-teal-300">Nilai Akhir PKL (F5 40% + F6 60%)</span>
       <h3 class="text-lg sm:text-xl font-black font-heading text-white mt-0.5">
         Skor: <span class="text-teal-300 font-mono">{{ $pengajuanAktif->nilai_akhir_fuzzy }}</span>
         <span class="text-xs font-semibold text-emerald-400 ml-1">({{ $pengajuanAktif->fuzzy_percentage }}% — Lulus)</span>

@@ -10,7 +10,7 @@
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
   <div>
     <h2 class="text-xl font-bold font-heading text-slate-900">Form F6: Evaluasi Akademik Dosen</h2>
-    <p class="text-xs text-slate-500 mt-0.5">Penilaian laporan, presentasi, dan bimbingan mahasiswa (bobot 40%).</p>
+    <p class="text-xs text-slate-500 mt-0.5">Penilaian Kriteria Unjuk Kerja (KUK) laporan, presentasi, dan bimbingan mahasiswa (bobot 60%).</p>
   </div>
 
   <div class="flex items-center gap-2">
@@ -91,15 +91,15 @@
 <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-6">
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
     <div>
-      <h3 class="text-base font-bold font-heading text-slate-900">Rubrik Evaluasi Akademik (Skala 0–100)</h3>
-      <p class="text-xs text-slate-500 mt-0.5">Penilaian laporan PKL, penguasaan materi presentasi, dan kedisiplinan bimbingan.</p>
+      <h3 class="text-base font-bold font-heading text-slate-900">Rubrik Evaluasi Akademik KUK (Total Maksimal 100 | Bobot 60%)</h3>
+      <p class="text-xs text-slate-500 mt-0.5">Pelaporan: <strong>5 – 10</strong> (Maks 30) • Presentasi: <strong>5 – 10</strong> (Maks 40) • Bimbingan: <strong>5 – 15</strong> (Maks 30).</p>
     </div>
 
     <div class="bg-blue-50/80 border border-blue-200 px-4 py-2.5 rounded-xl text-center min-w-[150px]">
-      <span class="text-[10px] text-[#0056B3] uppercase font-bold block">Rata-Rata F6</span>
+      <span class="text-[10px] text-[#0056B3] uppercase font-bold block">Total Skor F6</span>
       <div class="flex items-baseline justify-center gap-1">
         <span id="live-average-display" class="text-2xl font-black font-heading text-[#0056B3]">
-          {{ $evalF6 ? number_format($evalF6->rata_rata_f6, 1) : '88.0' }}
+          {{ $evalF6 ? number_format($evalF6->rata_rata_f6, 1) : '88.5' }}
         </span>
         <span class="text-xs font-bold text-slate-500">/ 100</span>
       </div>
@@ -111,63 +111,72 @@
 
     <!-- A. Laporan PKL -->
     <div class="space-y-3">
-      <h4 class="text-xs font-bold uppercase tracking-wider text-[#0056B3]">A. Naskah Laporan PKL (3 Indikator)</h4>
+      <h4 class="text-xs font-bold uppercase tracking-wider text-[#0056B3]">A. Pelaporan / Naskah Laporan PKL (KUK 1.1 – 1.3 | Rentang Poin: 5 – 10 | Maks: 30)</h4>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">1. Kesesuaian Judul &amp; Isi</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_kesesuaian_judul" required value="{{ old('skor_kesesuaian_judul', $evalF6?->skor_kesesuaian_judul ?? 90) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#0056B3] p-2 text-center">
+          <label class="block text-xs font-bold text-slate-700 mb-1">1.1 Kesesuaian Judul &amp; Isi</label>
+          <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 10</span>
+          <input type="number" step="0.5" min="5" max="10" name="skor_kesesuaian_judul" required value="{{ old('skor_kesesuaian_judul', ($evalF6 && $evalF6->skor_kesesuaian_judul <= 10) ? $evalF6->skor_kesesuaian_judul : 9) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#0056B3] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">2. Tata Bahasa &amp; EYD</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_tata_bahasa" required value="{{ old('skor_tata_bahasa', $evalF6?->skor_tata_bahasa ?? 85) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#0056B3] p-2 text-center">
+          <label class="block text-xs font-bold text-slate-700 mb-1">1.2 Tata Bahasa &amp; EYD</label>
+          <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 10</span>
+          <input type="number" step="0.5" min="5" max="10" name="skor_tata_bahasa" required value="{{ old('skor_tata_bahasa', ($evalF6 && $evalF6->skor_tata_bahasa <= 10) ? $evalF6->skor_tata_bahasa : 8) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#0056B3] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">3. Kepatuhan Format</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_format_laporan" required value="{{ old('skor_format_laporan', $evalF6?->skor_format_laporan ?? 88) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#0056B3] p-2 text-center">
+          <label class="block text-xs font-bold text-slate-700 mb-1">1.3 Kepatuhan Format</label>
+          <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 10</span>
+          <input type="number" step="0.5" min="5" max="10" name="skor_format_laporan" required value="{{ old('skor_format_laporan', ($evalF6 && $evalF6->skor_format_laporan <= 10) ? $evalF6->skor_format_laporan : 8.5) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#0056B3] p-2 text-center">
         </div>
       </div>
     </div>
 
     <!-- B. Presentasi & Ujian -->
     <div class="space-y-3">
-      <h4 class="text-xs font-bold uppercase tracking-wider text-[#02796B]">B. Penguasaan Materi &amp; Presentasi (4 Indikator)</h4>
+      <h4 class="text-xs font-bold uppercase tracking-wider text-[#02796B]">B. Presentasi &amp; Penguasaan Materi (KUK 2.1 – 2.4 | Rentang Poin: 5 – 10 | Maks: 40)</h4>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">4. Penguasaan Materi</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_pengetahuan" required value="{{ old('skor_pengetahuan', $evalF6?->skor_pengetahuan ?? 90) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#02796B] p-2 text-center">
+          <label class="block text-xs font-bold text-slate-700 mb-1">2.1 Penguasaan Materi</label>
+          <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 10</span>
+          <input type="number" step="0.5" min="5" max="10" name="skor_pengetahuan" required value="{{ old('skor_pengetahuan', ($evalF6 && $evalF6->skor_pengetahuan <= 10) ? $evalF6->skor_pengetahuan : 9) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#02796B] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">5. Tanya Jawab</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_tanya_jawab" required value="{{ old('skor_tanya_jawab', $evalF6?->skor_tanya_jawab ?? 88) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#02796B] p-2 text-center">
+          <label class="block text-xs font-bold text-slate-700 mb-1">2.2 Tanya Jawab</label>
+          <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 10</span>
+          <input type="number" step="0.5" min="5" max="10" name="skor_tanya_jawab" required value="{{ old('skor_tanya_jawab', ($evalF6 && $evalF6->skor_tanya_jawab <= 10) ? $evalF6->skor_tanya_jawab : 8.5) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#02796B] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">6. Etika &amp; Sikap</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_etika" required value="{{ old('skor_etika', $evalF6?->skor_etika ?? 95) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#02796B] p-2 text-center">
+          <label class="block text-xs font-bold text-slate-700 mb-1">2.3 Etika &amp; Sikap</label>
+          <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 10</span>
+          <input type="number" step="0.5" min="5" max="10" name="skor_etika" required value="{{ old('skor_etika', ($evalF6 && $evalF6->skor_etika <= 10) ? $evalF6->skor_etika : 9.5) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#02796B] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">7. Justifikasi Solusi</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_justifikasi" required value="{{ old('skor_justifikasi', $evalF6?->skor_justifikasi ?? 86) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#02796B] p-2 text-center">
+          <label class="block text-xs font-bold text-slate-700 mb-1">2.4 Justifikasi Solusi</label>
+          <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 10</span>
+          <input type="number" step="0.5" min="5" max="10" name="skor_justifikasi" required value="{{ old('skor_justifikasi', ($evalF6 && $evalF6->skor_justifikasi <= 10) ? $evalF6->skor_justifikasi : 8.5) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#02796B] p-2 text-center">
         </div>
       </div>
     </div>
 
     <!-- C. Rutinitas Bimbingan -->
     <div class="space-y-3">
-      <h4 class="text-xs font-bold uppercase tracking-wider text-purple-700">C. Kedisiplinan Bimbingan &amp; Progres (2 Indikator)</h4>
+      <h4 class="text-xs font-bold uppercase tracking-wider text-purple-700">C. Bimbingan &amp; Progres (KUK 3.1 – 3.2 | Rentang Poin: 5 – 15 | Maks: 30)</h4>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">8. Rutinitas Bimbingan (Min. 8 Sesi)</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_rutinitas_bimbingan" required value="{{ old('skor_rutinitas_bimbingan', $evalF6?->skor_rutinitas_bimbingan ?? 95) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-purple-800 p-2 text-center">
+          <label class="block text-xs font-bold text-slate-700 mb-1">3.1 Rutinitas Bimbingan (Min. 8 Sesi)</label>
+          <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 15</span>
+          <input type="number" step="0.5" min="5" max="15" name="skor_rutinitas_bimbingan" required value="{{ old('skor_rutinitas_bimbingan', ($evalF6 && $evalF6->skor_rutinitas_bimbingan <= 15) ? $evalF6->skor_rutinitas_bimbingan : 14) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-purple-800 p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">9. Progres Capaian Magang</label>
-          <input type="number" step="0.5" min="0" max="100" name="skor_progres" required value="{{ old('skor_progres', $evalF6?->skor_progres ?? 88) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-purple-800 p-2 text-center">
+          <label class="block text-xs font-bold text-slate-700 mb-1">3.2 Progres Capaian Magang</label>
+          <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 15</span>
+          <input type="number" step="0.5" min="5" max="15" name="skor_progres" required value="{{ old('skor_progres', ($evalF6 && $evalF6->skor_progres <= 15) ? $evalF6->skor_progres : 13.5) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-purple-800 p-2 text-center">
         </div>
       </div>
     </div>
@@ -193,9 +202,9 @@
 <div class="bg-slate-900 rounded-2xl p-5 sm:p-6 text-white shadow-md space-y-4">
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
     <div>
-      <h3 class="text-base font-bold font-heading text-white">Kalkulasi Nilai Akhir (Metode Fuzzy Sugeno)</h3>
+      <h3 class="text-base font-bold font-heading text-white">Kalkulasi Nilai Akhir (Metode Fuzzy Sugeno Orde-1)</h3>
       <p class="text-xs text-slate-300 mt-0.5">
-        Penggabungan nilai F5 Industri (60%) dan F6 Dosen (40%) dengan metode Fuzzy Sugeno untuk menerbitkan nilai akhir Form F7.
+        Penggabungan nilai F5 Industri (40%) dan F6 Dosen (60%) dengan metode Fuzzy Sugeno untuk menerbitkan nilai akhir Form F7 (Skala 100).
       </p>
     </div>
 
@@ -210,18 +219,18 @@
 
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
     <div class="bg-white/5 border border-white/10 p-3 rounded-xl">
-      <span class="text-slate-400 block text-[10px] uppercase font-bold">1. Form F5 (Industri - 60%)</span>
+      <span class="text-slate-400 block text-[10px] uppercase font-bold">1. Form F5 (Industri - 40%)</span>
       @if($evalF5)
-        <strong class="text-emerald-400 font-bold block mt-0.5">Rata-Rata: {{ $evalF5->rata_rata_f5 }}/100</strong>
+        <strong class="text-emerald-400 font-bold block mt-0.5">Total Skor: {{ $evalF5->rata_rata_f5 }}/100</strong>
       @else
         <span class="text-rose-400 font-bold block mt-0.5">Belum Diisi</span>
       @endif
     </div>
 
     <div class="bg-white/5 border border-white/10 p-3 rounded-xl">
-      <span class="text-slate-400 block text-[10px] uppercase font-bold">2. Form F6 (Dosen - 40%)</span>
+      <span class="text-slate-400 block text-[10px] uppercase font-bold">2. Form F6 (Dosen - 60%)</span>
       @if($evalF6)
-        <strong class="text-emerald-400 font-bold block mt-0.5">Rata-Rata: {{ $evalF6->rata_rata_f6 }}/100</strong>
+        <strong class="text-emerald-400 font-bold block mt-0.5">Total Skor: {{ $evalF6->rata_rata_f6 }}/100</strong>
       @else
         <span class="text-amber-300 font-bold block mt-0.5">Belum Disimpan</span>
       @endif
@@ -270,10 +279,9 @@
       }
     });
     if (count > 0) {
-      const avg = (total / count).toFixed(1);
       const display = document.getElementById('live-average-display');
       if (display) {
-        display.innerText = avg;
+        display.innerText = total.toFixed(1);
       }
     }
   }

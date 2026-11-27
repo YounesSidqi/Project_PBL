@@ -207,7 +207,7 @@
       'label' => 'Evaluasi Kinerja (F5)',
       'icon' => 'grade',
       'route' => route('form.f5.industri', $industriParams()),
-      'badge' => '60%',
+      'badge' => '40%',
       'badgeClass' => 'bg-teal-100 text-teal-800 font-bold',
     ],
   ];
@@ -301,7 +301,7 @@
       'label' => 'Evaluasi Akademik (F6)',
       'icon' => 'grade',
       'route' => route('form.f6.dosen'),
-      'badge' => '40%',
+      'badge' => '60%',
       'badgeClass' => 'bg-emerald-100 text-emerald-800 font-bold',
     ],
   ];

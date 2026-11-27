@@ -82,22 +82,22 @@
     <div class="border-2 border-slate-900 rounded-xl p-5 my-6 bg-slate-50 font-sans">
       <div class="text-center mb-3">
         <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Hasil Evaluasi Akhir Berbasis Kecerdasan Buatan (Python Fuzzy Sugeno Engine)</span>
-        <h4 class="text-sm font-bold text-slate-900 mt-0.5">Kombinasi Evaluasi Industri (Form F5 - 60%) &amp; Evaluasi Dosen (Form F6 - 40%)</h4>
+        <h4 class="text-sm font-bold text-slate-900 mt-0.5">Kombinasi Evaluasi Industri (Form F5 - 40%) &amp; Evaluasi Dosen (Form F6 - 60%)</h4>
       </div>
 
       <div class="grid grid-cols-3 gap-3 text-center border-t border-b border-slate-200 py-3 my-2">
         <div>
           <span class="text-[10px] text-slate-500 font-bold uppercase block">Skor F5 (Industri)</span>
-          <span class="text-base font-extrabold text-[#02796B] font-mono">{{ $pengajuan->evaluasiF5->rata_rata_f5 ?? 88.2 }}/100</span>
+          <span class="text-base font-extrabold text-[#02796B] font-mono">{{ $pengajuan->evaluasiF5->rata_rata_f5 ?? 88.0 }}/100</span>
         </div>
         <div>
           <span class="text-[10px] text-slate-500 font-bold uppercase block">Skor F6 (Dosen)</span>
-          <span class="text-base font-extrabold text-[#0056B3] font-mono">{{ $pengajuan->evaluasiF6->rata_rata_f6 ?? 89.7 }}/100</span>
+          <span class="text-base font-extrabold text-[#0056B3] font-mono">{{ $pengajuan->evaluasiF6->rata_rata_f6 ?? 88.5 }}/100</span>
         </div>
         <div>
-          <!-- Hasil Rasio Akurat Sesuai PRD 9.2 (Contoh: "40/50") -->
+          <!-- Hasil Rasio Akurat (Contoh: "90.0/100") -->
           <span class="text-[10px] text-purple-700 font-black uppercase block">Nilai Akhir Fuzzy</span>
-          <span class="text-lg font-black text-purple-900 font-mono">{{ $pengajuan->nilai_akhir_fuzzy ?? '43.2/50' }}</span>
+          <span class="text-lg font-black text-purple-900 font-mono">{{ $pengajuan->nilai_akhir_fuzzy ?? '90.0/100' }}</span>
         </div>
       </div>
 

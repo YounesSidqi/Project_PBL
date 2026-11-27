@@ -203,26 +203,26 @@ class PenilaianController extends Controller
     }
 
     /**
-     * Dosen Pembimbing PNJ menginput Form Evaluasi Akademik (Form F6 - Bobot 40%).
+     * Dosen Pembimbing PNJ menginput Form Evaluasi Akademik (Form F6 - Bobot 60%, Berbasis KUK).
      */
     public function storeEvaluasiF6(Request $request, PengajuanMagang $pengajuan)
     {
         $rules = [
-            'skor_kesesuaian_judul' => 'required|numeric|min:0|max:100',
-            'skor_tata_bahasa' => 'required|numeric|min:0|max:100',
-            'skor_format_laporan' => 'required|numeric|min:0|max:100',
-            'skor_pengetahuan' => 'required|numeric|min:0|max:100',
-            'skor_tanya_jawab' => 'required|numeric|min:0|max:100',
-            'skor_etika' => 'required|numeric|min:0|max:100',
-            'skor_justifikasi' => 'required|numeric|min:0|max:100',
-            'skor_rutinitas_bimbingan' => 'required|numeric|min:0|max:100',
-            'skor_progres' => 'required|numeric|min:0|max:100',
+            'skor_kesesuaian_judul' => 'required|numeric|min:5|max:10',
+            'skor_tata_bahasa' => 'required|numeric|min:5|max:10',
+            'skor_format_laporan' => 'required|numeric|min:5|max:10',
+            'skor_pengetahuan' => 'required|numeric|min:5|max:10',
+            'skor_tanya_jawab' => 'required|numeric|min:5|max:10',
+            'skor_etika' => 'required|numeric|min:5|max:10',
+            'skor_justifikasi' => 'required|numeric|min:5|max:10',
+            'skor_rutinitas_bimbingan' => 'required|numeric|min:5|max:15',
+            'skor_progres' => 'required|numeric|min:5|max:15',
             'catatan_dosen' => 'nullable|string|max:2000',
         ];
 
         $validated = $request->validate($rules);
 
-        // Hitung rata-rata skor F6 (9 parameter)
+        // Hitung total akumulasi skor KUK F6 (Pelaporan 30 + Presentasi 40 + Bimbingan 30 = 100)
         $sum = $validated['skor_kesesuaian_judul'] +
             $validated['skor_tata_bahasa'] +
             $validated['skor_format_laporan'] +
@@ -233,18 +233,18 @@ class PenilaianController extends Controller
             $validated['skor_rutinitas_bimbingan'] +
             $validated['skor_progres'];
 
-        $rataRata = round($sum / 9.0, 1);
+        $totalSkorF6 = round($sum, 1);
 
         EvaluasiF6::updateOrCreate(
             ['pengajuan_magang_id' => $pengajuan->id],
             array_merge($validated, [
-                'rata_rata_f6' => $rataRata,
+                'rata_rata_f6' => $totalSkorF6,
                 'submitted_at' => now(),
             ])
         );
 
         return redirect()->back()
-            ->with('success', "Form Evaluasi Akademik Dosen (F6) untuk mahasiswa {$pengajuan->mahasiswa->name} berhasil disimpan! Rata-rata Skor: {$rataRata}/100 (Bobot 40%).");
+            ->with('success', "Form Evaluasi Akademik Dosen (F6) untuk mahasiswa {$pengajuan->mahasiswa->name} berhasil disimpan! Total Skor: {$totalSkorF6}/100 (Bobot 60%).");
     }
 
     /**
@@ -264,23 +264,20 @@ class PenilaianController extends Controller
         // 2. Validasi kelengkapan Form F5 (Industri)
         if (! $pengajuan->evaluasiF5) {
             return redirect()->back()
-                ->with('error', 'Pembimbing Industri belum melengkapi Form Evaluasi Nilai F5 (Bobot 60%). Kalkulasi tidak dapat dijalankan.');
+                ->with('error', 'Pembimbing Industri belum melengkapi Form Evaluasi Nilai F5 (Bobot 40%). Kalkulasi tidak dapat dijalankan.');
         }
 
         // 3. Validasi kelengkapan Form F6 (Dosen)
         if (! $pengajuan->evaluasiF6) {
             return redirect()->back()
-                ->with('error', 'Form Evaluasi Akademik Dosen F6 (Bobot 40%) belum dilengkapi. Silakan isi form evaluasi F6 terlebih dahulu.');
+                ->with('error', 'Form Evaluasi Akademik Dosen F6 (Bobot 60%) belum dilengkapi. Silakan isi form evaluasi F6 terlebih dahulu.');
         }
 
-        $f5Score = $pengajuan->evaluasiF5->rata_rata_f5;
-        $f6Score = $pengajuan->evaluasiF6->rata_rata_f6;
-
-        // Eksekusi engine Python Fuzzy Logic (Metode Fuzzy Sugeno)
-        $result = $fuzzyService->calculate($f5Score, $f6Score);
+        // Eksekusi engine Python Fuzzy Logic (Metode Fuzzy Sugeno Orde-1 berbasis KUK)
+        $result = $fuzzyService->calculate($pengajuan->evaluasiF5, $pengajuan->evaluasiF6);
 
         $pengajuan->update([
-            'nilai_akhir_fuzzy' => $result['display'], // e.g. "41.9/50"
+            'nilai_akhir_fuzzy' => $result['display'], // e.g. "86.6/100"
             'fuzzy_score_num' => $result['score_num'],
             'fuzzy_percentage' => $result['percentage'],
             'updated_at' => now(),

@@ -217,18 +217,18 @@ class PrdCompleteFlowTest extends TestCase
             'status_industri' => 'acc',
         ]);
 
-        // 3. Submit Evaluasi F5 (Rahasia Industri bobot 60%)
+        // 3. Submit Evaluasi F5 (Rahasia Industri bobot 40%, KUK 5-10)
         $f5Response = $this->actingAs($this->industriUser)->post(route('industri.evaluasi_f5.store', $pengajuan->id), [
-            'skor_komunikasi' => 90,
-            'skor_berpikir_kritis' => 85,
-            'skor_kerjasama' => 88,
-            'skor_inisiatif' => 92,
-            'skor_literasi' => 86,
-            'skor_deskripsi_produk' => 95,
-            'skor_spesifikasi' => 89,
-            'skor_desain' => 87,
-            'skor_implementasi' => 90,
-            'skor_pengujian' => 88,
+            'skor_komunikasi' => 9,
+            'skor_berpikir_kritis' => 8.5,
+            'skor_kerjasama' => 9,
+            'skor_inisiatif' => 9,
+            'skor_literasi' => 8.5,
+            'skor_deskripsi_produk' => 9.5,
+            'skor_spesifikasi' => 9,
+            'skor_desain' => 8.5,
+            'skor_implementasi' => 9,
+            'skor_pengujian' => 9,
             'saran_industri' => 'Mahasiswa sangat berkompeten dan proaktif.',
         ]);
         $f5Response->assertRedirect();
@@ -247,33 +247,33 @@ class PrdCompleteFlowTest extends TestCase
             'status' => 'aktif',
         ]);
 
-        // Evaluasi F5 dari industri
+        // Evaluasi F5 dari industri (KUK 5-10)
         EvaluasiF5::create([
             'pengajuan_magang_id' => $pengajuan->id,
-            'skor_komunikasi' => 88,
-            'skor_berpikir_kritis' => 85,
-            'skor_kerjasama' => 89,
-            'skor_inisiatif' => 90,
-            'skor_literasi' => 85,
-            'skor_deskripsi_produk' => 90,
-            'skor_spesifikasi' => 88,
-            'skor_desain' => 86,
-            'skor_implementasi' => 88,
-            'skor_pengujian' => 87,
-            'rata_rata_f5' => 87.6,
+            'skor_komunikasi' => 9,
+            'skor_berpikir_kritis' => 8.5,
+            'skor_kerjasama' => 9,
+            'skor_inisiatif' => 9,
+            'skor_literasi' => 8.5,
+            'skor_deskripsi_produk' => 9,
+            'skor_spesifikasi' => 9,
+            'skor_desain' => 8.5,
+            'skor_implementasi' => 9,
+            'skor_pengujian' => 8.5,
+            'rata_rata_f5' => 88.0,
         ]);
 
-        // Dosen input Evaluasi F6
+        // Dosen input Evaluasi F6 (KUK Pelaporan & Presentasi 5-10, Bimbingan 5-15)
         $f6Response = $this->actingAs($this->dosen)->post(route('dosen.evaluasi_f6.store', $pengajuan->id), [
-            'skor_kesesuaian_judul' => 85,
-            'skor_tata_bahasa' => 80,
-            'skor_format_laporan' => 82,
-            'skor_pengetahuan' => 84,
-            'skor_tanya_jawab' => 80,
-            'skor_etika' => 85,
-            'skor_justifikasi' => 88,
-            'skor_rutinitas_bimbingan' => 86,
-            'skor_progres' => 90,
+            'skor_kesesuaian_judul' => 9,
+            'skor_tata_bahasa' => 8,
+            'skor_format_laporan' => 8.5,
+            'skor_pengetahuan' => 9,
+            'skor_tanya_jawab' => 8.5,
+            'skor_etika' => 9.5,
+            'skor_justifikasi' => 8.5,
+            'skor_rutinitas_bimbingan' => 14,
+            'skor_progres' => 13.5,
         ]);
         $f6Response->assertRedirect();
         $this->assertDatabaseHas('form_f6_evaluasi', [
@@ -306,7 +306,7 @@ class PrdCompleteFlowTest extends TestCase
 
         $freshPengajuan = $pengajuan->fresh();
         $this->assertNotNull($freshPengajuan->nilai_akhir_fuzzy);
-        $this->assertStringContainsString('/50', $freshPengajuan->nilai_akhir_fuzzy);
+        $this->assertStringContainsString('/100', $freshPengajuan->nilai_akhir_fuzzy);
         $this->assertNotNull($freshPengajuan->fuzzy_score_num);
         $this->assertNotNull($freshPengajuan->fuzzy_percentage);
     }

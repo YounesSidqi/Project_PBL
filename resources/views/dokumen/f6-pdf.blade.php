@@ -39,7 +39,7 @@
 
     <div class="text-center mb-6">
       <h2 class="text-base sm:text-lg font-bold uppercase underline">LEMBAR EVALUASI AKADEMIK DOSEN PEMBIMBING (FORM F6)</h2>
-      <p class="text-xs font-mono text-slate-500 mt-0.5">Kode Dokumen: PNJ-TIK-PKL-F6-2026 • Penilaian Akademik Kampus (Bobot 40%)</p>
+      <p class="text-xs font-mono text-slate-500 mt-0.5">Kode Dokumen: PNJ-TIK-PKL-F6-2026 • Penilaian Akademik Kampus (Bobot 60%)</p>
     </div>
 
     <!-- Identitas Mahasiswa & Dosen -->
@@ -93,98 +93,98 @@
     <table class="w-full text-xs sm:text-sm border-collapse border border-slate-900 mb-6 font-sans">
       <thead>
         <tr class="bg-slate-100 text-slate-900 uppercase font-bold text-[11px]">
-          <th class="border border-slate-900 py-2.5 px-3 w-12 text-center">No</th>
-          <th class="border border-slate-900 py-2.5 px-4 text-left">Aspek Evaluasi Akademik &amp; Kinerja</th>
-          <th class="border border-slate-900 py-2.5 px-3 w-28 text-center">Skor (0 - 100)</th>
-          <th class="border border-slate-900 py-2.5 px-3 w-32 text-center">Kategori</th>
+          <th class="border border-slate-900 py-2.5 px-3 w-14 text-center">KUK</th>
+          <th class="border border-slate-900 py-2.5 px-4 text-left">Kriteria Unjuk Kerja (Pelaporan, Presentasi &amp; Bimbingan)</th>
+          <th class="border border-slate-900 py-2.5 px-3 w-28 text-center">Skor KUK</th>
+          <th class="border border-slate-900 py-2.5 px-3 w-32 text-center">Rentang</th>
         </tr>
       </thead>
       <tbody>
         <!-- Kelompok A: Kualitas Laporan PKL -->
         <tr class="bg-slate-50 font-bold text-[11px] text-slate-800">
           <td colspan="4" class="border border-slate-900 py-1.5 px-3 uppercase tracking-wider bg-blue-50/80 text-blue-900 font-formal">
-            A. Penilaian Naskah Laporan PKL (Bab I s.d. Bab V)
+            A. Pelaporan / Naskah Laporan PKL (KUK 1.1 – 1.3 | Rentang Poin: 5 – 10 | Skor Maksimal Kategori: 30)
           </td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">1</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">1.1</td>
           <td class="border border-slate-900 py-2 px-4">Kesesuaian Judul dengan Isi &amp; Kedalaman Substansi Perancangan</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_kesesuaian_judul ?? 90 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_kesesuaian_judul ?? 9 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">5 – 10</td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">2</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">1.2</td>
           <td class="border border-slate-900 py-2 px-4">Tata Bahasa, Ejaan Baku (EYD), &amp; Kejelasan Istilah Teknis</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_tata_bahasa ?? 85 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_tata_bahasa ?? 8 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">5 – 10</td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">3</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">1.3</td>
           <td class="border border-slate-900 py-2 px-4">Kepatuhan Sistematika, Format Laporan &amp; Standar Sitasi JTIK</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_format_laporan ?? 88 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_format_laporan ?? 8.5 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">5 – 10</td>
         </tr>
 
         <!-- Kelompok B: Presentasi & Sidang -->
         <tr class="bg-slate-50 font-bold text-[11px] text-slate-800">
           <td colspan="4" class="border border-slate-900 py-1.5 px-3 uppercase tracking-wider bg-teal-50/80 text-teal-900 font-formal">
-            B. Penguasaan Materi, Presentasi &amp; Tanya Jawab Sidang
+            B. Presentasi &amp; Tanya Jawab Sidang (KUK 2.1 – 2.4 | Rentang Poin: 5 – 10 | Skor Maksimal Kategori: 40)
           </td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">4</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">2.1</td>
           <td class="border border-slate-900 py-2 px-4">Penguasaan Materi Proyek &amp; Landasan Teori Keilmuan</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_pengetahuan ?? 90 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_pengetahuan ?? 9 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">5 – 10</td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">5</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">2.2</td>
           <td class="border border-slate-900 py-2 px-4">Kemampuan Argumentasi, Tanya Jawab &amp; Respon Ilmiah</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_tanya_jawab ?? 88 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_tanya_jawab ?? 8.5 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">5 – 10</td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">6</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">2.3</td>
           <td class="border border-slate-900 py-2 px-4">Etika Akademik, Sikap Profesional &amp; Kerapian Presentasi</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_etika ?? 95 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_etika ?? 9.5 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">5 – 10</td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">7</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">2.4</td>
           <td class="border border-slate-900 py-2 px-4">Justifikasi Arsitektur Sistem, Stack Teknologi &amp; Rasionalitas Solusi</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_justifikasi ?? 86 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_justifikasi ?? 8.5 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">5 – 10</td>
         </tr>
 
         <!-- Kelompok C: Rutinitas Bimbingan -->
         <tr class="bg-slate-50 font-bold text-[11px] text-slate-800">
           <td colspan="4" class="border border-slate-900 py-1.5 px-3 uppercase tracking-wider bg-purple-50/80 text-purple-900 font-formal">
-            C. Kedisiplinan Asistensi Bimbingan &amp; Progresivitas PKL
+            C. Bimbingan &amp; Progresivitas PKL (KUK 3.1 – 3.2 | Rentang Poin: 5 – 15 | Skor Maksimal Kategori: 30)
           </td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">8</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">3.1</td>
           <td class="border border-slate-900 py-2 px-4">Rutinitas &amp; Keaktifan Sesi Bimbingan (Batas Min. 8 Pertemuan)</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_rutinitas_bimbingan ?? 95 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_rutinitas_bimbingan ?? 14 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">5 – 15</td>
         </tr>
         <tr>
-          <td class="border border-slate-900 py-2 px-3 text-center">9</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-mono">3.2</td>
           <td class="border border-slate-900 py-2 px-4">Progresivitas Capaian Magang &amp; Ketepatan Perbaikan Revisi</td>
-          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_progres ?? 88 }}</td>
-          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">Sangat Baik</td>
+          <td class="border border-slate-900 py-2 px-3 text-center font-bold font-mono">{{ $f6?->skor_progres ?? 13.5 }}</td>
+          <td class="border border-slate-900 py-2 px-3 text-center text-xs text-slate-600">5 – 15</td>
         </tr>
 
-        <!-- Total Rata-rata F6 -->
+        <!-- Total Skor F6 -->
         <tr class="bg-slate-100 font-bold text-sm">
           <td colspan="2" class="border border-slate-900 py-2.5 px-4 text-right uppercase tracking-wider">
-            Nilai Rata-Rata Form F6 (Bobot 40%):
+            Total Skor Form F6 (Maks 100 | Bobot Akhir 60%):
           </td>
           <td class="border border-slate-900 py-2.5 px-3 text-center font-black text-base text-[#0056B3] font-mono">
-            {{ $f6?->rata_rata_f6 ? number_format($f6->rata_rata_f6, 1) : '89.4' }}
+            {{ $f6?->rata_rata_f6 ? number_format($f6->rata_rata_f6, 1) : '88.5' }}
           </td>
           <td class="border border-slate-900 py-2.5 px-3 text-center text-xs font-bold text-blue-700">
-            Sangat Memuaskan
+            100
           </td>
         </tr>
       </tbody>
