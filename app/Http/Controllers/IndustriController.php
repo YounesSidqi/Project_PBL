@@ -185,6 +185,14 @@ class IndustriController extends Controller
      */
     public function storeEvaluasiF5(Request $request, PengajuanMagang $pengajuan)
     {
+        $existingF5 = $pengajuan->evaluasiF5;
+        if ($existingF5 && $existingF5->is_locked) {
+            return redirect()->route('form.f5.industri', [
+                'pengajuan_id' => $pengajuan->id,
+                'student_id' => $pengajuan->mahasiswa_id,
+            ])->with('error', 'Nilai Form F5 sudah dikunci secara permanen dan tidak dapat diubah lagi.');
+        }
+
         $rules = [
             'skor_komunikasi' => 'required|numeric|min:5|max:10',
             'skor_berpikir_kritis' => 'required|numeric|min:5|max:10',
@@ -226,6 +234,38 @@ class IndustriController extends Controller
         return redirect()->route('form.f5.industri', [
             'pengajuan_id' => $pengajuan->id,
             'student_id' => $pengajuan->mahasiswa_id,
-        ])->with('success', "Form Evaluasi Industri (F5) untuk mahasiswa {$pengajuan->mahasiswa->name} berhasil disimpan secara rahasia! Total Skor: {$totalSkorF5}/100 (Bobot 40%).");
+        ])->with('success', "Form Evaluasi Industri (F5) untuk mahasiswa {$pengajuan->mahasiswa->name} berhasil disimpan! Total Skor: {$totalSkorF5}/100 (Bobot 40%). Anda masih dapat mengubah nilai sebelum menekan tombol Kunci Nilai.");
+    }
+
+    /**
+     * Kunci permanen Nilai Evaluasi Form F5 oleh Pembimbing Industri.
+     */
+    public function lockEvaluasiF5(Request $request, PengajuanMagang $pengajuan)
+    {
+        $evalF5 = $pengajuan->evaluasiF5;
+
+        if (! $evalF5) {
+            return redirect()->route('form.f5.industri', [
+                'pengajuan_id' => $pengajuan->id,
+                'student_id' => $pengajuan->mahasiswa_id,
+            ])->with('error', 'Silakan simpan nilai Form F5 terlebih dahulu sebelum mengunci nilai.');
+        }
+
+        if ($evalF5->is_locked) {
+            return redirect()->route('form.f5.industri', [
+                'pengajuan_id' => $pengajuan->id,
+                'student_id' => $pengajuan->mahasiswa_id,
+            ])->with('info', 'Nilai Form F5 sudah berada dalam status terkunci.');
+        }
+
+        $evalF5->update([
+            'is_locked' => true,
+            'locked_at' => now(),
+        ]);
+
+        return redirect()->route('form.f5.industri', [
+            'pengajuan_id' => $pengajuan->id,
+            'student_id' => $pengajuan->mahasiswa_id,
+        ])->with('success', "Nilai Form F5 untuk mahasiswa {$pengajuan->mahasiswa->name} berhasil dikunci secara permanen!");
     }
 }

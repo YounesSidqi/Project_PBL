@@ -25,6 +25,8 @@ class EvaluasiF6 extends Model
         'rata_rata_f6',
         'catatan_dosen',
         'submitted_at',
+        'is_locked',
+        'locked_at',
     ];
 
     protected function casts(): array
@@ -41,6 +43,8 @@ class EvaluasiF6 extends Model
             'skor_progres' => 'float',
             'rata_rata_f6' => 'float',
             'submitted_at' => 'datetime',
+            'is_locked' => 'boolean',
+            'locked_at' => 'datetime',
         ];
     }
 

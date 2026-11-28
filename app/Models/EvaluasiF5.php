@@ -26,6 +26,8 @@ class EvaluasiF5 extends Model
         'rata_rata_f5',
         'saran_industri',
         'submitted_at',
+        'is_locked',
+        'locked_at',
     ];
 
     protected function casts(): array
@@ -43,6 +45,8 @@ class EvaluasiF5 extends Model
             'skor_pengujian' => 'float',
             'rata_rata_f5' => 'float',
             'submitted_at' => 'datetime',
+            'is_locked' => 'boolean',
+            'locked_at' => 'datetime',
         ];
     }
 

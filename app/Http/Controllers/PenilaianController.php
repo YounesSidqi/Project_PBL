@@ -207,6 +207,12 @@ class PenilaianController extends Controller
      */
     public function storeEvaluasiF6(Request $request, PengajuanMagang $pengajuan)
     {
+        $existingF6 = $pengajuan->evaluasiF6;
+        if ($existingF6 && $existingF6->is_locked) {
+            return redirect()->back()
+                ->with('error', 'Nilai Form F6 sudah dikunci secara permanen dan tidak dapat diubah lagi.');
+        }
+
         $rules = [
             'skor_kesesuaian_judul' => 'required|numeric|min:5|max:10',
             'skor_tata_bahasa' => 'required|numeric|min:5|max:10',
@@ -244,7 +250,33 @@ class PenilaianController extends Controller
         );
 
         return redirect()->back()
-            ->with('success', "Form Evaluasi Akademik Dosen (F6) untuk mahasiswa {$pengajuan->mahasiswa->name} berhasil disimpan! Total Skor: {$totalSkorF6}/100 (Bobot 60%).");
+            ->with('success', "Form Evaluasi Akademik Dosen (F6) untuk mahasiswa {$pengajuan->mahasiswa->name} berhasil disimpan! Total Skor: {$totalSkorF6}/100 (Bobot 60%). Anda masih dapat mengubah nilai sebelum menekan tombol Kunci Nilai.");
+    }
+
+    /**
+     * Kunci permanen Nilai Evaluasi Form F6 oleh Dosen Pembimbing.
+     */
+    public function lockEvaluasiF6(Request $request, PengajuanMagang $pengajuan)
+    {
+        $evalF6 = $pengajuan->evaluasiF6;
+
+        if (! $evalF6) {
+            return redirect()->back()
+                ->with('error', 'Silakan simpan nilai Form F6 terlebih dahulu sebelum mengunci nilai.');
+        }
+
+        if ($evalF6->is_locked) {
+            return redirect()->back()
+                ->with('info', 'Nilai Form F6 sudah berada dalam status terkunci.');
+        }
+
+        $evalF6->update([
+            'is_locked' => true,
+            'locked_at' => now(),
+        ]);
+
+        return redirect()->back()
+            ->with('success', "Nilai Form F6 untuk mahasiswa {$pengajuan->mahasiswa->name} berhasil dikunci secara permanen!");
     }
 
     /**

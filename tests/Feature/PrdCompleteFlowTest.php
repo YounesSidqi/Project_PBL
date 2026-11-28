@@ -234,8 +234,47 @@ class PrdCompleteFlowTest extends TestCase
         $f5Response->assertRedirect();
         $this->assertDatabaseHas('form_f5_evaluasi', [
             'pengajuan_magang_id' => $pengajuan->id,
+            'is_locked' => false,
         ]);
         $this->assertNotNull($pengajuan->fresh()->evaluasiF5);
+
+        // Sebelum dikunci, nilai F5 masih bisa diubah
+        $updateF5Response = $this->actingAs($this->industriUser)->post(route('industri.evaluasi_f5.store', $pengajuan->id), [
+            'skor_komunikasi' => 10,
+            'skor_berpikir_kritis' => 8.5,
+            'skor_kerjasama' => 9,
+            'skor_inisiatif' => 9,
+            'skor_literasi' => 8.5,
+            'skor_deskripsi_produk' => 9.5,
+            'skor_spesifikasi' => 9,
+            'skor_desain' => 8.5,
+            'skor_implementasi' => 9,
+            'skor_pengujian' => 9,
+            'saran_industri' => 'Revisi nilai komunikasi menjadi 10.',
+        ]);
+        $updateF5Response->assertRedirect();
+        $this->assertEquals(10.0, $pengajuan->fresh()->evaluasiF5->skor_komunikasi);
+
+        // Kunci nilai F5
+        $lockF5Response = $this->actingAs($this->industriUser)->post(route('industri.evaluasi_f5.lock', $pengajuan->id));
+        $lockF5Response->assertRedirect();
+        $this->assertTrue($pengajuan->fresh()->evaluasiF5->is_locked);
+
+        // Setelah dikunci, percobaan mengubah nilai F5 harus ditolak
+        $lockedAttempt = $this->actingAs($this->industriUser)->post(route('industri.evaluasi_f5.store', $pengajuan->id), [
+            'skor_komunikasi' => 6,
+            'skor_berpikir_kritis' => 6,
+            'skor_kerjasama' => 6,
+            'skor_inisiatif' => 6,
+            'skor_literasi' => 6,
+            'skor_deskripsi_produk' => 6,
+            'skor_spesifikasi' => 6,
+            'skor_desain' => 6,
+            'skor_implementasi' => 6,
+            'skor_pengujian' => 6,
+        ]);
+        $lockedAttempt->assertSessionHas('error');
+        $this->assertEquals(10.0, $pengajuan->fresh()->evaluasiF5->skor_komunikasi);
     }
 
     public function test_dosen_enforces_8_sessions_before_final_evaluation_and_executes_fuzzy(): void
@@ -278,7 +317,40 @@ class PrdCompleteFlowTest extends TestCase
         $f6Response->assertRedirect();
         $this->assertDatabaseHas('form_f6_evaluasi', [
             'pengajuan_magang_id' => $pengajuan->id,
+            'is_locked' => false,
         ]);
+
+        // Sebelum dikunci, dosen masih bisa memperbarui nilai F6
+        $this->actingAs($this->dosen)->post(route('dosen.evaluasi_f6.store', $pengajuan->id), [
+            'skor_kesesuaian_judul' => 9.5,
+            'skor_tata_bahasa' => 8,
+            'skor_format_laporan' => 8.5,
+            'skor_pengetahuan' => 9,
+            'skor_tanya_jawab' => 8.5,
+            'skor_etika' => 9.5,
+            'skor_justifikasi' => 8.5,
+            'skor_rutinitas_bimbingan' => 14,
+            'skor_progres' => 13.5,
+        ])->assertRedirect();
+        $this->assertEquals(9.5, $pengajuan->fresh()->evaluasiF6->skor_kesesuaian_judul);
+
+        // Kunci nilai F6
+        $this->actingAs($this->dosen)->post(route('dosen.evaluasi_f6.lock', $pengajuan->id))->assertRedirect();
+        $this->assertTrue($pengajuan->fresh()->evaluasiF6->is_locked);
+
+        // Setelah dikunci, percobaan mengubah nilai F6 harus ditolak
+        $this->actingAs($this->dosen)->post(route('dosen.evaluasi_f6.store', $pengajuan->id), [
+            'skor_kesesuaian_judul' => 6,
+            'skor_tata_bahasa' => 6,
+            'skor_format_laporan' => 6,
+            'skor_pengetahuan' => 6,
+            'skor_tanya_jawab' => 6,
+            'skor_etika' => 6,
+            'skor_justifikasi' => 6,
+            'skor_rutinitas_bimbingan' => 6,
+            'skor_progres' => 6,
+        ])->assertSessionHas('error');
+        $this->assertEquals(9.5, $pengajuan->fresh()->evaluasiF6->skor_kesesuaian_judul);
 
         // 1. Coba kalkulasi Fuzzy saat sesi bimbingan F4 masih 0 (< 8 sesi)
         // Harus ditolak dengan pesan error

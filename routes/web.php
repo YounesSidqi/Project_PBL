@@ -88,6 +88,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/industri/logbooks/{logbook}/acc', [IndustriController::class, 'accLogbookF3'])->name('industri.logbooks.acc');
     Route::post('/industri/logbooks/{logbook}/revisi', [IndustriController::class, 'revisiLogbookF3'])->name('industri.logbooks.revisi');
     Route::post('/industri/pengajuan/{pengajuan}/evaluasi-f5', [IndustriController::class, 'storeEvaluasiF5'])->name('industri.evaluasi_f5.store');
+    Route::post('/industri/pengajuan/{pengajuan}/evaluasi-f5/lock', [IndustriController::class, 'lockEvaluasiF5'])->name('industri.evaluasi_f5.lock');
 });
 
 // 4. Dashboard Dosen Pembimbing PNJ
@@ -237,6 +238,7 @@ Route::middleware('auth')->group(function () {
 
     // Form F6 & Kalkulasi Nilai Fuzzy Logic (Dosen)
     Route::post('/dosen/pengajuan/{pengajuan}/evaluasi-f6', [PenilaianController::class, 'storeEvaluasiF6'])->name('dosen.evaluasi_f6.store');
+    Route::post('/dosen/pengajuan/{pengajuan}/evaluasi-f6/lock', [PenilaianController::class, 'lockEvaluasiF6'])->name('dosen.evaluasi_f6.lock');
     Route::post('/dosen/pengajuan/{pengajuan}/kalkulasi-fuzzy', [PenilaianController::class, 'kalkulasiFuzzy'])->name('dosen.kalkulasi-fuzzy');
 
     // Legalisasi Berkas Digital & Cetak PDF F1-F7 (PRD 8)

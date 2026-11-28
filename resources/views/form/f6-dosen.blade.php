@@ -87,6 +87,29 @@
   </div>
 @endif
 
+@php
+  $isLockedF6 = (bool) ($evalF6?->is_locked ?? false);
+@endphp
+
+@if($isLockedF6)
+  <div class="bg-rose-50 border border-rose-200 rounded-xl p-3.5 flex items-center justify-between gap-2 text-xs text-rose-900">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-rose-600 text-[18px]">lock</span>
+      <span><strong>Nilai Form F6 telah dikunci.</strong> Rincian nilai sudah bersifat final dan tidak dapat diubah lagi.</span>
+    </div>
+    @if($evalF6?->locked_at)
+      <span class="text-[11px] font-mono text-rose-700 shrink-0">Dikunci: {{ $evalF6->locked_at->format('d M Y H:i') }}</span>
+    @endif
+  </div>
+@elseif($evalF6)
+  <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-center justify-between gap-2 text-xs text-amber-900">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-amber-600 text-[18px]">edit_note</span>
+      <span>Nilai Form F6 sudah tersimpan tetapi <strong>belum dikunci</strong>. Anda masih dapat mengubah dan menyimpan ulang nilai, atau tekan <strong>Kunci Nilai F6</strong> jika sudah final.</span>
+    </div>
+  </div>
+@endif
+
 <!-- Form Evaluasi F6 -->
 <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-6">
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
@@ -106,6 +129,12 @@
     </div>
   </div>
 
+  @if($evalF6 && !$isLockedF6)
+    <form id="form-lock-f6" method="POST" action="{{ route('dosen.evaluasi_f6.lock', $selectedPengajuan->id) }}" class="hidden">
+      @csrf
+    </form>
+  @endif
+
   <form method="POST" action="{{ route('dosen.evaluasi_f6.store', $selectedPengajuan->id) }}" id="form-f6-evaluation" class="space-y-6">
     @csrf
 
@@ -116,19 +145,19 @@
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1">1.1 Kesesuaian Judul &amp; Isi</label>
           <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 10</span>
-          <input type="number" step="0.5" min="5" max="10" name="skor_kesesuaian_judul" required value="{{ old('skor_kesesuaian_judul', ($evalF6 && $evalF6->skor_kesesuaian_judul <= 10) ? $evalF6->skor_kesesuaian_judul : 9) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#0056B3] p-2 text-center">
+          <input type="number" step="0.5" min="5" max="10" name="skor_kesesuaian_judul" required {{ $isLockedF6 ? 'disabled readonly' : '' }} value="{{ old('skor_kesesuaian_judul', ($evalF6 && $evalF6->skor_kesesuaian_judul <= 10) ? $evalF6->skor_kesesuaian_judul : 9) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed font-bold text-[#0056B3] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1">1.2 Tata Bahasa &amp; EYD</label>
           <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 10</span>
-          <input type="number" step="0.5" min="5" max="10" name="skor_tata_bahasa" required value="{{ old('skor_tata_bahasa', ($evalF6 && $evalF6->skor_tata_bahasa <= 10) ? $evalF6->skor_tata_bahasa : 8) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#0056B3] p-2 text-center">
+          <input type="number" step="0.5" min="5" max="10" name="skor_tata_bahasa" required {{ $isLockedF6 ? 'disabled readonly' : '' }} value="{{ old('skor_tata_bahasa', ($evalF6 && $evalF6->skor_tata_bahasa <= 10) ? $evalF6->skor_tata_bahasa : 8) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed font-bold text-[#0056B3] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1">1.3 Kepatuhan Format</label>
           <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 10</span>
-          <input type="number" step="0.5" min="5" max="10" name="skor_format_laporan" required value="{{ old('skor_format_laporan', ($evalF6 && $evalF6->skor_format_laporan <= 10) ? $evalF6->skor_format_laporan : 8.5) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#0056B3] p-2 text-center">
+          <input type="number" step="0.5" min="5" max="10" name="skor_format_laporan" required {{ $isLockedF6 ? 'disabled readonly' : '' }} value="{{ old('skor_format_laporan', ($evalF6 && $evalF6->skor_format_laporan <= 10) ? $evalF6->skor_format_laporan : 8.5) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed font-bold text-[#0056B3] p-2 text-center">
         </div>
       </div>
     </div>
@@ -140,25 +169,25 @@
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1">2.1 Penguasaan Materi</label>
           <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 10</span>
-          <input type="number" step="0.5" min="5" max="10" name="skor_pengetahuan" required value="{{ old('skor_pengetahuan', ($evalF6 && $evalF6->skor_pengetahuan <= 10) ? $evalF6->skor_pengetahuan : 9) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#02796B] p-2 text-center">
+          <input type="number" step="0.5" min="5" max="10" name="skor_pengetahuan" required {{ $isLockedF6 ? 'disabled readonly' : '' }} value="{{ old('skor_pengetahuan', ($evalF6 && $evalF6->skor_pengetahuan <= 10) ? $evalF6->skor_pengetahuan : 9) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed font-bold text-[#02796B] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1">2.2 Tanya Jawab</label>
           <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 10</span>
-          <input type="number" step="0.5" min="5" max="10" name="skor_tanya_jawab" required value="{{ old('skor_tanya_jawab', ($evalF6 && $evalF6->skor_tanya_jawab <= 10) ? $evalF6->skor_tanya_jawab : 8.5) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#02796B] p-2 text-center">
+          <input type="number" step="0.5" min="5" max="10" name="skor_tanya_jawab" required {{ $isLockedF6 ? 'disabled readonly' : '' }} value="{{ old('skor_tanya_jawab', ($evalF6 && $evalF6->skor_tanya_jawab <= 10) ? $evalF6->skor_tanya_jawab : 8.5) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed font-bold text-[#02796B] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1">2.3 Etika &amp; Sikap</label>
           <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 10</span>
-          <input type="number" step="0.5" min="5" max="10" name="skor_etika" required value="{{ old('skor_etika', ($evalF6 && $evalF6->skor_etika <= 10) ? $evalF6->skor_etika : 9.5) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#02796B] p-2 text-center">
+          <input type="number" step="0.5" min="5" max="10" name="skor_etika" required {{ $isLockedF6 ? 'disabled readonly' : '' }} value="{{ old('skor_etika', ($evalF6 && $evalF6->skor_etika <= 10) ? $evalF6->skor_etika : 9.5) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed font-bold text-[#02796B] p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1">2.4 Justifikasi Solusi</label>
           <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 10</span>
-          <input type="number" step="0.5" min="5" max="10" name="skor_justifikasi" required value="{{ old('skor_justifikasi', ($evalF6 && $evalF6->skor_justifikasi <= 10) ? $evalF6->skor_justifikasi : 8.5) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-[#02796B] p-2 text-center">
+          <input type="number" step="0.5" min="5" max="10" name="skor_justifikasi" required {{ $isLockedF6 ? 'disabled readonly' : '' }} value="{{ old('skor_justifikasi', ($evalF6 && $evalF6->skor_justifikasi <= 10) ? $evalF6->skor_justifikasi : 8.5) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed font-bold text-[#02796B] p-2 text-center">
         </div>
       </div>
     </div>
@@ -170,13 +199,13 @@
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1">3.1 Rutinitas Bimbingan (Min. 8 Sesi)</label>
           <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 15</span>
-          <input type="number" step="0.5" min="5" max="15" name="skor_rutinitas_bimbingan" required value="{{ old('skor_rutinitas_bimbingan', ($evalF6 && $evalF6->skor_rutinitas_bimbingan <= 15) ? $evalF6->skor_rutinitas_bimbingan : 14) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-purple-800 p-2 text-center">
+          <input type="number" step="0.5" min="5" max="15" name="skor_rutinitas_bimbingan" required {{ $isLockedF6 ? 'disabled readonly' : '' }} value="{{ old('skor_rutinitas_bimbingan', ($evalF6 && $evalF6->skor_rutinitas_bimbingan <= 15) ? $evalF6->skor_rutinitas_bimbingan : 14) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed font-bold text-purple-800 p-2 text-center">
         </div>
 
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
           <label class="block text-xs font-bold text-slate-700 mb-1">3.2 Progres Capaian Magang</label>
           <span class="block text-[10px] text-slate-400 mb-1.5">Rentang: 5 – 15</span>
-          <input type="number" step="0.5" min="5" max="15" name="skor_progres" required value="{{ old('skor_progres', ($evalF6 && $evalF6->skor_progres <= 15) ? $evalF6->skor_progres : 13.5) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white font-bold text-purple-800 p-2 text-center">
+          <input type="number" step="0.5" min="5" max="15" name="skor_progres" required {{ $isLockedF6 ? 'disabled readonly' : '' }} value="{{ old('skor_progres', ($evalF6 && $evalF6->skor_progres <= 15) ? $evalF6->skor_progres : 13.5) }}" class="f6-score-input w-full text-sm rounded-lg border border-slate-300 bg-white disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed font-bold text-purple-800 p-2 text-center">
         </div>
       </div>
     </div>
@@ -186,14 +215,35 @@
       <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
         D. Catatan Evaluasi Dosen
       </label>
-      <textarea name="catatan_dosen" rows="3" placeholder="Tuliskan catatan evaluasi atau revisi akhir laporan..." class="w-full text-xs rounded-xl border border-slate-300 p-3 focus:ring-2 focus:ring-[#0056B3]/20 focus:border-[#0056B3]">{{ old('catatan_dosen', $evalF6?->catatan_dosen) }}</textarea>
+      <textarea name="catatan_dosen" rows="3" {{ $isLockedF6 ? 'disabled readonly' : '' }} placeholder="Tuliskan catatan evaluasi atau revisi akhir laporan..." class="w-full text-xs rounded-xl border border-slate-300 p-3 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#0056B3]/20 focus:border-[#0056B3]">{{ old('catatan_dosen', $evalF6?->catatan_dosen) }}</textarea>
     </div>
 
-    <div class="flex items-center justify-end pt-3 border-t border-slate-100">
-      <button type="submit" class="px-5 py-2.5 rounded-xl bg-[#0056B3] hover:bg-[#00428A] text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-sm transition-colors">
-        <span class="material-symbols-outlined text-[16px]">save</span>
-        <span>Simpan Nilai F6</span>
-      </button>
+    <div class="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-slate-100">
+      @if($evalF6)
+        <a href="{{ route('dokumen.f6', $selectedPengajuan->id) }}" target="_blank" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs inline-flex items-center gap-1.5 transition-colors">
+          <span class="material-symbols-outlined text-[16px]">print</span>
+          <span>Cetak PDF</span>
+        </a>
+      @endif
+
+      @if($isLockedF6)
+        <span class="px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 font-bold text-xs inline-flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-[16px]">lock</span>
+          <span>Nilai F6 Terkunci</span>
+        </span>
+      @else
+        <button type="submit" class="px-5 py-2.5 rounded-xl bg-[#0056B3] hover:bg-[#00428A] text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
+          <span class="material-symbols-outlined text-[16px]">save</span>
+          <span>{{ $evalF6 ? 'Simpan Perubahan F6' : 'Simpan Nilai F6' }}</span>
+        </button>
+
+        @if($evalF6)
+          <button type="submit" form="form-lock-f6" onclick="return confirm('Kunci nilai Form F6 untuk {{ $selectedPengajuan->mahasiswa->name }}? Setelah dikunci, nilai tidak dapat diubah lagi.')" class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
+            <span class="material-symbols-outlined text-[16px]">lock</span>
+            <span>Kunci Nilai F6</span>
+          </button>
+        @endif
+      @endif
     </div>
   </form>
 </div>
